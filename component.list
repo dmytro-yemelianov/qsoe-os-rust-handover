@@ -1,0 +1,10 @@
+#
+# QSOE component list
+#
+
+[v0.1]
+
+lq              0.10
+nq              0.15
+libc            0.5
+quser           0.5

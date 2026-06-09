@@ -1,0 +1,19 @@
+#
+# Commands for U-Boot to start QSOE/L (seL4 + elfloader image)
+#
+# One file: qsoe.elf is the elfloader, which embeds archive.cpio
+# (seL4 kernel.elf + taskman.elf) via .incbin, and taskman in turn
+# embeds modpkg.cpio the same way.
+#
+# The ELF's load segment sits at 0x84000000; we stage the file at
+# 0x90000000 so bootelf's segment copy can't overwrite its own
+# source.  Today's image is built for QEMU virt -- expect it to balk
+# at the FU740's FDT; this entry exists so the recompile-for-real-
+# hardware step has a ready boot path.
+#
+
+ext4load nvme 0:6 0x90000000 /boot/qsoe/qsoe.elf
+bootelf 0x90000000
+
+# To run by hand:
+# nvme scan; ext4load nvme 0:6 0x82000000 /boot/qsoe/boot-lq.scr; source 0x82000000

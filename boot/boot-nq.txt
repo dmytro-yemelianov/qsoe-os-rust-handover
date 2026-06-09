@@ -1,0 +1,24 @@
+#
+# Commands for U-Boot to start QSOE/N (Skimmer kernel + modpkg initrd)
+#
+# booti reproduces exactly what QEMU's -kernel/-initrd/-append do:
+# jump S-mode with a0 = hartid, a1 = DTB carrying /chosen
+# {linux,initrd-start/end, bootargs} -- the same properties
+# kernel/cpio.c and sysmap's TAG_CMDLINE already consume.
+
+ext4load nvme 0:6 0x80200000 /boot/qsoe/skimmer.bin
+# U-Boot may relocate the ramdisk anywhere in the bank (it favors
+# the top of the lower 4 GiB); the kernel's physmem layer reads the
+# real RAM bounds from the FDT and excludes the initrd wherever it
+# lands, so no pinning is needed.
+ext4load nvme 0:6 0x90000000 /boot/qsoe/modpkg.cpio
+setenv initrd_size ${filesize}
+# Taskman command line -> FDT /chosen/bootargs (same knob as
+# BOOTARGS= in emu.sh).  Default --debug for the bring-up era;
+# override persistently from the U-Boot prompt without touching this
+# script:  setenv qsoe_bootargs '--debug=2'; saveenv
+if env exists qsoe_bootargs; then setenv bootargs ${qsoe_bootargs}; else setenv bootargs --debug; fi
+booti 0x80200000 0x90000000:${initrd_size} ${fdtaddr}
+
+# To run by hand:
+# nvme scan; ext4load nvme 0:6 0x82000000 /boot/qsoe/boot-nq.scr; source 0x82000000

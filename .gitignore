@@ -1,0 +1,16 @@
+CLAUDE*
+
+# Repositories
+lq/
+nq/
+libc/
+quser/
+doc/
+
+# seL4 repositories
+sel4-bootstrap/
+
+# Boot artifacts
+boot/*.scr
+boot/*.bin
+
