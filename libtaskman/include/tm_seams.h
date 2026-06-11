@@ -34,7 +34,7 @@
 #ifndef LIBTASKMAN_SEAMS_H
 #define LIBTASKMAN_SEAMS_H
 
-#include <qsoe-system.h>     /* pid_t, basic types */
+#include <sys/qsoe.h>     /* pid_t, basic types */
 
 struct libtaskman_seams {
     /* ---- Clock (timer module needs this) ---- */

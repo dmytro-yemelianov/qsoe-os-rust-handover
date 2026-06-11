@@ -22,7 +22,7 @@
 #ifndef LIBTASKMAN_SYSCFG_H
 #define LIBTASKMAN_SYSCFG_H
 
-#include <qsoe-system.h>
+#include <sys/qsoe.h>
 #include <qsoe/syscfg.h>     /* TM_SYSCFG_TAG_*, TM_SYSCFG_MAX */
 
 typedef struct tm_syscfg_state {

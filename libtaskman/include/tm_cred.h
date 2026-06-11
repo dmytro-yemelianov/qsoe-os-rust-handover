@@ -20,7 +20,7 @@
 #ifndef LIBTASKMAN_CRED_H
 #define LIBTASKMAN_CRED_H
 
-#include <qsoe-system.h>     /* pid_t, uid_t, gid_t, struct _cred_info */
+#include <sys/qsoe.h>     /* pid_t, uid_t, gid_t, struct _cred_info */
 
 #define TM_CWD_MAX  256
 

@@ -6,7 +6,7 @@
 # consumer (the per-kernel taskman build) drives this Makefile with:
 #
 #   O          output directory for objects and libtaskman.a
-#   LIBC_INC   path(s) to libc public headers (for <qsoe-system.h>)
+#   LIBC_INC   path(s) to libc public headers (for <sys/qsoe.h>)
 #   ARCHFLAGS  target arch/ABI flags (e.g. -march=... -mabi=lp64 -mcmodel=medany)
 #
 # A bare `make` here gives a standalone "does the body still compile?"

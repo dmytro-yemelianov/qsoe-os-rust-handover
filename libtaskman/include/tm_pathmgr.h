@@ -23,7 +23,7 @@
 #ifndef LIBTASKMAN_PATHMGR_H
 #define LIBTASKMAN_PATHMGR_H
 
-#include <qsoe-system.h>     /* pid_t */
+#include <sys/qsoe.h>     /* pid_t */
 
 /* Handler kinds.  HANDLER_EXTERNAL is the production case (a real
  * resmgr process serves the prefix).  The TASKMAN_* slots let taskman
@@ -36,6 +36,7 @@
 #define PATHMGR_HANDLER_TASKMAN_ZERO    4
 #define PATHMGR_HANDLER_TASKMAN_PMDIR   5
 #define PATHMGR_HANDLER_TASKMAN_SYSFS   6   /* synthetic read-only /sys */
+#define PATHMGR_HANDLER_TASKMAN_PROCFS  7   /* synthetic read-only /proc */
 
 typedef struct tm_pathmgr_obj {
     pid_t    server_pid;
