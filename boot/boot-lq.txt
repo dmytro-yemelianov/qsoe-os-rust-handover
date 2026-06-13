@@ -1,19 +1,26 @@
 #
-# Commands for U-Boot to start QSOE/L (seL4 + elfloader image)
+# Commands for U-Boot to start QSOE/L (seL4 elfloader, via uImage).
 #
-# One file: qsoe.elf is the elfloader, which embeds archive.cpio
-# (seL4 kernel.elf + taskman.elf) via .incbin, and taskman in turn
-# embeds modpkg.cpio the same way.
+# qsoe-l-fu740.uImage wraps the raw elfloader binary in a legacy U-Boot
+# uImage.  `bootm` of an -O linux -T kernel image enters it as
+# kernel(a0 = hartid, a1 = DTB) -- exactly what the elfloader's crt0.S
+# expects -- WITHOUT the RISC-V Linux Image header that `booti` checks
+# (which the raw .bin lacks; adding that header for a `booti` path, like
+# QSOE/N's skimmer has, is a follow-up).  Load + entry are the
+# elfloader's fixed link address, 0x84000000.
 #
-# The ELF's load segment sits at 0x84000000; we stage the file at
-# 0x90000000 so bootelf's segment copy can't overwrite its own
-# source.  Today's image is built for QEMU virt -- expect it to balk
-# at the FU740's FDT; this entry exists so the recompile-for-real-
-# hardware step has a ready boot path.
+# The elfloader embeds archive.cpio (seL4 kernel.elf + taskman.elf), and
+# taskman embeds modpkg.cpio, all via .incbin -- one self-contained
+# image.  Built for the FU740 with `make -C ../lq PLAT=hifive`
+# (FirstHartID=1: hart 0 is the S7 monitor; the OS runs on U74 harts 1-4).
 #
 
-ext4load nvme 0:6 0x90000000 /boot/qsoe/qsoe.elf
-bootelf 0x90000000
+ext4load nvme 0:6 0x90000000 /boot/qsoe/qsoe-l-fu740.uImage
+bootm 0x90000000 - ${fdtaddr}
+
+# --- mr-bml path uses the raw qsoe-l-fu740.bin directly ---
+# mr-bml loads it at 0x84000000 and jumps with a0=hartid / a1=DTB set
+# itself, so it needs neither the uImage wrap nor the Image header.
 
 # To run by hand:
 # nvme scan; ext4load nvme 0:6 0x82000000 /boot/qsoe/boot-lq.scr; source 0x82000000

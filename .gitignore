@@ -13,4 +13,6 @@ sel4-bootstrap/
 # Boot artifacts
 boot/*.scr
 boot/*.bin
+*.dat
+*.uImage
 

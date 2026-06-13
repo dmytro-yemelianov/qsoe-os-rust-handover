@@ -227,6 +227,23 @@ int tm_pathmgr_resolve(const char *path,
         return 0;
     }
 
+    /* A PMDIR (synthetic directory whose children are all real
+     * pathmgr-tree nodes, e.g. /dev) cannot own a sub-path: if pm_walk
+     * left a remainder under it, that remainder names a child that does
+     * not exist -- so it is ENOENT, not a directory handle on the
+     * parent.  CPIOFS / SYSFS / PROCFS synthesize their own children and
+     * resolve the remainder themselves, so they are left alone.  Without
+     * this, open("/dev/<missing>") succeeds against /dev and a client
+     * that MsgSends a device protocol to the resulting fd gets EOK with
+     * an empty payload -- which is exactly why `lspci` spins when
+     * pci-server is absent (it reads bdf 0 forever instead of ENOENT). */
+    if (deepest->obj.handler_kind == PATHMGR_HANDLER_TASKMAN_PMDIR) {
+        const char *rest = deepest_p;
+        while (*rest == '/') ++rest;
+        if (*rest != '\0')
+            return -ENOENT;
+    }
+
     *out = deepest->obj;
     if (out_consumed_bytes) *out_consumed_bytes = (unsigned)(deepest_p - path);
     return 0;
