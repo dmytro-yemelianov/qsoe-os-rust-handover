@@ -13,6 +13,7 @@
  */
 
 #include <tm_cred.h>
+#include <qsoe/tm_msgs.h>      /* TM_CRED_KEEP */
 
 void tm_cred_init(tm_cred_state_t *s)
 {
@@ -63,16 +64,37 @@ int tm_cred_set(tm_cred_state_t *s,
                 unsigned rgid_new, unsigned egid_new, unsigned sgid_new)
 {
     if (!s) return -EINVAL;
-    /* 0xFFFFFFFF = "leave alone".  Single-user-root posture: the
-     * per-OS taskman applies whatever policy it has before calling
-     * us; this body never gates on the requested values. */
-    if (ruid_new != 0xFFFFFFFFu) s->cred.ruid = (uid_t)ruid_new;
-    if (euid_new != 0xFFFFFFFFu) s->cred.euid = (uid_t)euid_new;
-    if (suid_new != 0xFFFFFFFFu) s->cred.suid = (uid_t)suid_new;
-    if (rgid_new != 0xFFFFFFFFu) s->cred.rgid = (gid_t)rgid_new;
-    if (egid_new != 0xFFFFFFFFu) s->cred.egid = (gid_t)egid_new;
-    if (sgid_new != 0xFFFFFFFFu) s->cred.sgid = (gid_t)sgid_new;
+    /* TM_CRED_KEEP = "leave alone".  The per-OS taskman calls
+     * tm_cred_change_permitted() before us; this body just mutates. */
+    if (ruid_new != TM_CRED_KEEP) s->cred.ruid = (uid_t)ruid_new;
+    if (euid_new != TM_CRED_KEEP) s->cred.euid = (uid_t)euid_new;
+    if (suid_new != TM_CRED_KEEP) s->cred.suid = (uid_t)suid_new;
+    if (rgid_new != TM_CRED_KEEP) s->cred.rgid = (gid_t)rgid_new;
+    if (egid_new != TM_CRED_KEEP) s->cred.egid = (gid_t)egid_new;
+    if (sgid_new != TM_CRED_KEEP) s->cred.sgid = (gid_t)sgid_new;
     return 0;
+}
+
+/* "Held" test for one requested id against the process's matching id set
+ * (real/effective/saved).  TM_CRED_KEEP ("unchanged") always passes. */
+static int cred_id_held(unsigned v, uid_t a, uid_t b, uid_t c)
+{
+    return v == TM_CRED_KEEP || v == (unsigned)a ||
+           v == (unsigned)b || v == (unsigned)c;
+}
+
+int tm_cred_change_permitted(const struct _cred_info *cur,
+                             unsigned ruid_new, unsigned euid_new, unsigned suid_new,
+                             unsigned rgid_new, unsigned egid_new, unsigned sgid_new)
+{
+    if (!cur) return 0;
+    if (cur->euid == 0) return 1;          /* root: unrestricted */
+    return cred_id_held(ruid_new, cur->ruid, cur->euid, cur->suid) &&
+           cred_id_held(euid_new, cur->ruid, cur->euid, cur->suid) &&
+           cred_id_held(suid_new, cur->ruid, cur->euid, cur->suid) &&
+           cred_id_held(rgid_new, cur->rgid, cur->egid, cur->sgid) &&
+           cred_id_held(egid_new, cur->rgid, cur->egid, cur->sgid) &&
+           cred_id_held(sgid_new, cur->rgid, cur->egid, cur->sgid);
 }
 
 void tm_cred_self_info(const tm_cred_state_t *s,

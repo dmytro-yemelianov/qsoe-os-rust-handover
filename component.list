@@ -4,7 +4,7 @@
 
 [v0.1]
 
-lq              0.13
+lq              0.14
 nq              0.17
-libc            0.5
+libc            0.6
 quser           0.5

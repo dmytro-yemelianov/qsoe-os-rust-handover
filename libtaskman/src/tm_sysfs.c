@@ -19,10 +19,12 @@
 #define SYSFS_BOARD_BUFSZ      130
 #define SYSFS_VERSION_BUFSZ     64
 #define SYSFS_BUILDDATE_BUFSZ   64
+#define SYSFS_OSNAME_BUFSZ      32   /* "QSOE/N", "QSOE/L", ... + \n + NUL */
 
 static char     s_board[SYSFS_BOARD_BUFSZ];          static unsigned s_board_len;
 static char     s_builddate[SYSFS_BUILDDATE_BUFSZ];  static unsigned s_builddate_len;
 static char     s_cmdline[SYSFS_CMDLINE_BUFSZ];      static unsigned s_cmdline_len;
+static char     s_osname[SYSFS_OSNAME_BUFSZ];        static unsigned s_osname_len;
 static char     s_version[SYSFS_VERSION_BUFSZ];      static unsigned s_version_len;
 
 struct sysfs_entry {
@@ -37,6 +39,7 @@ static const struct sysfs_entry s_entries[] = {
     { "board",     s_board,     &s_board_len     },
     { "builddate", s_builddate, &s_builddate_len },
     { "cmdline",   s_cmdline,   &s_cmdline_len   },
+    { "osname",    s_osname,    &s_osname_len    },
     { "version",   s_version,   &s_version_len   },
 };
 #define SYSFS_NENTRIES  ((unsigned)(sizeof s_entries / sizeof s_entries[0]))
@@ -58,9 +61,10 @@ static unsigned sysfs_snap(char *dst, unsigned cap, const char *src)
     return n + 1;
 }
 
-void tm_sysfs_init(const char *board, const char *cmdline,
+void tm_sysfs_init(const char *osname, const char *board, const char *cmdline,
                    const char *version, const char *builddate)
 {
+    s_osname_len    = sysfs_snap(s_osname,    SYSFS_OSNAME_BUFSZ,    osname);
     s_board_len     = sysfs_snap(s_board,     SYSFS_BOARD_BUFSZ,     board);
     s_cmdline_len   = sysfs_snap(s_cmdline,   SYSFS_CMDLINE_BUFSZ,   cmdline);
     s_version_len   = sysfs_snap(s_version,   SYSFS_VERSION_BUFSZ,   version);

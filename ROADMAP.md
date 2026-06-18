@@ -32,39 +32,40 @@ The two-kernel foundation as it stands, plus a real interactive login:
   reflected back into `component.list`.
 - **Sources opened on GitLab**, Apache-2.0 throughout.
 
-## 0.2 — First writable filesystem
+The shared test suite (/usr/bin/suite) is fully green on **both** kernels.
+The remaining (from pre-0.1) per-kernel seam gaps are closed (priority model,
+dup, readdir, spawn-by-name, …). This keeps the "one userspace, two kernels"
+promise honest.
+
+## 0.2 — Text-mode console on the GK208 ("Kepler")
+
+A watchable on-device display, so the real-time audio test can be observed
+on real hardware rather than over serial.
+
+## 0.3 — First writable filesystem
 
 qrvfs gains writes: `O_CREAT`/`O_TRUNC`, file create/unlink, `realpath` and
 symlink resolution. The disk stops being a read-only delivery vehicle.
 
-## 0.3 — NQ ↔ LQ parity gate
+## 0.4 — Canonical Dual-Panel File Manager
 
-The core bet made enforceable: the shared suite fully green on **both**
-kernels at every tag, with the remaining per-kernel seam gaps closed
-(priority model, dup, readdir, spawn-by-name, …). The checkpoint that keeps
-"one userspace, two kernels" honest.
+The QSOE flagship application — a two-pane file manager — exercising the
+writable filesystem and the userspace end to end.
 
-## 0.4 — First `deva-hdmi` + real-time groundwork
+## 0.5 — First `deva-hdmi` + real-time groundwork
 
 The GK208 HDMI-audio function brought up as a device, with the
 priority/IST/scheduling groundwork the hard-real-time path needs. First
 step toward the north-star RT test.
-
-## 0.5 — Canonical Dual-Panel File Manager
-
-The QSOE flagship application — a two-pane file manager — exercising the
-writable filesystem and the userspace end to end.
 
 ## 0.6 — Comprehensive suites + audio RT package
 
 Broaden conformance/syscall test coverage, and land the audio real-time
 package (up to N hard-RT tasks on an N-CPU system).
 
-## 0.7 — Text-mode console on the GK208 ("Kepler")
+## 0.7
 
-A watchable on-device display, so the real-time audio test can be observed
-on real hardware rather than over serial. (Display before the full RT push,
-deliberately.)
+To be defined
 
 ## 0.8 — Second hardware target + AIA
 
@@ -75,26 +76,24 @@ QEMU `virt`, the K3, and the Unmatched uniformly.
 ## 0.9 — QNX-libc compatibility push
 
 Recompile and run a target set of QNX-source userland utilities, closing
-the remaining libc gaps to the 1.0 bar. This is where "QNX compatibility"
-becomes measured rather than aspirational.
+the remaining libc gaps (except fork() of course). This is where
+"QNX compatibility" becomes measured rather than aspirational.
 
 ## 1.0 — QSOE initial release
 
 NQ 1.0 + LQ 1.0 + quser 1.0 + libc 1.0. QNX-libc compatibility good enough
-to run unmodified QNX *source* userland after recompilation.
+to run many QNX user-space applications after recompilation, with minimal
+modifications (fork -> posix_spawn).
 
 ---
 
 ### Threads that span milestones
 
-- **Hard real-time / HDMI audio** — the 0.4 `deva-hdmi` → 0.6 audio package
-  → 0.7 Kepler display sequence builds toward the north-star: a 24-hour
-  HDMI-audio capture on a GK208 under sustained multi-core load with
-  continuous NVMe/Ethernet IRQs.
+- **Hard real-time / HDMI audio** — text-mode console → `deva-hdmi` → audio package
+  play sequence builds toward the north-star: a 24-hour HDMI-audio capture on a
+  GK208 under sustained multi-core load with   continuous NVMe/Ethernet IRQs.
 - **Networking** (FLEET-inspired transparent distributed networking) is
   **post-1.0** — node-descriptor placeholders already thread through the
   IPC surface so it can land without an ABI break.
 - **Both kernels, every milestone** — Skimmer and seL4 advance together;
-  the parity gate (0.3) is the discipline that keeps the shared userspace a
-  genuine constant, which is also what makes QSOE a controlled experiment
-  in microkernel overhead.
+  the discipline of keeping the shared userspace is maintained with every QSOE release.

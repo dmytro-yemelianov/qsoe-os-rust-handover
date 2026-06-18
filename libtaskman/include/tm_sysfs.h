@@ -25,7 +25,7 @@
  * `cat /sys/<x>` looks right at the shell; a NULL or empty source yields
  * a one-byte "\n".  Idempotent -- safe to call again after a syscfg/
  * sysmap update. */
-void tm_sysfs_init(const char *board, const char *cmdline,
+void tm_sysfs_init(const char *osname, const char *board, const char *cmdline,
                    const char *version, const char *builddate);
 
 /* Resolve an absolute path against the /sys tree:

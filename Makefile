@@ -62,6 +62,15 @@ FSQRV_BINS     := quser/build/test/suite/suite.elf:suite \
                   quser/build/test/msgpass/test_msgpass.elf:test_msgpass \
                   quser/build/test/syncspace/test_syncspace.elf:test_syncspace \
                   quser/build/utils/time.elf:time
+# On-disk /usr/sbin programs: getty + login live on the root fs, not the
+# boot cpio -- they cannot do their job without /usr mounted (login reads
+# /usr/conf via the /etc symlink), so a boot that can't mount /usr has
+# nothing to log into.  Each "<src>:<name>" becomes /usr/sbin/<name>.
+FSQRV_SBIN     := quser/build/sbin/getty/getty.elf:getty \
+                  quser/build/sbin/login/login.elf:login
+# Credentials shipped on the image: /usr/conf/{passwd,shadow,group},
+# reached as /etc/* through the taskman /etc -> /usr/conf symlink.
+FSQRV_CONF     := quser/conf
 
 nvme: $(NVME_IMG) nvme-populate
 
@@ -93,7 +102,7 @@ tree: $(TREEQRVFS) fsqrv-image
 # hasn't been built yet there is nothing to stage and FSQRV_IMG is removed
 # so the consumers know to leave their images alone.
 fsqrv-image: $(MKFS_QRV)
-	@rm -rf $(FSQRV_ROOT); mkdir -p $(FSQRV_ROOT)/bin; \
+	@rm -rf $(FSQRV_ROOT); mkdir -p $(FSQRV_ROOT)/bin $(FSQRV_ROOT)/home; \
 	have=0; \
 	for pair in $(FSQRV_BINS); do \
 		src=$${pair%%:*}; name=$${pair##*:}; \
@@ -103,6 +112,18 @@ fsqrv-image: $(MKFS_QRV)
 		mkdir -p $(FSQRV_ROOT)/sbin/sysinit; \
 		cp $(FSQRV_SYSINIT)/level1.sh $(FSQRV_ROOT)/sbin/sysinit/; \
 		chmod +x $(FSQRV_ROOT)/sbin/sysinit/level1.sh; \
+	fi; \
+	mkdir -p $(FSQRV_ROOT)/sbin; \
+	for pair in $(FSQRV_SBIN); do \
+		src=$${pair%%:*}; name=$${pair##*:}; \
+		if [ -f "$$src" ]; then cp "$$src" $(FSQRV_ROOT)/sbin/$$name; have=1; fi; \
+	done; \
+	if [ -d $(FSQRV_CONF) ]; then \
+		mkdir -p $(FSQRV_ROOT)/conf; \
+		for f in $(FSQRV_CONF)/passwd $(FSQRV_CONF)/shadow $(FSQRV_CONF)/group; do \
+			[ -f "$$f" ] && cp "$$f" $(FSQRV_ROOT)/conf/; \
+		done; \
+		have=1; \
 	fi; \
 	if [ $$have = 1 ]; then \
 		"$(MKFS_QRV)" -s $(FSQRV_SIZE_MB) $(FSQRV_IMG) $(FSQRV_ROOT) >/dev/null; \

@@ -255,7 +255,15 @@ int tm_reloc_apply(const tm_elf_view_t *view,
                     if (skip_log)                                           \
                         skip_log(user,                                      \
                                  strtab + symtab[sidx].st_name);            \
-                    will_apply = 0;                                         \
+                    /* Eager-bind: write NULL (val is already 0) instead    \
+                     * of leaving the raw link-time bytes.  A lazy PLT      \
+                     * slot's initial value is this object's own PLT[0]     \
+                     * offset; left unbiased it sends a call to a low       \
+                     * address (the pre-eager-binding crash).  0 makes a    \
+                     * weak undefined read as NULL and a missing strong     \
+                     * call fault cleanly at PC=0 -- name already logged    \
+                     * above.  Deferring to first-call is unacceptable for  \
+                     * hard-real-time, so nothing is left unbound. */       \
                     break;                                                  \
                 }                                                           \
                 val = resolved + (uint64_t) rela[i].r_addend;               \

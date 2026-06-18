@@ -50,12 +50,27 @@ int tm_cred_getcwd(const tm_cred_state_t *s,
  * the mask unchanged (pure query). */
 int tm_cred_umask(tm_cred_state_t *s, int set, unsigned *out_old);
 
-/* Update credentials.  Pass 0xFFFFFFFF for any field to leave it
- * unchanged.  Returns 0 always; permission checks are the per-OS
- * taskman's responsibility (we just mutate the struct). */
+/* Update credentials.  Pass TM_CRED_KEEP for any field to leave it
+ * unchanged.  Returns 0 always; permission policy is decided by
+ * tm_cred_change_permitted() below, which the per-OS taskman calls
+ * first (we just mutate the struct). */
 int tm_cred_set(tm_cred_state_t *s,
                 unsigned ruid_new, unsigned euid_new, unsigned suid_new,
                 unsigned rgid_new, unsigned egid_new, unsigned sgid_new);
+
+/* Privilege policy for a credential change (OS-independent, so it lives
+ * here rather than being duplicated in each taskman's SET_CRED handler).
+ * `cur` is the process's current cred; the *_new args are the requested
+ * values (TM_CRED_KEEP = "leave alone").  Returns 1 if the change is
+ * permitted, 0 if it must be refused with EPERM:
+ *   - euid 0 (root): always permitted.
+ *   - otherwise: each requested id must already be one the process holds
+ *     (its real/effective/saved id of the matching uid/gid set).
+ * So an unprivileged process may shuffle among its own r/e/s ids but
+ * never gain a new one -- in particular it cannot setuid(0). */
+int tm_cred_change_permitted(const struct _cred_info *cur,
+                             unsigned ruid_new, unsigned euid_new, unsigned suid_new,
+                             unsigned rgid_new, unsigned egid_new, unsigned sgid_new);
 
 /* Snapshot accessor: copy out (pid, ppid, cred) for self-info
  * queries.  `pid` and `ppid` are passed in (looked up by the per-OS

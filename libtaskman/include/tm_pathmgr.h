@@ -23,6 +23,7 @@
 #ifndef LIBTASKMAN_PATHMGR_H
 #define LIBTASKMAN_PATHMGR_H
 
+#include <stdint.h>       /* uint8_t, uint64_t */
 #include <sys/qsoe.h>     /* pid_t */
 
 /* Handler kinds.  HANDLER_EXTERNAL is the production case (a real
@@ -86,6 +87,33 @@ int tm_pathmgr_repath(const char *path, const tm_pathmgr_obj_t *new_obj);
  * the pool is full, -EEXIST if link_path is already registered with
  * a different attachment. */
 int tm_pathmgr_symlink(const char *link_path, const char *target_path);
+
+/* Like tm_pathmgr_expand_symlink, but the symlink lives in the boot cpio
+ * (a top-level cross-fs mount link such as /etc -> /usr/conf, declared
+ * once as an `ln -sf` symlink in the modpkg recipe).  If the FIRST
+ * component of `path` names a cpio symlink, splice its target + the
+ * remainder into `out` (NUL-terminated, clamped to `cap`) and return 1;
+ * else return 0 and leave the caller to use the original path.  One
+ * level only.  The cpio is the single source of truth for these links --
+ * no in-memory node is registered, so they appear in `ls` (real cpio
+ * inode) without duplicating in the readdir merge. */
+int tm_pathmgr_expand_symlink_cpio(const uint8_t *cpio, uint64_t size,
+                                   const char *path,
+                                   char *out, unsigned cap);
+
+/* Expand a leading pathmgr symlink in `path`.  If some prefix of `path`
+ * names a registered symlink, write target+remainder to `out` (NUL-
+ * terminated, clamped to out_cap) and return 1.  If no symlink lies
+ * along the path, or the result would overflow, return 0 and leave the
+ * caller to use the original path.  One level only (no chained links).
+ *
+ * This is what makes a cross-fs link like /etc -> /usr/conf work for an
+ * EXTERNAL resmgr: tm_pathmgr_resolve already redirects /etc/passwd to
+ * the /usr mount's (pid,chid), but the server keys on the path string it
+ * receives -- so the open path must be rewritten to /usr/conf/passwd
+ * before it reaches the fs server.  Taskman-internal handlers re-resolve
+ * the path themselves and don't need this. */
+int tm_pathmgr_expand_symlink(const char *path, char *out, unsigned out_cap);
 
 /* Enumerate direct children of the pathmgr node at `path`.  `idx` is
  * zero-based; on a match the child's name (NUL-terminated) is written

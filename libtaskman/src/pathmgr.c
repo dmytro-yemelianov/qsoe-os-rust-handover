@@ -22,6 +22,7 @@
  */
 
 #include <tm_pathmgr.h>
+#include <tm_cpio.h>
 
 #define PATHMGR_NODES      64
 #define PATHMGR_NAME_MAX   30
@@ -297,6 +298,86 @@ int tm_pathmgr_symlink(const char *link_path, const char *target_path)
     for (unsigned i = 0; i < tlen; ++i) node->target[i] = target_path[i];
     node->target[tlen] = 0;
     return 0;
+}
+
+int tm_pathmgr_expand_symlink_cpio(const uint8_t *cpio, uint64_t size,
+                                   const char *path,
+                                   char *out, unsigned cap)
+{
+    if (!cpio || size == 0 || !path || path[0] != '/' || !out || cap == 0)
+        return 0;
+
+    /* First path component (the only level we expand): skip leading
+     * slashes, then read up to the next '/'. */
+    const char *p = path;
+    while (*p == '/') ++p;
+    const char *comp = p;
+    while (*p && *p != '/') ++p;          /* p now at '/' after comp, or NUL */
+    unsigned clen = (unsigned)(p - comp);
+    if (clen == 0) return 0;
+
+    /* Look the component up as a cpio entry; expand only if it's a link. */
+    char name[PATHMGR_NAME_MAX + 1];
+    if (clen + 1 > sizeof name) return 0;
+    for (unsigned i = 0; i < clen; ++i) name[i] = comp[i];
+    name[clen] = 0;
+
+    tm_cpio_file_info_t info;
+    if (!tm_cpio_find_file(cpio, size, name, &info)) return 0;
+    if ((info.mode & TM_CPIO_S_IFMT) != TM_CPIO_S_IFLNK) return 0;
+
+    /* out = target (entry data, filesize bytes, no NUL) + the unconsumed
+     * remainder (`p` at the '/' after the link, or the terminating NUL). */
+    unsigned o = 0;
+    for (unsigned i = 0; i < info.filesize; ++i) {
+        if (o + 1 >= cap) return 0;
+        out[o++] = (char) info.data[i];
+    }
+    while (*p) {
+        if (o + 1 >= cap) return 0;
+        out[o++] = *p++;
+    }
+    out[o] = 0;
+    return 1;
+}
+
+int tm_pathmgr_expand_symlink(const char *path, char *out, unsigned out_cap)
+{
+    if (!path || path[0] != '/' || !out || out_cap == 0 || !g_root)
+        return 0;
+
+    pm_node_t  *node = g_root;
+    const char *p    = path;
+    const char *comp;
+    unsigned    len;
+
+    /* Walk components until one names a symlink node.  At that point the
+     * matched prefix IS the link; everything still in `p` is the
+     * remainder that rides on the link's target.  Only the FIRST symlink
+     * along the path is expanded (one level) -- chained links would need
+     * a re-resolve loop and are not used here. */
+    while (pm_next_component(&p, &comp, &len)) {
+        pm_node_t *child = pm_find_child(node, comp, len);
+        if (!child) return 0;            /* no symlink before a dead end */
+        node = child;
+        if (node->is_symlink) {
+            unsigned o = 0;
+            /* target (absolute, NUL-trimmed at register time) ... */
+            for (unsigned i = 0; i < node->target_len; ++i) {
+                if (o + 1 >= out_cap) return 0;     /* overflow: use original */
+                out[o++] = node->target[i];
+            }
+            /* ... then the unconsumed remainder (`p` points at the '/'
+             * after the link component, or at the terminating NUL). */
+            while (*p) {
+                if (o + 1 >= out_cap) return 0;
+                out[o++] = *p++;
+            }
+            out[o] = 0;
+            return 1;
+        }
+    }
+    return 0;                            /* walked the whole path, no link */
 }
 
 int tm_pathmgr_child_at(const char *path, unsigned idx,
