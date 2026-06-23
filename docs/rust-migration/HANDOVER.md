@@ -164,6 +164,7 @@ make rust-fast
 make rust-quality
 make rust-deep
 make check-qrvfs-rust-fixture
+make check-elf-reloc-fixture
 cargo deny --manifest-path rust/Cargo.toml check -c rust/deny.toml
 make container-toolchain-build
 make container-check

@@ -144,6 +144,31 @@ make check-qrvfs-rust-fixture
 The comparison regenerates the qrvfs fixture with the current C tools, runs the
 Rust inspector, and fails if the output diverges from `treeqrvfs`.
 
+## Rust ELF Inspection Baseline
+
+The initial Rust ELF parser is read-only relocation inspection:
+
+```text
+rust/crates/qsoe-elf
+```
+
+It provides:
+
+- A dependency-free, `no_std` ELF64 little-endian header and section parser.
+- REL/RELA relocation iteration.
+- RISC-V relocation labels for the current QSOE userland baseline.
+- A fixture test against representative built C userland binaries.
+
+Run the relocation fixture:
+
+```sh
+make check-elf-reloc-fixture
+```
+
+The fixture requires the source tree to have built `quser/build` artifacts. It
+fails if the representative binaries are missing or if their relocation type
+counts drift from `docs/rust-migration/ELF_BASELINE.md`.
+
 ## GPT Behavior
 
 `host_tools/mkgpt.py` writes only the primary GPT structures used by QSOE:

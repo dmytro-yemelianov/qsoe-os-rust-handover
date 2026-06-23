@@ -22,7 +22,7 @@ SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
 
 .PHONY: all prepare clean nvme nvme-populate virtio fsqrv-image tree \
         check-host-tools check-qrvfs-fixture check-qrvfs-rust-fixture \
-        check-gpt-fixture \
+        check-elf-reloc-fixture check-gpt-fixture \
         index-c index-c-files index-c-tags index-c-cscope index-c-global \
         index-c-static index-c-compile-db tidy-c \
         elf-baseline rust-fast rust-quality rust-check rust-abi rust-deep \
@@ -146,6 +146,9 @@ check-qrvfs-fixture:
 
 check-qrvfs-rust-fixture:
 	@scripts/check-qrvfs-rust-fixture.sh
+
+check-elf-reloc-fixture:
+	@scripts/check-elf-reloc-fixture.sh
 
 check-gpt-fixture:
 	@scripts/check-gpt-fixture.py

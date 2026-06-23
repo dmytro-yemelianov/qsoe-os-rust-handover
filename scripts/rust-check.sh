@@ -22,6 +22,7 @@ cargo clippy --manifest-path "$MANIFEST" --workspace -- -D warnings
 cargo test --manifest-path "$MANIFEST" \
     -p qsoe-abi \
     -p qsoe-cpio \
+    -p qsoe-elf \
     -p qsoe-ressrv \
     -p qsoe-qrvfs \
     -p qsoe-slogger \

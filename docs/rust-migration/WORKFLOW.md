@@ -32,7 +32,7 @@ make container-rust-deep
 ```
 
 `container-check` continues to run host fixtures, the normal Rust quality gate,
-and the Rust/C qrvfs fixture comparison.
+the Rust/C qrvfs fixture comparison, and the built-ELF relocation fixture.
 
 ## Editor And Indexing
 
@@ -153,7 +153,7 @@ GitHub Checks for CodeRabbit review context:
 | --- | --- | --- |
 | Toolchain image | `make container-toolchain-build` | Builds the Debian trixie image used by all Linux-reproducible gates. |
 | Source build | `make container-source-build` | Runs `make prepare` when release components are missing, then builds NQ and LQ. |
-| Fixtures and Rust quality | `make container-check` | Includes host tools, Rust quality, and qrvfs Rust/C parity. |
+| Fixtures and Rust quality | `make container-check` | Includes host tools, Rust quality, qrvfs Rust/C parity, and ELF relocation fixtures. |
 | Rust ABI | `make container-rust-abi` | Requires C source build artifacts. |
 | C analysis | `QSOE_INDEX_CLEAN=1 QSOE_INDEX_DB_FLAVOR=container make index-c-compile-db` and bounded `make tidy-c` | Rebuilds under Bear, then runs the curated clang-tidy pass against container paths. |
 | Boot | `scripts/container-toolchain.sh run scripts/boot-smoke.sh -k lq -t 120` | Required before enabling any Rust service in an image. |

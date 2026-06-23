@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 01:05 CEST.
+Last updated: 2026-06-24 01:35 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,36 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 01:35 CEST - ELF Inspection Crate Added
+
+Scope:
+
+- Added `qsoe-elf`, a dependency-free `no_std` crate for read-only ELF64
+  little-endian header, section, and REL/RELA relocation inspection.
+- Added RISC-V relocation naming for the relocation types used by QSOE
+  userland artifacts.
+- Added host tests for a synthetic ELF and for the representative built QSOE C
+  binaries recorded in `ELF_BASELINE.md`.
+- Added `make check-elf-reloc-fixture` and included it in the container check
+  path after the source build.
+- Added the crate to Rust workflow gates.
+- Marked the Phase 7 ELF inspection task complete.
+
+Commands:
+
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-elf`
+- `make check-elf-reloc-fixture`
+
+Result:
+
+- Host tests identify the existing QSOE binary relocation types and counts:
+  `R_RISCV_64` and `R_RISCV_JUMP_SLOT` across the representative C userland
+  artifacts.
+
+Follow-up:
+
+- Reuse one shared parser in both host and guest contexts next.
 
 ## 2026-06-24 01:05 CEST - Syscfg/Sysmap View Crate Added
 

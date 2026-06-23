@@ -206,7 +206,7 @@ small reviewable change unless it explicitly says otherwise.
 - [x] Add syscfg/sysmap view crate.
   - Acceptance: read-only views validate bounds before exposing fields.
 
-- [ ] Add ELF inspection crate.
+- [x] Add ELF inspection crate.
   - Acceptance: host tests identify relocation types used by existing QSOE
     binaries.
 

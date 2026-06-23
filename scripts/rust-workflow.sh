@@ -54,6 +54,7 @@ run_fast() {
     cargo test --manifest-path "$MANIFEST" \
         -p qsoe-abi \
         -p qsoe-cpio \
+        -p qsoe-elf \
         -p qsoe-ressrv \
         -p qsoe-slogger \
         -p qsoe-sysview \
@@ -76,6 +77,7 @@ run_deep() {
         cargo test --manifest-path "$MANIFEST" \
             -p qsoe-abi \
             -p qsoe-cpio \
+            -p qsoe-elf \
             -p qsoe-ressrv \
             -p qsoe-slogger \
             -p qsoe-sysview \
@@ -86,6 +88,7 @@ run_deep() {
         cargo miri test --manifest-path "$MANIFEST" \
             -p qsoe-abi \
             -p qsoe-cpio \
+            -p qsoe-elf \
             -p qsoe-qrvfs \
             -p qsoe-sysview
         ran_optional=1

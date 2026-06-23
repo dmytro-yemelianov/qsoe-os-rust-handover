@@ -213,6 +213,28 @@ mtime frequency, and the command line. Tests cover valid views and malformed
 inputs so fields are only exposed after their containing record and requested
 body range have been validated.
 
+## Host ELF Inspector
+
+The first read-only ELF inspection crate is:
+
+```text
+crates/qsoe-elf
+```
+
+It parses ELF64 little-endian section tables and REL/RELA relocation entries
+without dependencies and remains `no_std` compatible. Host tests cover a
+synthetic ELF plus the current representative QSOE userland binaries when they
+are available. The required fixture gate is:
+
+```sh
+make check-elf-reloc-fixture
+```
+
+That target runs the existing-binary relocation test with
+`QSOE_ELF_FIXTURES_REQUIRED=1`, so CI/container checks fail if the built QSOE
+ELFs are missing or their relocation type counts drift from
+`docs/rust-migration/ELF_BASELINE.md`.
+
 ## Virtio MMIO Wrapper
 
 The first Rust driver-support crate is:
