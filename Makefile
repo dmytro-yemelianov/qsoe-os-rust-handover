@@ -29,6 +29,7 @@ SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
         rust-qsoe-link-smoke rust-slogger-link-smoke \
         rust-service-example-link-smoke rust-virtio-link-smoke \
         slogger-artifact virtio-artifact rust-slogger-boot-smoke \
+        rust-virtio-boot-smoke \
         container-toolchain-build container-shell container-check \
         container-index-c container-index-c-static container-index-c-compile-db \
         container-tidy-c \
@@ -36,7 +37,8 @@ SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
         container-rust-abi container-rust-deep container-rust-qsoe-link-smoke \
         container-rust-slogger-link-smoke container-rust-service-example-link-smoke \
         container-rust-virtio-link-smoke container-slogger-artifact \
-        container-virtio-artifact container-source-build
+        container-virtio-artifact container-rust-virtio-boot-smoke \
+        container-source-build
 
 all:
 	$(MAKE) -C nq
@@ -217,6 +219,9 @@ virtio-artifact:
 rust-slogger-boot-smoke:
 	@scripts/rust-slogger-boot-smoke.sh
 
+rust-virtio-boot-smoke:
+	@scripts/rust-virtio-boot-smoke.sh
+
 container-toolchain-build:
 	@scripts/container-toolchain.sh build
 
@@ -273,6 +278,9 @@ container-virtio-artifact:
 	@scripts/container-toolchain.sh run make virtio-artifact \
 	    QSOE_RUST_VIRTIO=$(QSOE_RUST_VIRTIO) \
 	    SELECTED_VIRTIO_ELF=$(SELECTED_VIRTIO_ELF)
+
+container-rust-virtio-boot-smoke:
+	@scripts/container-toolchain.sh run make rust-virtio-boot-smoke
 
 container-source-build:
 	@scripts/container-toolchain.sh source-build

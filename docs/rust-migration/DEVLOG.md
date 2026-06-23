@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 00:32 CEST.
+Last updated: 2026-06-24 00:37 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,32 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 00:37 CEST - Rust Virtio Boot Smoke Passed
+
+Scope:
+
+- Added `scripts/rust-virtio-boot-smoke.sh` to build a temporary QSOE/L boot
+  CPIO with `qsoe-devb-virtio-rs` installed as `/sbin/devb-virtio`.
+- Added `QSOE_BOOT_VIRTIO_PATTERN` to `scripts/boot-smoke.sh` so the same boot
+  gate can validate C or Rust virtio driver milestones.
+- Added `make rust-virtio-boot-smoke` and a container wrapper.
+- Marked the Phase 6 Rust virtio boot task complete.
+
+Commands:
+
+- `scripts/rust-virtio-boot-smoke.sh -t 240 -o build/boot-smoke-lq-rust-virtio.log`
+- `strings build/boot-smoke-lq-rust-virtio.log | rg "devb-virtio-rs|fs-qrv: mounted|login:|dispatcher ready|spawning /sbin/init|\\[slogger\\] alive"`
+
+Result:
+
+- QEMU reached `login:` with `[devb-virtio-rs] /dev/vblk0 ready` and
+  `fs-qrv: mounted qrvfs at /usr (dev=/dev/vblk0)` in the console log.
+
+Follow-up:
+
+- Run a file access smoke through `/usr` while booted with the Rust virtio
+  driver.
 
 ## 2026-06-24 00:32 CEST - Opt-In Rust Virtio Driver Added
 

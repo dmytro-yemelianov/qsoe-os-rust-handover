@@ -192,7 +192,7 @@ small reviewable change unless it explicitly says otherwise.
 - [x] Implement opt-in Rust virtio block driver.
   - Acceptance: binary links and passes artifact audit.
 
-- [ ] Boot with Rust virtio block driver.
+- [x] Boot with Rust virtio block driver.
   - Acceptance: `/dev/vblk0` appears, qrvfs mounts at `/usr`, and login starts.
 
 - [ ] Run file access smoke.

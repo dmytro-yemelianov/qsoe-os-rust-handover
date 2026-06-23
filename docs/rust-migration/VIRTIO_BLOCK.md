@@ -292,3 +292,27 @@ The default `QSOE_RUST_VIRTIO=0` stages the C `devb-virtio` artifact. The Rust
 mode stages the audited Rust ELF at
 `build/rust/selected/sbin/devb-virtio.elf`, ready for the next boot-smoke task
 to place into an opt-in QSOE/L image.
+
+## Rust Opt-In Boot Smoke
+
+`scripts/rust-virtio-boot-smoke.sh` builds an opt-in QSOE/L image by replacing
+only `sbin/devb-virtio` in a temporary boot CPIO:
+
+```sh
+make rust-virtio-boot-smoke
+```
+
+The smoke delegates to `scripts/boot-smoke.sh` with
+`QSOE_BOOT_VIRTIO_PATTERN="[devb-virtio-rs] /dev/vblk0 ready"` and still
+requires the common milestones:
+
+- `[slogger] alive`.
+- `[devb-virtio-rs] /dev/vblk0 ready`.
+- `fs-qrv: mounted qrvfs at /usr`.
+- `login:`.
+
+Validated log:
+
+```text
+build/boot-smoke-lq-rust-virtio.log
+```

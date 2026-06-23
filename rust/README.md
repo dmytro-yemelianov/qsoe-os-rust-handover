@@ -143,6 +143,17 @@ links and audits `qsoe-devb-virtio-rs`. Both modes write the selected binary to
 `build/rust/selected/sbin/devb-virtio.elf`; the C driver remains the boot
 default until the explicit Rust boot-smoke step lands.
 
+The opt-in LQ boot smoke uses that selected artifact without changing the C
+default:
+
+```sh
+make rust-virtio-boot-smoke
+```
+
+It builds a temporary `build/rust-virtio/modpkg-lq-rust-virtio.cpio`, rebuilds
+the LQ QEMU image with `MODPKG_CPIO` pointing at that archive, and waits for
+`[devb-virtio-rs] /dev/vblk0 ready`, the `/usr` qrvfs mount, and `login:`.
+
 ## Host qrvfs Parser
 
 The first host-side Rust parser is:
