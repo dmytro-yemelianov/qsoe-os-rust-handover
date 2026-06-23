@@ -57,6 +57,15 @@ pub const STATUS_DRIVER_OK: u32 = 4;
 pub const STATUS_FEATURES_OK: u32 = 8;
 
 pub const GUEST_PAGE_SIZE: u32 = 4096;
+pub const VIRTQ_NUM: usize = 8;
+pub const VIRTIO_BLK_SECTOR_SIZE: usize = 512;
+pub const VIRTIO_DATA_BYTES: usize = 4096;
+pub const VIRTIO_DMA_PAGE_BYTES: usize = 4096;
+pub const VIRTIO_DMA_PAGES: usize = 4;
+pub const VIRTIO_DMA_SIZE: usize = VIRTIO_DMA_PAGE_BYTES * VIRTIO_DMA_PAGES;
+pub const VIRTIO_OFF_USED: usize = VIRTIO_DMA_PAGE_BYTES;
+pub const VIRTIO_OFF_OPS: usize = 2 * VIRTIO_DMA_PAGE_BYTES;
+pub const VIRTIO_OFF_DATA: usize = 3 * VIRTIO_DMA_PAGE_BYTES;
 
 pub const BLK_F_RO: u32 = 5;
 pub const BLK_F_SCSI: u32 = 7;
@@ -80,6 +89,195 @@ pub const UNSUPPORTED_BLOCK_FEATURES: u32 = feature_bit(BLK_F_RO)
 
 pub const fn accepted_block_features(device_features: u32) -> u32 {
     device_features & !UNSUPPORTED_BLOCK_FEATURES
+}
+
+pub const VIRTIO_BLK_T_IN: u32 = 0;
+pub const VIRTIO_BLK_T_OUT: u32 = 1;
+
+pub const VRING_DESC_F_NEXT: u16 = 1;
+pub const VRING_DESC_F_WRITE: u16 = 2;
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct VirtqDesc {
+    pub addr: u64,
+    pub len: u32,
+    pub flags: u16,
+    pub next: u16,
+}
+
+impl VirtqDesc {
+    pub const fn zeroed() -> Self {
+        Self {
+            addr: 0,
+            len: 0,
+            flags: 0,
+            next: 0,
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct VirtqAvail {
+    pub flags: u16,
+    pub idx: u16,
+    pub ring: [u16; VIRTQ_NUM],
+    pub unused: u16,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct VirtqUsedElem {
+    pub id: u32,
+    pub len: u32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct VirtqUsed {
+    pub flags: u16,
+    pub idx: u16,
+    pub ring: [VirtqUsedElem; VIRTQ_NUM],
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct VirtioBlkReq {
+    pub type_: u32,
+    pub reserved: u32,
+    pub sector: u64,
+}
+
+impl VirtioBlkReq {
+    pub const fn read(sector: u64) -> Self {
+        Self {
+            type_: VIRTIO_BLK_T_IN,
+            reserved: 0,
+            sector,
+        }
+    }
+
+    pub const fn write(sector: u64) -> Self {
+        Self {
+            type_: VIRTIO_BLK_T_OUT,
+            reserved: 0,
+            sector,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DescriptorIndex(u16);
+
+impl DescriptorIndex {
+    pub const fn new(index: u16) -> Option<Self> {
+        if (index as usize) < VIRTQ_NUM {
+            Some(Self(index))
+        } else {
+            None
+        }
+    }
+
+    pub const fn raw(self) -> u16 {
+        self.0
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DescriptorOwner {
+    Driver,
+    Device,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DescriptorAccess {
+    DeviceReadable,
+    DeviceWritable,
+}
+
+impl DescriptorAccess {
+    pub const fn write_flag(self) -> u16 {
+        match self {
+            Self::DeviceReadable => 0,
+            Self::DeviceWritable => VRING_DESC_F_WRITE,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DescriptorModel {
+    index: DescriptorIndex,
+    owner: DescriptorOwner,
+    access: DescriptorAccess,
+    addr: u64,
+    len: u32,
+    next: Option<DescriptorIndex>,
+}
+
+impl DescriptorModel {
+    pub const fn driver_owned(
+        index: DescriptorIndex,
+        addr: u64,
+        len: u32,
+        access: DescriptorAccess,
+    ) -> Self {
+        Self {
+            index,
+            owner: DescriptorOwner::Driver,
+            access,
+            addr,
+            len,
+            next: None,
+        }
+    }
+
+    pub const fn with_next(mut self, next: DescriptorIndex) -> Self {
+        self.next = Some(next);
+        self
+    }
+
+    pub const fn publish_to_device(mut self) -> Self {
+        self.owner = DescriptorOwner::Device;
+        self
+    }
+
+    pub const fn reclaim_to_driver(mut self) -> Self {
+        self.owner = DescriptorOwner::Driver;
+        self
+    }
+
+    pub const fn index(self) -> DescriptorIndex {
+        self.index
+    }
+
+    pub const fn owner(self) -> DescriptorOwner {
+        self.owner
+    }
+
+    pub const fn access(self) -> DescriptorAccess {
+        self.access
+    }
+
+    pub const fn next(self) -> Option<DescriptorIndex> {
+        self.next
+    }
+
+    pub const fn raw(self) -> VirtqDesc {
+        let mut flags = self.access.write_flag();
+        let mut next = 0;
+        if let Some(index) = self.next {
+            flags |= VRING_DESC_F_NEXT;
+            next = index.raw();
+        }
+
+        VirtqDesc {
+            addr: self.addr,
+            len: self.len,
+            flags,
+            next,
+        }
+    }
 }
 
 pub struct VirtioMmio {
@@ -195,6 +393,7 @@ extern crate std;
 #[cfg(test)]
 mod tests {
     use super::*;
+    use core::mem::{align_of, size_of};
 
     fn with_regs<T>(f: impl FnOnce(VirtioMmio, &mut [u32; MMIO_BYTES / REGISTER_BYTES]) -> T) -> T {
         let mut regs = [0u32; MMIO_BYTES / REGISTER_BYTES];
@@ -211,6 +410,104 @@ mod tests {
         assert_eq!(regs::QUEUE_PFN.word_index(), 0x040 / 4);
         assert_eq!(regs::STATUS.word_index(), 0x070 / 4);
         assert_eq!(regs::CONFIG.word_index(), 0x100 / 4);
+    }
+
+    #[test]
+    fn virtqueue_layouts_match_c_driver_shapes() {
+        assert_eq!(VIRTQ_NUM, 8);
+        assert_eq!(VIRTIO_DATA_BYTES, 4096);
+        assert_eq!(VIRTIO_DMA_SIZE, 16 * 1024);
+        assert_eq!(VIRTIO_OFF_USED, 4096);
+        assert_eq!(VIRTIO_OFF_OPS, 8192);
+        assert_eq!(VIRTIO_OFF_DATA, 12288);
+
+        assert_eq!(size_of::<VirtqDesc>(), 16);
+        assert_eq!(align_of::<VirtqDesc>(), 8);
+        assert_eq!(size_of::<VirtqAvail>(), 22);
+        assert_eq!(align_of::<VirtqAvail>(), 2);
+        assert_eq!(size_of::<VirtqUsedElem>(), 8);
+        assert_eq!(align_of::<VirtqUsedElem>(), 4);
+        assert_eq!(size_of::<VirtqUsed>(), 68);
+        assert_eq!(align_of::<VirtqUsed>(), 4);
+        assert_eq!(size_of::<VirtioBlkReq>(), 16);
+        assert_eq!(align_of::<VirtioBlkReq>(), 8);
+    }
+
+    #[test]
+    fn descriptor_index_is_bounded_to_queue_depth() {
+        assert_eq!(DescriptorIndex::new(0).unwrap().raw(), 0);
+        assert_eq!(
+            DescriptorIndex::new((VIRTQ_NUM - 1) as u16).unwrap().raw(),
+            7
+        );
+        assert_eq!(DescriptorIndex::new(VIRTQ_NUM as u16), None);
+    }
+
+    #[test]
+    fn descriptor_model_tracks_owner_and_device_mutability() {
+        let header = DescriptorModel::driver_owned(
+            DescriptorIndex::new(0).unwrap(),
+            0x2000,
+            size_of::<VirtioBlkReq>() as u32,
+            DescriptorAccess::DeviceReadable,
+        )
+        .with_next(DescriptorIndex::new(1).unwrap());
+        let data = DescriptorModel::driver_owned(
+            DescriptorIndex::new(1).unwrap(),
+            0x3000,
+            VIRTIO_DATA_BYTES as u32,
+            DescriptorAccess::DeviceWritable,
+        )
+        .with_next(DescriptorIndex::new(2).unwrap());
+
+        assert_eq!(header.owner(), DescriptorOwner::Driver);
+        assert_eq!(header.access(), DescriptorAccess::DeviceReadable);
+        assert_eq!(header.next(), DescriptorIndex::new(1));
+        assert_eq!(
+            header.raw(),
+            VirtqDesc {
+                addr: 0x2000,
+                len: 16,
+                flags: VRING_DESC_F_NEXT,
+                next: 1,
+            }
+        );
+        assert_eq!(
+            data.raw(),
+            VirtqDesc {
+                addr: 0x3000,
+                len: 4096,
+                flags: VRING_DESC_F_WRITE | VRING_DESC_F_NEXT,
+                next: 2,
+            }
+        );
+
+        let published = data.publish_to_device();
+        assert_eq!(published.owner(), DescriptorOwner::Device);
+        assert_eq!(
+            published.reclaim_to_driver().owner(),
+            DescriptorOwner::Driver
+        );
+    }
+
+    #[test]
+    fn block_request_headers_encode_direction_and_sector() {
+        assert_eq!(
+            VirtioBlkReq::read(9),
+            VirtioBlkReq {
+                type_: VIRTIO_BLK_T_IN,
+                reserved: 0,
+                sector: 9,
+            }
+        );
+        assert_eq!(
+            VirtioBlkReq::write(10),
+            VirtioBlkReq {
+                type_: VIRTIO_BLK_T_OUT,
+                reserved: 0,
+                sector: 10,
+            }
+        );
     }
 
     #[test]

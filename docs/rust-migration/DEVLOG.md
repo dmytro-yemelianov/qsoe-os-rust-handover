@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-23 23:52 CEST.
+Last updated: 2026-06-24 00:16 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,33 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 00:16 CEST - Virtqueue Descriptor Model Added
+
+Scope:
+
+- Added C-compatible Rust virtqueue layouts to `qsoe-virtio`: descriptor,
+  available ring, used ring, used element, and virtio-blk request header.
+- Added `DescriptorIndex`, `DescriptorAccess`, `DescriptorOwner`, and
+  `DescriptorModel` so descriptor bounds, device mutability, and
+  driver/device ownership are represented explicitly.
+- Added host tests for layout sizes, bounded descriptor ids, descriptor flag
+  conversion, ownership transitions, and block request direction encoding.
+- Marked the Phase 6 virtqueue descriptor model task complete.
+
+Commands:
+
+- `make rust-quality`
+
+Result:
+
+- The Rust virtio pilot has a typed descriptor model without adding allocator
+  or free-list behavior yet.
+
+Follow-up:
+
+- Add host-side queue tests for descriptor chain allocation and free-list
+  behavior.
 
 ## 2026-06-23 23:52 CEST - Virtio MMIO Wrapper Added
 

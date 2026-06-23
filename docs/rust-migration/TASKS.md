@@ -182,7 +182,7 @@ small reviewable change unless it explicitly says otherwise.
 - [x] Build volatile MMIO wrapper.
   - Acceptance: unsafe pointer access is isolated and reviewed.
 
-- [ ] Build virtqueue descriptor model.
+- [x] Build virtqueue descriptor model.
   - Acceptance: descriptor ownership and mutability are represented explicitly.
 
 - [ ] Add host-side queue tests.

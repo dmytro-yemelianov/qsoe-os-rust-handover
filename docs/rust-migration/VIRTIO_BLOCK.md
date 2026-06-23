@@ -246,3 +246,21 @@ register boundary:
 
 Future Rust queue and driver code should use this crate instead of performing
 raw pointer arithmetic at each call site.
+
+## Rust Virtqueue Descriptor Model
+
+`qsoe-virtio` also contains the initial Rust model for the legacy virtqueue
+shapes used by the C driver:
+
+- `VirtqDesc`, `VirtqAvail`, `VirtqUsedElem`, `VirtqUsed`, and `VirtioBlkReq`
+  are `repr(C)` mirrors of the C structs.
+- `DescriptorIndex` bounds descriptor ids to the current queue depth.
+- `DescriptorAccess` distinguishes buffers the device may only read from
+  buffers the device may write.
+- `DescriptorOwner` distinguishes driver-owned descriptors from descriptors
+  published to the device.
+- `DescriptorModel` combines index, owner, access, address, length, and next
+  pointer metadata and converts to the raw `VirtqDesc` ring entry.
+
+This layer deliberately does not allocate descriptor chains yet. Free-list and
+chain lifecycle tests are the next Phase 6 task.
