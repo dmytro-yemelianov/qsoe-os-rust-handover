@@ -195,7 +195,7 @@ small reviewable change unless it explicitly says otherwise.
 - [x] Boot with Rust virtio block driver.
   - Acceptance: `/dev/vblk0` appears, qrvfs mounts at `/usr`, and login starts.
 
-- [ ] Run file access smoke.
+- [x] Run file access smoke.
   - Acceptance: an in-guest command can read files from `/usr`.
 
 ## Phase 7: Shared Parsers

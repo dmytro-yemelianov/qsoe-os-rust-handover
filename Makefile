@@ -29,7 +29,7 @@ SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
         rust-qsoe-link-smoke rust-slogger-link-smoke \
         rust-service-example-link-smoke rust-virtio-link-smoke \
         slogger-artifact virtio-artifact rust-slogger-boot-smoke \
-        rust-virtio-boot-smoke \
+        rust-virtio-boot-smoke rust-virtio-file-smoke \
         container-toolchain-build container-shell container-check \
         container-index-c container-index-c-static container-index-c-compile-db \
         container-tidy-c \
@@ -38,6 +38,7 @@ SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
         container-rust-slogger-link-smoke container-rust-service-example-link-smoke \
         container-rust-virtio-link-smoke container-slogger-artifact \
         container-virtio-artifact container-rust-virtio-boot-smoke \
+        container-rust-virtio-file-smoke \
         container-source-build
 
 all:
@@ -222,6 +223,9 @@ rust-slogger-boot-smoke:
 rust-virtio-boot-smoke:
 	@scripts/rust-virtio-boot-smoke.sh
 
+rust-virtio-file-smoke:
+	@scripts/rust-virtio-file-smoke.sh
+
 container-toolchain-build:
 	@scripts/container-toolchain.sh build
 
@@ -282,6 +286,9 @@ container-virtio-artifact:
 container-rust-virtio-boot-smoke:
 	@scripts/container-toolchain.sh run make rust-virtio-boot-smoke
 
+container-rust-virtio-file-smoke:
+	@scripts/container-toolchain.sh run make rust-virtio-file-smoke
+
 container-source-build:
 	@scripts/container-toolchain.sh source-build
 
@@ -312,6 +319,9 @@ fsqrv-image: $(MKFS_QRV)
 		for f in $(FSQRV_CONF)/passwd $(FSQRV_CONF)/shadow $(FSQRV_CONF)/group; do \
 			[ -f "$$f" ] && cp "$$f" $(FSQRV_ROOT)/conf/; \
 		done; \
+		if [ -d $(FSQRV_CONF)/sysinit ]; then \
+			cp -a $(FSQRV_CONF)/sysinit $(FSQRV_ROOT)/conf/; \
+		fi; \
 		have=1; \
 	fi; \
 	if [ -d $(FSQRV_HOME) ]; then \

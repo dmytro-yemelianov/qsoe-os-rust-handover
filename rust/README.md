@@ -154,6 +154,18 @@ It builds a temporary `build/rust-virtio/modpkg-lq-rust-virtio.cpio`, rebuilds
 the LQ QEMU image with `MODPKG_CPIO` pointing at that archive, and waits for
 `[devb-virtio-rs] /dev/vblk0 ready`, the `/usr` qrvfs mount, and `login:`.
 
+The file-access smoke adds an in-guest `/usr` read check on top of the same
+Rust virtio boot path:
+
+```sh
+make rust-virtio-file-smoke
+```
+
+It temporarily stages a `/usr/conf/sysinit` fragment into the qrvfs image; that
+fragment runs after `/usr` is mounted and prints
+`rust-virtio-file-smoke: read /usr/conf/passwd ok` only after `/bin/cat` can
+read the file through the Rust-backed `/dev/vblk0` mount.
+
 ## Host qrvfs Parser
 
 The first host-side Rust parser is:

@@ -316,3 +316,33 @@ Validated log:
 ```text
 build/boot-smoke-lq-rust-virtio.log
 ```
+
+## Rust File Access Smoke
+
+`scripts/rust-virtio-file-smoke.sh` layers one more acceptance check on top of
+the opt-in Rust virtio boot smoke:
+
+```sh
+make rust-virtio-file-smoke
+```
+
+The helper creates a temporary `quser/conf/sysinit/*.sh` fragment before boot.
+The normal qrvfs image build stages `/usr/conf/sysinit` into the virtio disk,
+and `/usr/sbin/sysinit/level1.sh` sources the fragment after `/usr` is mounted.
+The fragment runs:
+
+```sh
+/bin/cat /usr/conf/passwd >/dev/null
+```
+
+Success is reported by this in-guest marker:
+
+```text
+rust-virtio-file-smoke: read /usr/conf/passwd ok
+```
+
+Validated log:
+
+```text
+build/boot-smoke-lq-rust-virtio-file.log
+```
