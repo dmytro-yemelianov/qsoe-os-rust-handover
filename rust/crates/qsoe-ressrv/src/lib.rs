@@ -232,13 +232,72 @@ impl ReplyStatus {
         Self(status)
     }
 
-    pub const fn from_errno(errno: c_int) -> Self {
-        Self(errno)
+    pub fn from_errno(errno: c_int) -> Self {
+        Self(errno_code(errno))
+    }
+
+    pub fn from_method_status(status: MethodStatus) -> Option<Self> {
+        status.errno().map(Self::from_errno)
     }
 
     pub const fn raw(self) -> c_int {
         self.0
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct MethodStatus(SsizeT);
+
+impl MethodStatus {
+    pub const DEFER: Self = Self(QSOE_DEFER as SsizeT);
+
+    pub fn success(value: SsizeT) -> Self {
+        debug_assert!(value >= 0);
+        Self(value)
+    }
+
+    pub fn from_errno(errno: c_int) -> Self {
+        let errno = errno_code(errno);
+        if errno == EOK {
+            Self::success(0)
+        } else {
+            Self(-(errno as SsizeT))
+        }
+    }
+
+    pub const fn from_raw(status: SsizeT) -> Self {
+        Self(status)
+    }
+
+    pub const fn raw(self) -> SsizeT {
+        self.0
+    }
+
+    pub const fn is_deferred(self) -> bool {
+        self.0 == QSOE_DEFER as SsizeT
+    }
+
+    pub const fn is_success(self) -> bool {
+        self.0 >= 0
+    }
+
+    pub const fn is_error(self) -> bool {
+        self.0 < 0 && !self.is_deferred()
+    }
+
+    pub fn errno(self) -> Option<c_int> {
+        if self.is_error() {
+            Some((-self.0) as c_int)
+        } else {
+            None
+        }
+    }
+}
+
+fn errno_code(errno: c_int) -> c_int {
+    let code = errno.saturating_abs();
+    debug_assert!(code <= QSOE_ERRNO_MAX);
+    code
 }
 
 pub struct Channel {
@@ -665,5 +724,40 @@ mod tests {
                 max: TM_IO_MAX,
             })
         );
+    }
+
+    #[test]
+    fn direct_reply_status_uses_positive_errno_labels() {
+        assert_eq!(ReplyStatus::OK.raw(), EOK);
+        assert_eq!(ReplyStatus::from_errno(ENOSYS).raw(), ENOSYS);
+        assert_eq!(ReplyStatus::from_errno(-ENOSYS).raw(), ENOSYS);
+    }
+
+    #[test]
+    fn method_status_uses_negative_errno_results() {
+        let ok = MethodStatus::success(17);
+        assert_eq!(ok.raw(), 17);
+        assert!(ok.is_success());
+        assert!(!ok.is_error());
+        assert_eq!(ok.errno(), None);
+
+        let err = MethodStatus::from_errno(ENOSYS);
+        assert_eq!(err.raw(), -(ENOSYS as SsizeT));
+        assert!(err.is_error());
+        assert_eq!(err.errno(), Some(ENOSYS));
+        assert_eq!(
+            ReplyStatus::from_method_status(err),
+            Some(ReplyStatus::from_errno(ENOSYS))
+        );
+    }
+
+    #[test]
+    fn deferred_status_does_not_collide_with_errno_range() {
+        let deferred = MethodStatus::DEFER;
+        assert_eq!(deferred.raw(), QSOE_DEFER as SsizeT);
+        assert!(deferred.is_deferred());
+        assert!(!deferred.is_error());
+        assert_eq!(deferred.errno(), None);
+        assert_eq!(ReplyStatus::from_method_status(deferred), None);
     }
 }

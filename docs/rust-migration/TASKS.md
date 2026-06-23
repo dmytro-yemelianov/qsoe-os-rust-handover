@@ -165,7 +165,7 @@ small reviewable change unless it explicitly says otherwise.
 - [x] Add resource-server example.
   - Acceptance: example compiles and demonstrates a minimal request/reply loop.
 
-- [ ] Define error mapping.
+- [x] Define error mapping.
   - Acceptance: Rust errors map to existing QSOE negative errno or status
     conventions without inventing a new ABI.
 

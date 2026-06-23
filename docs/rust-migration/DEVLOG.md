@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-23 23:01 CEST.
+Last updated: 2026-06-23 23:11 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,32 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-23 23:11 CEST - Error Mapping Defined
+
+Scope:
+
+- Added explicit Rust wrappers for the two existing QSOE status conventions:
+  `ReplyStatus` for direct `MsgReply` labels and `MethodStatus` for
+  resource-server method returns.
+- Added host tests for positive direct errno labels, negative method errno
+  results, and the `QSOE_DEFER` sentinel.
+- Documented that Rust code preserves the current `0`/positive errno and
+  `>=0`/`-errno`/defer ABI conventions.
+- Marked the Phase 5 error-mapping task complete.
+
+Commands:
+
+- `make rust-quality`
+
+Result:
+
+- Direct-service and method-style Rust error mapping is explicit and covered
+  by the normal host quality gate.
+
+Follow-up:
+
+- Add wrapper-level tests for state transitions and receive-loop behavior.
 
 ## 2026-06-23 23:01 CEST - Resource Server Example Documented
 
