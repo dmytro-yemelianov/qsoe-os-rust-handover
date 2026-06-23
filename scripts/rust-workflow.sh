@@ -60,6 +60,7 @@ run_fast() {
         -p qsoe-sysview \
         -p qsoe-qrvfs \
         --lib
+    cargo test --manifest-path "$MANIFEST" -p qsoe-minimal-rs --features host-tests --lib
 }
 
 run_deep() {
@@ -82,6 +83,7 @@ run_deep() {
             -p qsoe-slogger \
             -p qsoe-sysview \
             -p qsoe-qrvfs
+        cargo test --manifest-path "$MANIFEST" -p qsoe-minimal-rs --features host-tests
     fi
 
     if run_optional "cargo-miri" cargo miri; then

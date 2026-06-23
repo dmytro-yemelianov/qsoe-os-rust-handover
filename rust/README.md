@@ -92,6 +92,14 @@ uses the same `DirectServer` wrapper path as `slogger-rs`. The package README
 documents its minimal connect, write, read, close, and unsupported-request
 replies.
 
+The minimal Rust link-smoke binary also carries the first shared parser reuse
+check: it parses a static `newc` archive through `qsoe-cpio` before returning
+success from `main`. The same path runs as a host test:
+
+```sh
+cargo test --manifest-path rust/Cargo.toml -p qsoe-minimal-rs --features host-tests
+```
+
 ## Slogger Selection
 
 The tracked handover tree does not edit the ignored `quser/` component

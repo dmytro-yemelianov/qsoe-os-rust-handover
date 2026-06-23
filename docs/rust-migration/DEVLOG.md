@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 01:35 CEST.
+Last updated: 2026-06-24 01:40 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,33 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 01:40 CEST - Parser Reused In Host And Guest Contexts
+
+Scope:
+
+- Reused `qsoe-cpio` from `qsoe-minimal-rs`, the no-std guest link-smoke
+  binary.
+- Added a static `newc` archive parser smoke that runs through the same
+  borrowed `Archive` API used by host tests.
+- Added a `host-tests` feature for `qsoe-minimal-rs` so the parser reuse path
+  also runs under `cargo test`.
+- Added the minimal binary host test to Rust workflow gates.
+- Marked the Phase 7 parser reuse task complete.
+
+Commands:
+
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-minimal-rs --features host-tests`
+- `cargo build --manifest-path rust/Cargo.toml -p qsoe-minimal-rs --target riscv64gc-unknown-none-elf --release`
+
+Result:
+
+- The same `qsoe-cpio` crate now builds and runs in host tests and compiles into
+  the no-std guest smoke binary.
+
+Follow-up:
+
+- Start Phase 8 candidate ranking.
 
 ## 2026-06-24 01:35 CEST - ELF Inspection Crate Added
 

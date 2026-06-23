@@ -210,7 +210,7 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: host tests identify relocation types used by existing QSOE
     binaries.
 
-- [ ] Reuse one parser in host and guest contexts.
+- [x] Reuse one parser in host and guest contexts.
   - Acceptance: the same crate builds for host tests and `no_std` guest use.
 
 ## Phase 8: Additional Migrations

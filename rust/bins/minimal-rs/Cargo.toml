@@ -10,5 +10,9 @@ name = "qsoe_minimal_rs"
 path = "src/lib.rs"
 crate-type = ["rlib", "staticlib"]
 
+[features]
+host-tests = []
+
 [dependencies]
 qsoe-abi = { path = "../../crates/qsoe-abi", version = "0.0.0" }
+qsoe-cpio = { path = "../../crates/qsoe-cpio", version = "0.0.0" }
