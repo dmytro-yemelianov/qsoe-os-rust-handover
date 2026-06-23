@@ -88,9 +88,10 @@ Historical documentation mismatch:
 
 - `libc/include/sys/slog.h` previously said the ring was `256 KiB`.
 - The implementation and observed boot log use `64 KiB`.
-- The header comment has been corrected; the Rust port preserves the
-  implemented `64 KiB` behavior unless a separate decision changes the ring
-  size.
+- The Rust port preserves the implemented `64 KiB` behavior unless a separate
+  decision changes the ring size. The component header lives under the ignored
+  `libc/` release tree in this handover repo, so the source-comment correction
+  remains an upstream component follow-up.
 
 ## Wire Protocol
 
@@ -267,3 +268,5 @@ Before `slogger-rs` is linked into an image:
 
 - Add an automated `/dev/slog` readback smoke that writes known messages and
   verifies `sloginfo` can observe them.
+- Correct the stale `libc/include/sys/slog.h` comments in the component source
+  repository.

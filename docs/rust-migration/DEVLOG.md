@@ -30,9 +30,10 @@ Scope:
 
 - Added the `qsoe-slogger` no-std crate.
 - Implemented the byte-ring behavior needed by `slogger-rs`.
-- Corrected slog event header documentation from stale 16-byte wording to the
-  current 24-byte LP64 ABI layout.
-- Corrected the stale `sys/slog.h` ring-size comment to 64 KiB.
+- Documented that the slog event header is the current 24-byte LP64 ABI layout,
+  not the stale 16-byte wording in the ignored component header.
+- Recorded that the stale `sys/slog.h` ring-size comment still needs an
+  upstream component-source correction because `libc/` is ignored here.
 - Added the crate to Rust workflow test coverage.
 - Marked the Phase 4 Rust ring-buffer task complete.
 
@@ -55,6 +56,8 @@ Result:
 Follow-up:
 
 - Add the `/dev/slog` readback smoke before replacing the C service.
+- Correct the stale `libc/include/sys/slog.h` comments in the component source
+  repository.
 
 ## 2026-06-23 21:25 CEST - Direct Resource-Server Wrapper Added
 
