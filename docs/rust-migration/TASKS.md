@@ -230,6 +230,8 @@ small reviewable change unless it explicitly says otherwise.
 - [ ] Retire one C implementation after proving parity.
   - Acceptance: removal is approved only after at least one release candidate
     with Rust default and C rollback available.
+  - Status: blocked until a component ships through that release-candidate
+    period; see `RETIREMENT.md` for the required evidence and current status.
 
 ## Phase 9: Task Manager Readiness
 

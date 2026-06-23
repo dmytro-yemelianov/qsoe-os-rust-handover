@@ -31,11 +31,13 @@ Read in this order:
 16. `PIPE.md`: selected second Rust service mini-spec and C registration smoke.
 17. `TEST_HELPER.md`: selected first Rust in-guest test helper and safety
    constraints.
-18. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+18. `RETIREMENT.md`: C removal gate, current retirement status, and future
+   removal checklist.
+19. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-19. `PLAN.md`: phased migration plan from baseline validation through possible
+20. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-20. `TASKS.md`: executable backlog with acceptance criteria.
+21. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust

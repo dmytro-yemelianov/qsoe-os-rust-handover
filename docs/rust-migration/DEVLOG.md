@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 01:53 CEST.
+Last updated: 2026-06-24 01:56 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,34 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 01:56 CEST - C Retirement Gate Documented
+
+Scope:
+
+- Added `RETIREMENT.md` to make the C removal gate explicit.
+- Recorded the state model from C default through Rust opt-in, Rust-default RC,
+  and retired.
+- Listed the mandatory evidence for any future C removal PR.
+- Recorded that `slogger`, `devb-virtio`, `pipe`, and `test_msgpass` are not
+  currently retireable.
+- Linked the gate from the migration docs index.
+- Left the Phase 8 retirement task open because no component has completed a
+  Rust-default release candidate with C rollback.
+
+Commands:
+
+- `rg -n "retire|remove|rollback|release candidate|default|C implementation|parity" docs/rust-migration docs -g '!build/**'`
+- `gh issue view 26 --repo dmytro-yemelianov/qsoe-os-rust-handover --json number,title,body,state,labels,assignees,url`
+
+Result:
+
+- No C implementation was removed. Issue #26 is gated on release-candidate
+  evidence rather than eligible for immediate retirement.
+
+Follow-up:
+
+- Start Phase 9 task-manager module inventory.
 
 ## 2026-06-24 01:53 CEST - First Rust Test Helper Selected
 
