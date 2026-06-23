@@ -25,6 +25,7 @@ SELECTED_SLOGGER_ELF ?= build/rust/selected/sbin/slogger.elf
         index-c-static index-c-compile-db tidy-c \
         elf-baseline rust-fast rust-quality rust-check rust-abi rust-deep \
         rust-qsoe-link-smoke rust-slogger-link-smoke slogger-artifact \
+        rust-slogger-boot-smoke \
         container-toolchain-build container-shell container-check \
         container-index-c container-index-c-static container-index-c-compile-db \
         container-tidy-c \
@@ -193,6 +194,9 @@ slogger-artifact:
 	@QSOE_RUST_SLOGGER=$(QSOE_RUST_SLOGGER) \
 	    SELECTED_SLOGGER_ELF=$(SELECTED_SLOGGER_ELF) \
 	    scripts/select-slogger-artifact.sh
+
+rust-slogger-boot-smoke:
+	@scripts/rust-slogger-boot-smoke.sh
 
 container-toolchain-build:
 	@scripts/container-toolchain.sh build

@@ -150,7 +150,7 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: C `slogger` remains default; Rust version is selected by one
     explicit make variable.
 
-- [ ] Boot image with Rust `slogger`.
+- [x] Boot image with Rust `slogger`.
   - Acceptance: QEMU reaches login and console logs show `slogger-rs` alive.
 
 - [ ] Compare C and Rust boot logs.

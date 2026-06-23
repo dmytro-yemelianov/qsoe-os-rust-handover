@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-23 22:28 CEST.
+Last updated: 2026-06-23 22:45 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,30 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-23 22:45 CEST - Rust Slogger Boot Smoke Added
+
+Scope:
+
+- Added `make rust-slogger-boot-smoke`.
+- Added a wrapper that builds an LQ modpkg archive with only
+  `sbin/slogger` replaced by the selected Rust artifact.
+- Rebuilt the LQ QEMU image with `MODPKG_CPIO` pointing at that opt-in archive.
+- Let `boot-smoke.sh` accept a custom slogger startup pattern.
+- Marked the Phase 4 Rust boot-image task complete.
+
+Commands:
+
+- `make rust-slogger-boot-smoke`
+
+Result:
+
+- QEMU reached login with `[slogger-rs] alive` in the console log.
+
+Follow-up:
+
+- Compare C and Rust boot logs before making the Rust service less
+  experimental.
 
 ## 2026-06-23 22:28 CEST - Rust Slogger Build Flag Added
 

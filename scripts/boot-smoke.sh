@@ -23,6 +23,10 @@ Examples:
 
 The selected variant must already be built. Missing build artifacts are
 reported by lq/emu.sh or nq/emu.sh and captured in the log.
+
+Environment:
+  QSOE_BOOT_SLOGGER_PATTERN   slogger startup milestone; defaults to
+                              "[slogger] alive"
 EOF
 }
 
@@ -32,6 +36,7 @@ timeout_s=120
 log=
 keep_running=0
 emu_args=()
+slogger_pattern=${QSOE_BOOT_SLOGGER_PATTERN:-"[slogger] alive"}
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -111,7 +116,7 @@ mkdir -p "$(dirname "$log")"
 
 patterns=(
     "QSOE/"
-    "[slogger] alive"
+    "$slogger_pattern"
     "fs-qrv: mounted qrvfs at /usr"
     "login:"
 )
