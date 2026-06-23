@@ -5,7 +5,6 @@
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-UMBRELLA=$(cd "$ROOT/.." && pwd)
 RUNTIME=${CONTAINER_RUNTIME:-docker}
 IMAGE=${QSOE_TOOLCHAIN_IMAGE:-qsoe-toolchain:debian}
 DOCKERFILE="$ROOT/toolchains/debian/Dockerfile"
@@ -17,11 +16,12 @@ usage: scripts/container-toolchain.sh <command> [args...]
 
 commands:
   build              build the Debian toolchain image
-  shell              open an interactive shell in the mounted umbrella tree
+  shell              open an interactive shell in the mounted repository
   run <cmd...>       run a command in /work/qsoe/os
   check              run host fixtures and Rust checks
   index-c-static     build C tags, cscope, and GNU Global indexes
   index-c-compile-db capture C compile_commands.json with Bear
+  tidy-c             run bounded clang-tidy over the active compile DB
   rust-fast          run the fast Rust edit-loop checks
   rust-quality       run the normal Rust quality gate
   rust-abi           run the QSOE Rust ABI/link-smoke gate
@@ -60,7 +60,7 @@ run_container() {
         -e GIT_CONFIG_KEY_0=safe.directory \
         -e GIT_CONFIG_VALUE_0='*' \
         -e QSOE_HOST_ROOT="$ROOT" \
-        -v "$UMBRELLA:/work/qsoe" \
+        -v "$ROOT:/work/qsoe/os" \
         -w /work/qsoe/os \
         "$IMAGE" \
         bash -c 'mkdir -p "$HOME"; exec "$@"' qsoe-container "$@"
@@ -91,6 +91,15 @@ case "$cmd" in
         ;;
     index-c-compile-db)
         run_container make index-c-compile-db
+        ;;
+    tidy-c)
+        run_container bash -c '
+            if [ -f build/index/c/compile_commands.container.json ]; then
+                QSOE_TIDY_DB="$PWD/build/index/c/compile_commands.container.json" make tidy-c
+            else
+                make tidy-c
+            fi
+        '
         ;;
     rust-fast)
         run_container make rust-fast

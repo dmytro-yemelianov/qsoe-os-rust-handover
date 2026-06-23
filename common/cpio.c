@@ -170,6 +170,10 @@ const void *cpio_get_entry(const void *archive, unsigned long len, int n, const 
     const struct cpio_header *header = archive;
     struct cpio_header_info header_info;
 
+    if (n < 0) {
+        return NULL;
+    }
+
     /* Find n'th entry. */
     for (int i = 0; i <= n; i++) {
         int error = cpio_parse_header(header, len, &header_info);

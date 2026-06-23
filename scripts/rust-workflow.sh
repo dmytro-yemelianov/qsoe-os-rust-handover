@@ -54,6 +54,7 @@ run_fast() {
     cargo test --manifest-path "$MANIFEST" \
         -p qsoe-abi \
         -p qsoe-ressrv \
+        -p qsoe-slogger \
         -p qsoe-qrvfs \
         --lib
 }
@@ -73,6 +74,7 @@ run_deep() {
         cargo test --manifest-path "$MANIFEST" \
             -p qsoe-abi \
             -p qsoe-ressrv \
+            -p qsoe-slogger \
             -p qsoe-qrvfs
     fi
 

@@ -5,6 +5,7 @@ members = [
     "crates/qsoe-ffi",
     "crates/qsoe-qrvfs",
     "crates/qsoe-ressrv",
+    "crates/qsoe-slogger",
     "bins/minimal-rs",
 ]
 

@@ -28,20 +28,15 @@ It is based on Debian trixie and installs:
 - Rust: pinned `1.95.0`, with `rustfmt`, `clippy`, `rust-analyzer`, and
   `riscv64gc-unknown-none-elf`.
 
-The image does not copy source code. It mounts the whole QSOE umbrella tree at:
-
-```text
-/work/qsoe
-```
-
-and works from:
+The image does not copy source code. The wrapper mounts the checked-out
+repository at:
 
 ```text
 /work/qsoe/os
 ```
 
-This matters because the release build uses sibling component directories such
-as `lq`, `nq`, `libc`, and `quser`.
+This path is stable even when the host checkout directory is not literally
+named `os`, which keeps local clones and GitHub Actions checkouts equivalent.
 
 ## Runtime
 

@@ -19,11 +19,12 @@
         check-host-tools check-qrvfs-fixture check-qrvfs-rust-fixture \
         check-gpt-fixture \
         index-c index-c-files index-c-tags index-c-cscope index-c-global \
-        index-c-static index-c-compile-db \
+        index-c-static index-c-compile-db tidy-c \
         elf-baseline rust-fast rust-quality rust-check rust-abi rust-deep \
         rust-qsoe-link-smoke \
         container-toolchain-build container-shell container-check \
         container-index-c container-index-c-static container-index-c-compile-db \
+        container-tidy-c \
         container-elf-baseline container-rust-fast container-rust-quality \
         container-rust-abi container-rust-deep container-rust-qsoe-link-smoke \
         container-source-build
@@ -157,6 +158,9 @@ index-c-static:
 index-c-compile-db:
 	@scripts/c-index.sh compile-db
 
+tidy-c:
+	@scripts/c-tidy.sh
+
 elf-baseline:
 	@scripts/capture-elf-baseline.sh
 
@@ -194,6 +198,9 @@ container-index-c-static:
 
 container-index-c-compile-db:
 	@scripts/container-toolchain.sh index-c-compile-db
+
+container-tidy-c:
+	@scripts/container-toolchain.sh tidy-c
 
 container-elf-baseline:
 	@scripts/container-toolchain.sh run scripts/capture-elf-baseline.sh

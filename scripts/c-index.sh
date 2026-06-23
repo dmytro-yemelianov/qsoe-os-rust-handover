@@ -197,6 +197,7 @@ capture_compile_db() {
 
     if [ "${QSOE_INDEX_CLEAN:-0}" = "1" ]; then
         (cd "$ROOT" && make clean)
+        mkdir -p "$INDEX_DIR"
     fi
 
     raw="$INDEX_DIR/compile_commands.raw.json"

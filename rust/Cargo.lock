@@ -29,4 +29,9 @@ name = "qsoe-ressrv"
 version = "0.0.0"
 dependencies = [
  "qsoe-abi",
+ "qsoe-ffi",
 ]
+
+[[package]]
+name = "qsoe-slogger"
+version = "0.0.0"

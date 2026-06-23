@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-23 21:20 EEST.
+Last updated: 2026-06-23 21:32 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,70 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-23 21:32 CEST - Rust Slogger Ring Added
+
+Scope:
+
+- Added the `qsoe-slogger` no-std crate.
+- Implemented the byte-ring behavior needed by `slogger-rs`.
+- Corrected slog event header documentation from stale 16-byte wording to the
+  current 24-byte LP64 ABI layout.
+- Corrected the stale `sys/slog.h` ring-size comment to 64 KiB.
+- Added the crate to Rust workflow test coverage.
+- Marked the Phase 4 Rust ring-buffer task complete.
+
+Commands:
+
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-slogger`
+- `make rust-quality`
+- `scripts/container-toolchain.sh run bash -lc 'cd rust && cargo check -p qsoe-slogger --target riscv64gc-unknown-none-elf'`
+- RISC-V C layout probe for `qsoe_slog_event_t` with
+  `riscv64-linux-gnu-gcc`.
+
+Result:
+
+- Host tests passed, including append, drain, wraparound, exact-full,
+  drop-oldest eviction, oversized rejection, incomplete-event read guard, read
+  caps, and corrupt head-event clamping during eviction.
+- `qsoe-slogger` compiled for the RISC-V no-std target in the Debian
+  container. The compile emitted the existing `f`/`d` target-feature warnings.
+
+Follow-up:
+
+- Add the `/dev/slog` readback smoke before replacing the C service.
+
+## 2026-06-23 21:25 CEST - Direct Resource-Server Wrapper Added
+
+Scope:
+
+- Added shared Rust ABI constants for the `_IO_*` resource-manager protocol.
+- Added `tm_stat_t` as `qsoe_abi::TmStat`.
+- Added a direct-service wrapper surface in `qsoe-ressrv` for the current
+  `slogger` model: channel ownership, path registration, daemon-ready detach,
+  receive, pulse detection, replies, and explicit shutdown.
+- Added `IoRequest` and `IoReply` wire buffers for the `slogger` request/reply
+  shape.
+- Marked the Phase 3 `slogger` wrapper task complete.
+
+Commands:
+
+- `cargo check --manifest-path rust/Cargo.toml --workspace`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-abi -p qsoe-ressrv`
+- `make rust-quality`
+- `scripts/container-toolchain.sh run bash -lc 'cd rust && cargo check -p qsoe-ressrv --target riscv64gc-unknown-none-elf'`
+
+Result:
+
+- Host Rust quality checks passed.
+- `qsoe-abi` and `qsoe-ressrv` layout and helper tests passed.
+- `qsoe-ressrv` compiled for the RISC-V no-std target in the Debian
+  container. The compile emitted the existing `f`/`d` target-feature warnings.
+
+Follow-up:
+
+- Implement the Rust `slogger` ring buffer with host tests before linking a
+  `slogger-rs` binary.
 
 ## 2026-06-23 21:20 EEST - Linux Handover Written
 

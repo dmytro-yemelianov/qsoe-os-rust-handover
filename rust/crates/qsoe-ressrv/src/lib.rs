@@ -1,8 +1,16 @@
 #![no_std]
 
-use core::ffi::{c_char, c_int, c_uint, c_void};
+use core::convert::TryFrom;
+use core::ffi::{c_char, c_int, c_uint, c_void, CStr};
+use core::mem::size_of;
+use core::ptr;
+use core::slice;
 
-pub use qsoe_abi::{GidT, ModeT, OffT, QsoeTimeT, SizeT, SsizeT, UidT};
+pub use qsoe_abi::{
+    GidT, ModeT, OffT, QsoeMsgInfo, QsoeTimeT, SizeT, SsizeT, TmStat, UidT, IO_CLOSE, IO_CONNECT,
+    IO_DUP, IO_FSTAT, IO_READ, IO_READDIR, IO_WRITE, QSOE_MI_PULSE, TM_IO_MAX, TM_REQ_CLOSE,
+    TM_REQ_FSTAT, TM_REQ_IO_READ, TM_REQ_IO_WRITE, TM_S_IFCHR, TM_WIRE_BASE_BYTES,
+};
 
 pub const QSOE_ATTR_MODE: c_uint = 0x01;
 pub const QSOE_ATTR_UID: c_uint = 0x02;
@@ -200,6 +208,312 @@ impl Server {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DirectError {
+    ChannelCreateFailed(c_int),
+    ChannelDestroyFailed(c_int),
+    PathRegisterFailed(c_int),
+    DetachFailed(c_int),
+    ReceiveFailed(c_int),
+    ReplyFailed(c_int),
+    MessageTooLarge(usize),
+    ReplyPrefixTooLarge { requested: usize, max: usize },
+}
+
+pub type DirectResult<T> = Result<T, DirectError>;
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct ReplyStatus(c_int);
+
+impl ReplyStatus {
+    pub const OK: Self = Self(0);
+
+    pub const fn from_raw(status: c_int) -> Self {
+        Self(status)
+    }
+
+    pub const fn from_errno(errno: c_int) -> Self {
+        Self(errno)
+    }
+
+    pub const fn raw(self) -> c_int {
+        self.0
+    }
+}
+
+pub struct Channel {
+    chid: c_int,
+}
+
+impl Channel {
+    pub fn create(flags: c_uint) -> DirectResult<Self> {
+        // SAFETY: `ChannelCreate` takes a scalar flag word and returns a
+        // process-local channel id or -1 with qsoe_errno set.
+        let chid = unsafe { qsoe_ffi::channel_create(flags) };
+        if chid >= 0 {
+            Ok(Self { chid })
+        } else {
+            Err(DirectError::ChannelCreateFailed(chid))
+        }
+    }
+
+    /// Take ownership of an already-created QSOE channel id.
+    ///
+    /// # Safety
+    ///
+    /// `chid` must be a live channel owned by this process, and no other Rust
+    /// value may destroy it while the returned `Channel` exists.
+    pub unsafe fn from_raw(chid: c_int) -> Self {
+        Self { chid }
+    }
+
+    pub const fn id(&self) -> c_int {
+        self.chid
+    }
+
+    pub fn register_path(&self, path: &CStr) -> DirectResult<()> {
+        // SAFETY: `CStr` guarantees a non-null, NUL-terminated path pointer for
+        // the duration of this call; `self.chid` is owned by this wrapper.
+        let rc = unsafe { qsoe_ffi::pathmgr_register(path.as_ptr(), self.chid) };
+        if rc == 0 {
+            Ok(())
+        } else {
+            Err(DirectError::PathRegisterFailed(rc))
+        }
+    }
+
+    pub fn receive_bytes(&self, buf: &mut [u8]) -> DirectResult<Receive> {
+        let len = usize_to_c_int(buf.len())?;
+        let mut info = QsoeMsgInfo::zeroed();
+        // SAFETY: `buf` is valid writable storage of `len` bytes and `info`
+        // points to valid message-info storage for the duration of the call.
+        let rcvid = unsafe {
+            qsoe_ffi::msg_receive(self.chid, buf.as_mut_ptr().cast::<c_void>(), len, &mut info)
+        };
+
+        if rcvid < 0 {
+            return Err(DirectError::ReceiveFailed(rcvid));
+        }
+        if rcvid == 0 || (info.flags as u32 & QSOE_MI_PULSE) != 0 {
+            return Ok(Receive::Pulse(info));
+        }
+
+        Ok(Receive::Message(ReceivedMessage { rcvid, info }))
+    }
+
+    pub fn receive_request(&self, req: &mut IoRequest) -> DirectResult<Receive> {
+        // SAFETY: `IoRequest` is a plain `repr(C)` integer/byte buffer with no
+        // padding, verified by layout tests below.
+        let buf = unsafe {
+            slice::from_raw_parts_mut((req as *mut IoRequest).cast::<u8>(), size_of::<IoRequest>())
+        };
+        self.receive_bytes(buf)
+    }
+
+    pub fn destroy(mut self) -> DirectResult<()> {
+        let rc = self.destroy_inner();
+        if rc == 0 {
+            Ok(())
+        } else {
+            Err(DirectError::ChannelDestroyFailed(rc))
+        }
+    }
+
+    fn destroy_inner(&mut self) -> c_int {
+        if self.chid < 0 {
+            return 0;
+        }
+        let chid = self.chid;
+        // SAFETY: this wrapper owns `chid`; after a successful destroy it marks
+        // the channel as retired so Drop will not destroy it again.
+        let rc = unsafe { qsoe_ffi::channel_destroy(chid) };
+        if rc == 0 {
+            self.chid = -1;
+        }
+        rc
+    }
+}
+
+impl Drop for Channel {
+    fn drop(&mut self) {
+        let _ = self.destroy_inner();
+    }
+}
+
+pub struct DirectService {
+    channel: Channel,
+}
+
+impl DirectService {
+    pub fn register(path: &CStr) -> DirectResult<Self> {
+        let channel = Channel::create(0)?;
+        channel.register_path(path)?;
+        Ok(Self { channel })
+    }
+
+    pub const fn from_channel(channel: Channel) -> Self {
+        Self { channel }
+    }
+
+    pub const fn channel_id(&self) -> c_int {
+        self.channel.id()
+    }
+
+    pub fn detach_ready(&self, status: c_int) -> DirectResult<()> {
+        // SAFETY: `procmgr_detach` takes a scalar status value and does not
+        // retain borrowed Rust state.
+        let rc = unsafe { qsoe_ffi::procmgr_detach(status) };
+        if rc == 0 {
+            Ok(())
+        } else {
+            Err(DirectError::DetachFailed(rc))
+        }
+    }
+
+    pub fn receive_bytes(&self, buf: &mut [u8]) -> DirectResult<Receive> {
+        self.channel.receive_bytes(buf)
+    }
+
+    pub fn receive_request(&self, req: &mut IoRequest) -> DirectResult<Receive> {
+        self.channel.receive_request(req)
+    }
+
+    pub fn shutdown(self) -> DirectResult<()> {
+        self.channel.destroy()
+    }
+}
+
+pub enum Receive {
+    Message(ReceivedMessage),
+    Pulse(QsoeMsgInfo),
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct ReceivedMessage {
+    rcvid: c_int,
+    info: QsoeMsgInfo,
+}
+
+impl ReceivedMessage {
+    pub const fn rcvid(&self) -> c_int {
+        self.rcvid
+    }
+
+    pub const fn info(&self) -> &QsoeMsgInfo {
+        &self.info
+    }
+
+    pub fn reply_empty(self, status: ReplyStatus) -> DirectResult<()> {
+        self.reply_raw(status, ptr::null(), 0)
+    }
+
+    pub fn reply_word(self, status: ReplyStatus, word: u64) -> DirectResult<()> {
+        self.reply_raw(
+            status,
+            (&word as *const u64).cast::<c_void>(),
+            size_of::<u64>(),
+        )
+    }
+
+    pub fn reply_bytes(self, status: ReplyStatus, bytes: &[u8]) -> DirectResult<()> {
+        let ptr = if bytes.is_empty() {
+            ptr::null()
+        } else {
+            bytes.as_ptr().cast::<c_void>()
+        };
+        self.reply_raw(status, ptr, bytes.len())
+    }
+
+    fn reply_raw(self, status: ReplyStatus, msg: *const c_void, bytes: usize) -> DirectResult<()> {
+        let len = usize_to_c_int(bytes)?;
+        // SAFETY: `rcvid` came from a successful `MsgReceive` call. `msg` is
+        // either null for an empty reply or points to `len` readable bytes for
+        // the duration of the synchronous `MsgReply` call.
+        let rc = unsafe { qsoe_ffi::msg_reply(self.rcvid, status.raw(), msg, len) };
+        if rc == 0 {
+            Ok(())
+        } else {
+            Err(DirectError::ReplyFailed(rc))
+        }
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct IoRequest {
+    pub type_: u64,
+    pub count: u64,
+    pub reserved: [u64; 3],
+    pub data: [u8; TM_IO_MAX],
+}
+
+impl IoRequest {
+    pub const fn zeroed() -> Self {
+        Self {
+            type_: 0,
+            count: 0,
+            reserved: [0; 3],
+            data: [0; TM_IO_MAX],
+        }
+    }
+
+    pub const fn opcode(&self) -> u64 {
+        self.type_
+    }
+
+    pub const fn requested_count(&self) -> u64 {
+        self.count
+    }
+
+    pub fn payload_prefix(&self) -> &[u8] {
+        let len = core::cmp::min(self.count as usize, TM_IO_MAX);
+        &self.data[..len]
+    }
+}
+
+#[repr(C)]
+#[derive(Clone, Copy)]
+pub struct IoReply {
+    pub count: u64,
+    pub reserved: [u64; 3],
+    pub data: [u8; TM_IO_MAX],
+}
+
+impl IoReply {
+    pub const HEADER_BYTES: usize = 4 * size_of::<u64>();
+
+    pub const fn zeroed() -> Self {
+        Self {
+            count: 0,
+            reserved: [0; 3],
+            data: [0; TM_IO_MAX],
+        }
+    }
+
+    pub fn data_mut(&mut self) -> &mut [u8; TM_IO_MAX] {
+        &mut self.data
+    }
+
+    pub fn bytes_with_payload(&self, payload_len: usize) -> DirectResult<&[u8]> {
+        if payload_len > TM_IO_MAX {
+            return Err(DirectError::ReplyPrefixTooLarge {
+                requested: payload_len,
+                max: TM_IO_MAX,
+            });
+        }
+
+        let total = Self::HEADER_BYTES + payload_len;
+        // SAFETY: `IoReply` is a `repr(C)` integer/byte buffer with no padding,
+        // verified by layout tests below. `total` is bounded to the initialized
+        // header plus initialized `data` bytes.
+        Ok(unsafe { slice::from_raw_parts((self as *const IoReply).cast::<u8>(), total) })
+    }
+}
+
+fn usize_to_c_int(value: usize) -> DirectResult<c_int> {
+    c_int::try_from(value).map_err(|_| DirectError::MessageTooLarge(value))
+}
+
 #[repr(C)]
 pub struct Call {
     _private: [u8; 0],
@@ -264,5 +578,37 @@ mod tests {
         assert_eq!(align_of::<Provider>(), 8);
         assert_eq!(size_of::<Server>(), 264);
         assert_eq!(align_of::<Server>(), 8);
+    }
+
+    #[test]
+    fn direct_io_layouts_match_slogger_wire_shapes() {
+        assert_eq!(TM_WIRE_BASE_BYTES, 40);
+        assert_eq!(TM_IO_MAX, 896);
+        assert_eq!(size_of::<IoRequest>(), 936);
+        assert_eq!(align_of::<IoRequest>(), 8);
+        assert_eq!(size_of::<IoReply>(), 928);
+        assert_eq!(align_of::<IoReply>(), 8);
+        assert_eq!(IoReply::HEADER_BYTES, 32);
+    }
+
+    #[test]
+    fn io_request_payload_is_capped_to_inline_payload() {
+        let mut req = IoRequest::zeroed();
+        req.count = (TM_IO_MAX as u64) + 128;
+        assert_eq!(req.payload_prefix().len(), TM_IO_MAX);
+    }
+
+    #[test]
+    fn io_reply_exposes_only_requested_prefix() {
+        let reply = IoReply::zeroed();
+        assert_eq!(reply.bytes_with_payload(0).unwrap().len(), 32);
+        assert_eq!(reply.bytes_with_payload(17).unwrap().len(), 49);
+        assert_eq!(
+            reply.bytes_with_payload(TM_IO_MAX + 1),
+            Err(DirectError::ReplyPrefixTooLarge {
+                requested: TM_IO_MAX + 1,
+                max: TM_IO_MAX,
+            })
+        );
     }
 }

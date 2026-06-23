@@ -1,0 +1,69 @@
+language: en-US
+tone_instructions: "Be direct. Prioritize correctness, ABI safety, build reproducibility, and rollback risk."
+
+reviews:
+  profile: assertive
+  request_changes_workflow: false
+  high_level_summary: true
+  review_status: true
+  review_details: true
+  commit_status: true
+  fail_commit_status: true
+  sequence_diagrams: false
+  assess_linked_issues: true
+  related_issues: true
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    base_branches:
+      - main
+  path_filters:
+    - "!build/**"
+    - "!rust/target/**"
+    - "!sel4-bootstrap/**"
+    - "!**/*.elf"
+    - "!**/*.img"
+    - "!**/*.log"
+  path_instructions:
+    - path: "rust/**"
+      instructions: "Check no_std assumptions, panic behavior, FFI boundaries, repr(C) layout, allocator use, TLS/unwind drift, and whether host tests still prove the intended ABI."
+    - path: "common/**"
+      instructions: "Treat changes as shared boot/runtime code. Look for bounds, alignment, integer overflow, and differences between LQ and NQ consumers."
+    - path: "scripts/**"
+      instructions: "Check deterministic behavior, error handling, quoting, cleanup, and whether failures preserve useful diagnostics."
+    - path: ".github/workflows/**"
+      instructions: "Check least-privilege permissions, pinned actions, runner safety, shell robustness, and whether CodeRabbit can consume relevant GitHub Checks."
+    - path: "docs/rust-migration/**"
+      instructions: "Check that migration docs stay consistent with the task backlog, decision log, and rollback policy."
+  tools:
+    actionlint:
+      enabled: true
+    zizmor:
+      enabled: true
+    github-checks:
+      enabled: true
+      timeout_ms: 900000
+    shellcheck:
+      enabled: true
+    clang:
+      enabled: true
+    cppcheck:
+      enabled: true
+    clippy:
+      enabled: true
+    hadolint:
+      enabled: true
+    markdownlint:
+      enabled: true
+
+issue_enrichment:
+  auto_enrich:
+    enabled: true
+  planning:
+    enabled: true
+    auto_planning:
+      enabled: true
+      labels:
+        - rust-migration
+        - ci

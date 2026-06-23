@@ -226,6 +226,7 @@ rust/
     qsoe-abi/
     qsoe-ffi/
     qsoe-ressrv/
+    qsoe-slogger/
     qrvfs/
     qsoe-host-image/
   bins/
@@ -237,6 +238,7 @@ Crate intent:
 - `qsoe-abi`: shared constants and `#[repr(C)]` data structures.
 - `qsoe-ffi`: raw extern bindings to QSOE libc and system calls.
 - `qsoe-ressrv`: safe wrappers around resource-server APIs.
+- `qsoe-slogger`: no-std ring-buffer logic for the Rust `slogger` pilot.
 - `qrvfs`: parser and image metadata code, designed for host tests first.
 - `qsoe-host-image`: host-side image construction/checking utilities.
 - `slogger-rs`: first in-guest service pilot.

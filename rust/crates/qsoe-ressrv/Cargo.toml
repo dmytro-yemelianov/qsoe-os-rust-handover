@@ -10,3 +10,4 @@ path = "src/lib.rs"
 
 [dependencies]
 qsoe-abi = { path = "../qsoe-abi", version = "0.0.0" }
+qsoe-ffi = { path = "../qsoe-ffi", version = "0.0.0" }

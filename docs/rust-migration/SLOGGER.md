@@ -84,12 +84,13 @@ Read policy:
 - If an event header claims a size larger than `g_used`, reading stops.
 - Empty or incomplete rings return zero event bytes rather than blocking.
 
-Known documentation mismatch:
+Historical documentation mismatch:
 
-- `libc/include/sys/slog.h` says the ring is `256 KiB`.
+- `libc/include/sys/slog.h` previously said the ring was `256 KiB`.
 - The implementation and observed boot log use `64 KiB`.
-- The Rust port must preserve the implemented `64 KiB` behavior unless a
-  separate decision changes the ring size and updates all docs.
+- The header comment has been corrected; the Rust port preserves the
+  implemented `64 KiB` behavior unless a separate decision changes the ring
+  size.
 
 ## Wire Protocol
 
@@ -191,6 +192,11 @@ typedef struct {
 } qsoe_slog_event_t;
 ```
 
+The current LP64 layout is 24 bytes: 20 bytes of fields plus 4 bytes of tail
+padding from the `uint64_t` alignment. The Rust port must use `sizeof`-matched
+layout, not the stale 16-byte wording that previously appeared in
+`libc/include/sys/slog.h`.
+
 Header fields:
 
 - `magic = QSOE_SLOG_MAGIC` (`0x534c`, `SL`).
@@ -204,7 +210,7 @@ Header fields:
 Payload constraints:
 
 - `QSOE_SLOG_MAX_PAYLOAD` is `240`.
-- One event write is at most `16 + 240 = 256` bytes.
+- One event write is at most `24 + 240 = 264` bytes on the current LP64 ABI.
 - `vslogf` uses a minimal formatter supporting `%s`, `%d`, `%u`, `%x`, `%p`,
   `%c`, `%%`, and width such as `%08x`.
 - `slogb` rejects negative payload sizes and sizes above `240` with `EINVAL`.
@@ -244,7 +250,9 @@ It checks return values from `slogf`. It does not currently automate a
 Before `slogger-rs` is linked into an image:
 
 - Ring-buffer host tests cover append, drain, wraparound, drop-oldest eviction,
-  oversized append, empty read, incomplete event guard, and read cap behavior.
+  exact-full behavior, oversized append, empty read, incomplete event guard,
+  corrupt head-event eviction, and read cap behavior. This is implemented in
+  `rust/crates/qsoe-slogger`.
 - Wire structs preserve LP64 request and reply layout.
 - Startup messages either match the C strings or are intentionally documented
   for boot-log comparison.
@@ -259,5 +267,3 @@ Before `slogger-rs` is linked into an image:
 
 - Add an automated `/dev/slog` readback smoke that writes known messages and
   verifies `sloginfo` can observe them.
-- Fix or explicitly update the stale `256 KiB` ring comment in
-  `libc/include/sys/slog.h`.

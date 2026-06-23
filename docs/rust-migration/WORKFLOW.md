@@ -146,16 +146,21 @@ message parsers as they move from planning into implementation.
 
 ## CI Shape
 
-The eventual CI/local-equivalent matrix should keep the same tiers:
+The checked-in GitHub Actions workflow keeps the same tiers and publishes
+GitHub Checks for CodeRabbit review context:
 
 | Job | Command | Notes |
 | --- | --- | --- |
-| Rust fast | `make rust-fast` | Cheap feedback on every Rust change. |
-| Rust quality | `make rust-quality` | Required before merge. |
+| Toolchain image | `make container-toolchain-build` | Builds the Debian trixie image used by all Linux-reproducible gates. |
+| Source build | `make container-source-build` | Runs `make prepare` when release components are missing, then builds NQ and LQ. |
+| Fixtures and Rust quality | `make container-check` | Includes host tools, Rust quality, and qrvfs Rust/C parity. |
 | Rust ABI | `make container-rust-abi` | Requires C source build artifacts. |
-| Fixtures | `make container-check` | Includes host tools and qrvfs Rust/C parity. |
+| C analysis | `QSOE_INDEX_CLEAN=1 QSOE_INDEX_DB_FLAVOR=container make index-c-compile-db` and bounded `make tidy-c` | Rebuilds under Bear, then runs the curated clang-tidy pass against container paths. |
 | Boot | `scripts/container-toolchain.sh run scripts/boot-smoke.sh -k lq -t 120` | Required before enabling any Rust service in an image. |
 | Deep | `make rust-deep` | Scheduled or before risky parser/unsafe changes. |
+
+The workflow intentionally uses `runs-on: [self-hosted, X64]` to match the
+hosted runner label used by the main Rapsody CI jobs.
 
 ## External References
 

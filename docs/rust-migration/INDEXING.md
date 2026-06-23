@@ -19,6 +19,7 @@ Rust workflow details live in `WORKFLOW.md`.
 | cscope | `make index-c-cscope` | Callers, callees, references, text navigation. | C-oriented and fast, but not type-aware. |
 | GNU Global | `make index-c-global` | Cross-reference database usable by many tools. | More complete than tags for some queries, still not clang. |
 | clangd DB | `make container-index-c-compile-db` | Compiler-aware navigation, diagnostics, and clang-tidy. | Requires an actual build capture. |
+| clang-tidy | `make tidy-c` | Bounded compiler-aware static analysis over the active DB. | Noisy by nature; starts with a small file limit. |
 
 The combined static index is:
 
@@ -108,6 +109,9 @@ The original container-path database is kept as:
 build/index/c/compile_commands.container.json
 ```
 
+`make container-tidy-c` prefers that container-path database when it exists, so
+clang-tidy runs against paths visible inside the Debian toolchain container.
+
 For a devcontainer or container-local clangd, request container paths:
 
 ```sh
@@ -139,14 +143,54 @@ with different defines and include paths. Do not merge unrelated compile
 databases blindly once the project grows variant-specific DBs; prefer one active
 database per workflow or preserve named databases under `build/index/c/`.
 
+## clang-tidy
+
+The bounded clang-tidy wrapper reads:
+
+```text
+build/index/c/compile_commands.json
+```
+
+Run the default bounded pass:
+
+```sh
+make tidy-c
+```
+
+The default limit is intentionally small. Expand it explicitly:
+
+```sh
+QSOE_TIDY_LIMIT=100 make tidy-c
+scripts/c-tidy.sh --all
+```
+
+Analyze a focused source set:
+
+```sh
+scripts/c-tidy.sh libtaskman/src/pathmgr.c quser/sbin/slogger/main.c
+```
+
+The checked-in `.clang-tidy` records the initial checker policy:
+
+- `clang-analyzer-*`;
+- `bugprone-*`;
+- `performance-*`;
+- `portability-restrict-system-includes`;
+- disabled high-noise platform families and identifier-style checks.
+
+The wrapper excludes generated `build/` output and third-party
+`sel4-bootstrap/` entries by default. Use `QSOE_TIDY_ROOTS` to narrow or expand
+QSOE-owned source roots:
+
+```sh
+QSOE_TIDY_ROOTS="libtaskman quser/sbin/slogger" make tidy-c
+```
+
+Any future suppressions or disabled checks should be recorded in `.clang-tidy`
+or this document, not hidden in editor-local settings.
+
 ## Analysis Follow-Up
 
-The current workflow adds index and compile database plumbing. The next useful
-quality layer is a bounded clang-tidy wrapper that:
-
-- reads `build/index/c/compile_commands.json`;
-- starts with a small checker set, especially `clang-analyzer-*`,
-  `bugprone-*`, `performance-*`, and selected portability checks;
-- excludes generated build output and third-party seL4 by default;
-- records suppressions or disabled checks in the repo instead of ad hoc editor
-  settings.
+The next useful quality layer is to promote recurring clang-tidy findings into
+targeted fixes or documented suppressions once the bounded pass has enough
+signal.

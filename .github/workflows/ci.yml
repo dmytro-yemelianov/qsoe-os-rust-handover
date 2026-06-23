@@ -1,0 +1,58 @@
+name: CI
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: qsoe-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qsoe:
+    name: QSOE build, checks, and boot smoke
+    # Match the hosted runner label used by dmytro-yemelianov/rapsody main CI.
+    runs-on: [self-hosted, X64]
+    timeout-minutes: 180
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Build Debian toolchain image
+        run: make container-toolchain-build
+
+      - name: Build release source tree
+        run: make container-source-build
+
+      - name: Run host fixtures and Rust quality gate
+        run: make container-check
+
+      - name: Run Rust ABI/link gate
+        run: make container-rust-abi
+
+      - name: Capture C compile database and run bounded clang-tidy
+        run: |
+          scripts/container-toolchain.sh run bash -lc '
+            QSOE_INDEX_CLEAN=1 QSOE_INDEX_DB_FLAVOR=container make index-c-compile-db
+            QSOE_TIDY_LIMIT=10 make tidy-c
+          '
+
+      - name: Boot smoke LQ image
+        run: scripts/container-toolchain.sh run scripts/boot-smoke.sh -k lq -t 120
+
+      - name: Upload boot smoke logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: qsoe-boot-smoke-logs
+          path: build/boot-smoke-*.log
+          if-no-files-found: ignore

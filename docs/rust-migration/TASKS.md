@@ -115,7 +115,7 @@ small reviewable change unless it explicitly says otherwise.
     match the current C headers, and thin wrappers cover provider initialization,
     provider listen, and dispatch-loop entry.
 
-- [ ] Add safe `slogger` resource-server wrapper surface.
+- [x] Add safe `slogger` resource-server wrapper surface.
   - Acceptance: safe wrappers cover registration, receive, reply, and shutdown
     paths needed by `slogger`.
 
@@ -139,7 +139,7 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: a test or helper writes a log message and verifies it is
     accepted or observable through the existing interface.
 
-- [ ] Implement ring buffer in Rust.
+- [x] Implement ring buffer in Rust.
   - Acceptance: host tests cover wraparound, full buffer behavior, and message
     truncation if applicable.
 
@@ -262,7 +262,7 @@ small reviewable change unless it explicitly says otherwise.
 
 ## Cross-Cutting Tasks
 
-- [ ] Add CI or local equivalent for build matrix.
+- [x] Add CI or local equivalent for build matrix.
   - Acceptance: one command can run host tests, artifact audit, and boot smoke
     for selected configurations.
 
@@ -289,7 +289,7 @@ small reviewable change unless it explicitly says otherwise.
 - [ ] Add `make audit-artifacts`.
   - Acceptance: audit can be run on all installed userland binaries.
 
-- [ ] Add bounded clang-tidy wrapper.
+- [x] Add bounded clang-tidy wrapper.
   - Acceptance: one command runs a curated checker set against the active
     compile database without requiring full-tree editor setup.
 
