@@ -236,8 +236,13 @@ Binary events print as `<N bytes binary>`.
 - `slogf(_SLOGC_TEST, _SLOG_WARNING, ...)`
 - `slogf(_SLOGC_TEST, _SLOG_DEBUG1, ...)`
 
-It checks return values from `slogf`. It does not currently automate a
-`sloginfo` readback assertion.
+It checks return values from `slogf`.
+
+`scripts/slog-readback-smoke.py` boots QSOE/L without the virtio disk so init
+falls into the cpio rescue shell after starting `slogger` and `pci-server`.
+`pci-server` writes known `slogf` entries during startup. The smoke runs
+`/bin/sloginfo` from the rescue shell and verifies that a `pci-server:` entry is
+observable through `/dev/slog`.
 
 ## Rust Port Acceptance
 

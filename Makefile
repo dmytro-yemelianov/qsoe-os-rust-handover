@@ -18,6 +18,7 @@
 .PHONY: all prepare clean nvme nvme-populate virtio fsqrv-image tree \
         check-host-tools check-qrvfs-fixture check-qrvfs-rust-fixture \
         check-gpt-fixture \
+        slog-readback-smoke \
         index-c index-c-files index-c-tags index-c-cscope index-c-global \
         index-c-static index-c-compile-db \
         elf-baseline rust-fast rust-quality rust-check rust-abi rust-deep \
@@ -136,6 +137,9 @@ check-qrvfs-rust-fixture:
 
 check-gpt-fixture:
 	@scripts/check-gpt-fixture.py
+
+slog-readback-smoke:
+	@scripts/slog-readback-smoke.py
 
 index-c: index-c-static
 

@@ -135,7 +135,7 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: docs cover startup, device registration, ring size, message
     receive loop, overflow behavior, and observable logs.
 
-- [ ] Add `/dev/slog` smoke test.
+- [x] Add `/dev/slog` smoke test.
   - Acceptance: a test or helper writes a log message and verifies it is
     accepted or observable through the existing interface.
 

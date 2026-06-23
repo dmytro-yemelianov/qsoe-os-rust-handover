@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-23 21:20 EEST.
+Last updated: 2026-06-23 22:14 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,32 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-23 22:14 CEST - Slog Readback Smoke Added
+
+Scope:
+
+- Added `scripts/slog-readback-smoke.py`.
+- Added `make slog-readback-smoke`.
+- Documented the smoke in `SLOGGER.md`.
+- Marked the `/dev/slog` smoke backlog item complete.
+
+Commands:
+
+- `python3 -m py_compile scripts/slog-readback-smoke.py`
+- `make -n slog-readback-smoke`
+- `scripts/slog-readback-smoke.py -t 120`
+
+Result:
+
+- The smoke booted QSOE/L without the virtio disk, reached the cpio rescue
+  shell, ran `/bin/sloginfo`, and observed a `pci-server:` log entry from
+  `/dev/slog`.
+
+Follow-up:
+
+- Use this smoke as the readback baseline when the Rust `slogger-rs` binary is
+  added behind an opt-in build flag.
 
 ## 2026-06-23 21:20 EEST - Linux Handover Written
 
