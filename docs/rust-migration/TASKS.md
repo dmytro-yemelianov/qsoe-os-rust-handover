@@ -146,7 +146,7 @@ small reviewable change unless it explicitly says otherwise.
 - [x] Implement QSOE service entry point.
   - Acceptance: `slogger-rs` links as a QSOE userland binary.
 
-- [ ] Add build flag for Rust `slogger`.
+- [x] Add build flag for Rust `slogger`.
   - Acceptance: C `slogger` remains default; Rust version is selected by one
     explicit make variable.
 

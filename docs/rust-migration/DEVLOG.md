@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-23 22:55 CEST.
+Last updated: 2026-06-23 22:28 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -24,7 +24,35 @@ Follow-up:
 - ...
 ```
 
-## 2026-06-23 22:55 CEST - Rust Slogger Entry Point Added
+## 2026-06-23 22:28 CEST - Rust Slogger Build Flag Added
+
+Scope:
+
+- Added `QSOE_RUST_SLOGGER`, defaulting to the existing C `slogger`.
+- Added `make slogger-artifact`, which stages the selected implementation at
+  `build/rust/selected/sbin/slogger.elf`.
+- Added `QSOE_RUST_SLOGGER=1 make slogger-artifact` for the Rust pilot.
+- Kept CPIO and boot-image substitution for the next task.
+- Marked the Phase 4 build-flag task complete.
+
+Commands:
+
+- `make slogger-artifact`
+- `QSOE_RUST_SLOGGER=1 make slogger-artifact`
+- `make container-slogger-artifact`
+- `QSOE_RUST_SLOGGER=1 make container-slogger-artifact`
+
+Result:
+
+- The C service remains the default selected artifact.
+- One explicit make variable selects the Rust `slogger-rs` artifact.
+
+Follow-up:
+
+- Use the selected artifact in an opt-in boot image and run the Rust `slogger`
+  boot smoke.
+
+## 2026-06-23 22:25 CEST - Rust Slogger Entry Point Added
 
 Scope:
 

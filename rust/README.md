@@ -81,6 +81,22 @@ It builds `qsoe-slogger-rs` as a no-std staticlib and links it through the same
 QSOE userland CRT/libc path. The C `slogger` remains the default service until
 the explicit build flag and boot smoke steps land.
 
+## Slogger Selection
+
+The tracked handover tree does not edit the ignored `quser/` component
+Makefiles directly. Instead, it exposes a stable selected artifact for later
+CPIO/image packaging:
+
+```sh
+make slogger-artifact
+QSOE_RUST_SLOGGER=1 make slogger-artifact
+```
+
+With the default `QSOE_RUST_SLOGGER=0`, the target stages the existing C
+`quser/build/sbin/slogger/slogger.elf`. With `QSOE_RUST_SLOGGER=1`, it first
+links `qsoe-slogger-rs` through the QSOE userland path. Both modes write the
+selected binary to `build/rust/selected/sbin/slogger.elf`.
+
 ## Host qrvfs Parser
 
 The first host-side Rust parser is:
