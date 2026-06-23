@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 00:56 CEST.
+Last updated: 2026-06-24 01:05 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,34 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 01:05 CEST - Syscfg/Sysmap View Crate Added
+
+Scope:
+
+- Added `qsoe-sysview`, a dependency-free `no_std` crate for read-only
+  `syscfg` and `sysmap` TLV views.
+- Added bounds-checked scalar, string, range, timebase, cmdline, and generic TLV
+  accessors.
+- Covered malformed syscfg and sysmap inputs that truncate payloads, omit END
+  tags, mis-size scalar/range fields, expose unterminated strings, or carry an
+  invalid sysmap header.
+- Added the crate to Rust workflow gates.
+- Marked the Phase 7 syscfg/sysmap view task complete.
+
+Commands:
+
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-sysview`
+
+Result:
+
+- The crate exposes no raw struct references; callers receive typed values or
+  borrowed payload slices only after the containing TLV and requested field
+  bounds are validated.
+
+Follow-up:
+
+- Add ELF inspection coverage next.
 
 ## 2026-06-24 00:56 CEST - CPIO Parser Crate Added
 

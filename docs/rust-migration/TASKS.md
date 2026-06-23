@@ -203,7 +203,7 @@ small reviewable change unless it explicitly says otherwise.
 - [x] Add CPIO parser crate.
   - Acceptance: parser handles valid and malformed fixtures without panics.
 
-- [ ] Add syscfg/sysmap view crate.
+- [x] Add syscfg/sysmap view crate.
   - Acceptance: read-only views validate bounds before exposing fields.
 
 - [ ] Add ELF inspection crate.

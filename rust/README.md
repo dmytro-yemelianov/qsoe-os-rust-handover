@@ -198,6 +198,21 @@ length. The crate is dependency-free and `no_std`; host tests cover a valid
 archive plus malformed headers, names, UTF-8, and truncated data so parser
 errors stay explicit instead of panicking.
 
+## Host Sysview Parser
+
+The first read-only system-configuration view crate is:
+
+```text
+crates/qsoe-sysview
+```
+
+It covers both legacy `syscfg` TLV blobs and the page-based `sysmap` TLV stream.
+The crate is dependency-free and `no_std`; it exposes borrowed TLVs plus
+bounds-checked helpers for u32/u64 fields, C strings, common sysmap ranges, the
+mtime frequency, and the command line. Tests cover valid views and malformed
+inputs so fields are only exposed after their containing record and requested
+body range have been validated.
+
 ## Virtio MMIO Wrapper
 
 The first Rust driver-support crate is:

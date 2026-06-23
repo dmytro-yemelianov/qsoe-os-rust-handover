@@ -24,7 +24,8 @@ cargo test --manifest-path "$MANIFEST" \
     -p qsoe-cpio \
     -p qsoe-ressrv \
     -p qsoe-qrvfs \
-    -p qsoe-slogger
+    -p qsoe-slogger \
+    -p qsoe-sysview
 cargo test --manifest-path "$MANIFEST" -p qsoe-virtio
 cargo test --manifest-path "$MANIFEST" -p qsoe-service-example-rs --features host-tests
 
