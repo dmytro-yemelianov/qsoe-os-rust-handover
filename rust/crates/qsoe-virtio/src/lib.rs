@@ -280,6 +280,151 @@ impl DescriptorModel {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DescriptorBuffer {
+    addr: u64,
+    len: u32,
+    access: DescriptorAccess,
+}
+
+impl DescriptorBuffer {
+    pub const fn new(addr: u64, len: u32, access: DescriptorAccess) -> Self {
+        Self { addr, len, access }
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DescriptorQueueError {
+    EmptyChain,
+    OutOfDescriptors,
+    DescriptorAlreadyFree,
+    DescriptorOwnedByDevice,
+    DuplicateDescriptor,
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct DescriptorFreeList {
+    free: [bool; VIRTQ_NUM],
+    available: usize,
+}
+
+impl DescriptorFreeList {
+    pub const fn new() -> Self {
+        Self {
+            free: [true; VIRTQ_NUM],
+            available: VIRTQ_NUM,
+        }
+    }
+
+    pub const fn available(&self) -> usize {
+        self.available
+    }
+
+    pub fn is_free(&self, index: DescriptorIndex) -> bool {
+        self.free[index.raw() as usize]
+    }
+
+    pub fn alloc(&mut self) -> Option<DescriptorIndex> {
+        let mut index = 0;
+        while index < VIRTQ_NUM {
+            if self.free[index] {
+                self.free[index] = false;
+                self.available -= 1;
+                return Some(DescriptorIndex(index as u16));
+            }
+            index += 1;
+        }
+        None
+    }
+
+    pub fn alloc_chain<const N: usize>(
+        &mut self,
+        buffers: [DescriptorBuffer; N],
+    ) -> Result<[DescriptorModel; N], DescriptorQueueError> {
+        if N == 0 {
+            return Err(DescriptorQueueError::EmptyChain);
+        }
+        if self.available < N {
+            return Err(DescriptorQueueError::OutOfDescriptors);
+        }
+
+        let mut indices = [DescriptorIndex(0); N];
+        let mut index = 0;
+        while index < N {
+            indices[index] = self.alloc().ok_or(DescriptorQueueError::OutOfDescriptors)?;
+            index += 1;
+        }
+
+        Ok(core::array::from_fn(|index| {
+            let buffer = buffers[index];
+            let descriptor = DescriptorModel::driver_owned(
+                indices[index],
+                buffer.addr,
+                buffer.len,
+                buffer.access,
+            );
+            if index + 1 < N {
+                descriptor.with_next(indices[index + 1])
+            } else {
+                descriptor
+            }
+        }))
+    }
+
+    pub fn free_descriptor(&mut self, index: DescriptorIndex) -> Result<(), DescriptorQueueError> {
+        let slot = index.raw() as usize;
+        if self.free[slot] {
+            return Err(DescriptorQueueError::DescriptorAlreadyFree);
+        }
+
+        self.free[slot] = true;
+        self.available += 1;
+        Ok(())
+    }
+
+    pub fn free_chain<const N: usize>(
+        &mut self,
+        chain: [DescriptorModel; N],
+    ) -> Result<(), DescriptorQueueError> {
+        if N == 0 {
+            return Err(DescriptorQueueError::EmptyChain);
+        }
+
+        let mut index = 0;
+        while index < N {
+            let descriptor = chain[index];
+            if descriptor.owner() != DescriptorOwner::Driver {
+                return Err(DescriptorQueueError::DescriptorOwnedByDevice);
+            }
+            if self.is_free(descriptor.index()) {
+                return Err(DescriptorQueueError::DescriptorAlreadyFree);
+            }
+
+            let mut next = index + 1;
+            while next < N {
+                if descriptor.index() == chain[next].index() {
+                    return Err(DescriptorQueueError::DuplicateDescriptor);
+                }
+                next += 1;
+            }
+            index += 1;
+        }
+
+        let mut index = 0;
+        while index < N {
+            self.free_descriptor(chain[index].index())?;
+            index += 1;
+        }
+        Ok(())
+    }
+}
+
+impl Default for DescriptorFreeList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct VirtioMmio {
     base: NonNull<u32>,
     _not_send_sync: PhantomData<*mut u32>,
@@ -508,6 +653,141 @@ mod tests {
                 sector: 10,
             }
         );
+    }
+
+    #[test]
+    fn descriptor_chain_allocation_builds_legacy_request_shape() {
+        let mut free = DescriptorFreeList::new();
+        let chain = free
+            .alloc_chain([
+                DescriptorBuffer::new(
+                    0x2000,
+                    size_of::<VirtioBlkReq>() as u32,
+                    DescriptorAccess::DeviceReadable,
+                ),
+                DescriptorBuffer::new(
+                    0x3000,
+                    VIRTIO_BLK_SECTOR_SIZE as u32,
+                    DescriptorAccess::DeviceWritable,
+                ),
+                DescriptorBuffer::new(0x2080, 1, DescriptorAccess::DeviceWritable),
+            ])
+            .unwrap();
+
+        assert_eq!(free.available(), VIRTQ_NUM - 3);
+        assert_eq!(chain[0].index().raw(), 0);
+        assert_eq!(chain[1].index().raw(), 1);
+        assert_eq!(chain[2].index().raw(), 2);
+        assert_eq!(
+            chain[0].raw(),
+            VirtqDesc {
+                addr: 0x2000,
+                len: 16,
+                flags: VRING_DESC_F_NEXT,
+                next: 1,
+            }
+        );
+        assert_eq!(
+            chain[1].raw(),
+            VirtqDesc {
+                addr: 0x3000,
+                len: 512,
+                flags: VRING_DESC_F_WRITE | VRING_DESC_F_NEXT,
+                next: 2,
+            }
+        );
+        assert_eq!(
+            chain[2].raw(),
+            VirtqDesc {
+                addr: 0x2080,
+                len: 1,
+                flags: VRING_DESC_F_WRITE,
+                next: 0,
+            }
+        );
+    }
+
+    #[test]
+    fn descriptor_chain_exhaustion_does_not_consume_free_entries() {
+        let mut free = DescriptorFreeList::new();
+        let buffer = DescriptorBuffer::new(0x4000, 1, DescriptorAccess::DeviceReadable);
+
+        let held = free.alloc_chain([buffer; VIRTQ_NUM - 2]).unwrap();
+        assert_eq!(free.available(), 2);
+
+        assert_eq!(
+            free.alloc_chain([buffer; 3]),
+            Err(DescriptorQueueError::OutOfDescriptors)
+        );
+        assert_eq!(free.available(), 2);
+
+        free.free_chain(held).unwrap();
+        assert_eq!(free.available(), VIRTQ_NUM);
+    }
+
+    #[test]
+    fn descriptor_free_list_reclaims_chain_and_reuses_lowest_indices() {
+        let mut free = DescriptorFreeList::new();
+        let buffer = DescriptorBuffer::new(0x5000, 1, DescriptorAccess::DeviceReadable);
+        let chain = free.alloc_chain([buffer; 3]).unwrap();
+        let published = chain.map(|descriptor| descriptor.publish_to_device());
+
+        assert_eq!(
+            free.free_chain(published),
+            Err(DescriptorQueueError::DescriptorOwnedByDevice)
+        );
+        assert_eq!(free.available(), VIRTQ_NUM - 3);
+
+        let reclaimed = published.map(|descriptor| descriptor.reclaim_to_driver());
+        free.free_chain(reclaimed).unwrap();
+        assert_eq!(free.available(), VIRTQ_NUM);
+        assert!(free.is_free(DescriptorIndex::new(0).unwrap()));
+        assert!(free.is_free(DescriptorIndex::new(1).unwrap()));
+        assert!(free.is_free(DescriptorIndex::new(2).unwrap()));
+
+        let reused = free.alloc_chain([buffer; 3]).unwrap();
+        assert_eq!(reused[0].index().raw(), 0);
+        assert_eq!(reused[1].index().raw(), 1);
+        assert_eq!(reused[2].index().raw(), 2);
+    }
+
+    #[test]
+    fn descriptor_free_list_rejects_empty_and_duplicate_frees() {
+        let mut free = DescriptorFreeList::new();
+        let empty: [DescriptorBuffer; 0] = [];
+        assert_eq!(
+            free.alloc_chain(empty),
+            Err(DescriptorQueueError::EmptyChain)
+        );
+
+        let index = free.alloc().unwrap();
+        assert_eq!(free.free_descriptor(index), Ok(()));
+        assert_eq!(
+            free.free_descriptor(index),
+            Err(DescriptorQueueError::DescriptorAlreadyFree)
+        );
+    }
+
+    #[test]
+    fn descriptor_free_list_rejects_duplicate_chain_entries_without_partial_free() {
+        let mut free = DescriptorFreeList::new();
+        let first = free.alloc().unwrap();
+        let second = free.alloc().unwrap();
+        let descriptor =
+            DescriptorModel::driver_owned(first, 0x6000, 1, DescriptorAccess::DeviceReadable)
+                .with_next(second);
+
+        assert_eq!(
+            free.free_chain([descriptor, descriptor]),
+            Err(DescriptorQueueError::DuplicateDescriptor)
+        );
+        assert_eq!(free.available(), VIRTQ_NUM - 2);
+        assert!(!free.is_free(first));
+        assert!(!free.is_free(second));
+
+        free.free_descriptor(first).unwrap();
+        free.free_descriptor(second).unwrap();
+        assert_eq!(free.available(), VIRTQ_NUM);
     }
 
     #[test]

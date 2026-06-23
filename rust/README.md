@@ -149,5 +149,5 @@ It contains legacy virtio-mmio register constants and `VirtioMmio`, a no-std
 volatile register wrapper for the future `devb-virtio-rs` pilot. Host tests
 exercise the wrapper against an in-memory register array. The crate also models
 the C virtqueue descriptor, available-ring, used-ring, and block-request
-layouts, with explicit descriptor ownership and device mutability metadata. The
-C driver remains the boot default.
+layouts, with explicit descriptor ownership, device mutability metadata, and
+host-side descriptor free-list tests. The C driver remains the boot default.

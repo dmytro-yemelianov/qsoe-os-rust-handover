@@ -185,7 +185,7 @@ small reviewable change unless it explicitly says otherwise.
 - [x] Build virtqueue descriptor model.
   - Acceptance: descriptor ownership and mutability are represented explicitly.
 
-- [ ] Add host-side queue tests.
+- [x] Add host-side queue tests.
   - Acceptance: tests cover descriptor chaining and free-list behavior without
     hardware.
 

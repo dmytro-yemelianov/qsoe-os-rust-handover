@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 00:16 CEST.
+Last updated: 2026-06-24 00:20 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,31 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 00:20 CEST - Host-Side Virtqueue Tests Added
+
+Scope:
+
+- Added `DescriptorBuffer`, `DescriptorFreeList`, and queue errors to
+  `qsoe-virtio` for fixed-size descriptor chain allocation without hardware.
+- Mirrored the C driver's first-free descriptor map behavior.
+- Added host tests for three-descriptor request chaining, exhaustion without
+  partial consumption, device-owned chain rejection, reclaim, reuse, and double
+  free rejection.
+- Marked the Phase 6 host-side queue tests task complete.
+
+Commands:
+
+- `make rust-quality`
+
+Result:
+
+- Descriptor chaining and free-list behavior are covered by host-side Rust
+  tests before implementing the opt-in Rust block driver.
+
+Follow-up:
+
+- Implement the opt-in Rust virtio block driver binary.
 
 ## 2026-06-24 00:16 CEST - Virtqueue Descriptor Model Added
 

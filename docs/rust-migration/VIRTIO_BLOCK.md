@@ -261,6 +261,9 @@ shapes used by the C driver:
   published to the device.
 - `DescriptorModel` combines index, owner, access, address, length, and next
   pointer metadata and converts to the raw `VirtqDesc` ring entry.
+- `DescriptorFreeList` mirrors the C driver's first-free descriptor map and
+  allocates fixed-size host-testable chains.
 
-This layer deliberately does not allocate descriptor chains yet. Free-list and
-chain lifecycle tests are the next Phase 6 task.
+Host tests cover the current three-descriptor request shape, descriptor
+exhaustion without partial consumption, device-owned chain rejection, reclaim,
+and descriptor reuse without touching hardware.
