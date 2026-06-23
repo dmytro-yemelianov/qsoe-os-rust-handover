@@ -223,7 +223,7 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: selected component has a written mini-spec and smoke test before
     implementation.
 
-- [ ] Pick first Rust test helper.
+- [x] Pick first Rust test helper.
   - Acceptance: helper validates IPC or sync behavior and is safe to include in
     test images.
 

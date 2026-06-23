@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 01:47 CEST.
+Last updated: 2026-06-24 01:53 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,35 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 01:53 CEST - First Rust Test Helper Selected
+
+Scope:
+
+- Added `TEST_HELPER.md` selecting `test_msgpass-rs` as the first Rust
+  in-guest test helper candidate.
+- Documented the existing C helper contract, IPC behavior, safety constraints,
+  and Rust acceptance gates.
+- Compared `test_msgpass` with `test_syncspace`; selected `test_msgpass`
+  because it validates the bulk IPC path on QSOE/L today.
+- Linked the selection from the migration docs index.
+- Marked the Phase 8 test-helper selection task complete.
+
+Commands:
+
+- `sed -n '1,260p' quser/test/msgpass/main.c`
+- `sed -n '450,560p' quser/test/suite/sync.c`
+- `sed -n '1,260p' quser/test/suite/msgpass_test.c`
+
+Result:
+
+- `test_msgpass-rs` is selected for later implementation. The C helper remains
+  the default `/usr/bin/test_msgpass` until an opt-in Rust artifact passes the
+  existing suite `[msgpass]` section.
+
+Follow-up:
+
+- Define the proof period needed before retiring a C implementation.
 
 ## 2026-06-24 01:47 CEST - Pipe Selected As Second Rust Service
 
