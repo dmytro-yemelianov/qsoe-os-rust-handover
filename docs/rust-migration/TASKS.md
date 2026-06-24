@@ -135,7 +135,7 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: docs cover startup, device registration, ring size, message
     receive loop, overflow behavior, and observable logs.
 
-- [ ] Add `/dev/slog` smoke test.
+- [x] Add `/dev/slog` smoke test.
   - Acceptance: a test or helper writes a log message and verifies it is
     accepted or observable through the existing interface.
 
@@ -310,10 +310,10 @@ small reviewable change unless it explicitly says otherwise.
 - [x] Add unsafe-code review checklist.
   - Acceptance: checklist is referenced by Rust migration PRs.
 
-- [ ] Add migration status table.
+- [x] Add migration status table.
   - Acceptance: docs show C default, Rust opt-in, Rust default, and retired
     status for each component.
 
-- [ ] Add release-note template.
+- [x] Add release-note template.
   - Acceptance: template records language changes, rollback flags, test
     evidence, and known limitations.

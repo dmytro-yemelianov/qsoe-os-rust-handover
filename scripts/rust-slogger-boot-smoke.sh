@@ -7,11 +7,15 @@ set -eu
 
 usage() {
     cat <<'EOF'
-usage: scripts/rust-slogger-boot-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
+usage: scripts/rust-slogger-boot-smoke.sh [-t seconds] [-o log] [--prepare-only] [--keep-running] [-- <emu args>]
 
 Builds a temporary Rust-slogger LQ modpkg.cpio under build/rust-slogger/,
 rebuilds the LQ QEMU image with MODPKG_CPIO pointing at it, and delegates to
 scripts/boot-smoke.sh while matching "[slogger-rs] alive".
+
+With --prepare-only, the script builds the Rust-slogger LQ image and exits
+before starting QEMU. This is intended for narrower smokes that need to
+interact with the guest directly.
 
 Environment:
   RUST_SLOGGER_MODPKG_CPIO   output archive, default build/rust-slogger/modpkg-lq-rust-slogger.cpio
@@ -23,6 +27,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MAKE=${MAKE:-make}
 timeout_s=180
 log=
+prepare_only=0
 keep_running=0
 emu_args=()
 
@@ -40,6 +45,10 @@ while [ "$#" -gt 0 ]; do
             ;;
         --keep-running)
             keep_running=1
+            shift
+            ;;
+        --prepare-only)
+            prepare_only=1
             shift
             ;;
         -h|--help)
@@ -131,6 +140,11 @@ echo "rust-slogger-boot-smoke.sh: wrote $rust_cpio"
 
 echo "rust-slogger-boot-smoke.sh: rebuilding LQ QEMU image with Rust slogger cpio"
 "$MAKE" -C "$ROOT/lq" MODPKG_CPIO="$rust_cpio" --no-print-directory
+
+if [ "$prepare_only" -eq 1 ]; then
+    echo "rust-slogger-boot-smoke.sh: prepared Rust slogger LQ image"
+    exit 0
+fi
 
 boot_args=(-k lq -t "$timeout_s")
 if [ -n "$log" ]; then

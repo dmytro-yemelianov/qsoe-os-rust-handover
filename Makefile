@@ -17,12 +17,17 @@
 
 QSOE_RUST_SLOGGER ?= 0
 QSOE_RUST_VIRTIO ?= 0
+QSOE_RUST_TEST_MSGPASS ?= 0
+QSOE_RUST_PIPE ?= 0
 SELECTED_SLOGGER_ELF ?= build/rust/selected/sbin/slogger.elf
 SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
+SELECTED_TEST_MSGPASS_ELF ?= build/rust/selected/usr/bin/test_msgpass.elf
+SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
 
 .PHONY: all prepare clean nvme nvme-populate virtio fsqrv-image tree \
         check-host-tools check-qrvfs-fixture check-qrvfs-rust-fixture \
-        check-elf-reloc-fixture check-gpt-fixture \
+        check-elf-reloc-fixture check-gpt-fixture slog-readback-smoke \
+        rust-slog-readback-smoke \
         index-c index-c-files index-c-tags index-c-cscope index-c-global \
         index-c-static index-c-compile-db tidy-c \
         elf-baseline audit-artifacts \
@@ -30,8 +35,11 @@ SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
         rust-coverage \
         rust-qsoe-link-smoke rust-slogger-link-smoke \
         rust-service-example-link-smoke rust-virtio-link-smoke \
-        slogger-artifact virtio-artifact rust-slogger-boot-smoke \
-        rust-virtio-boot-smoke rust-virtio-file-smoke pipe-smoke \
+        rust-test-msgpass-link-smoke rust-pipe-link-smoke \
+        slogger-artifact virtio-artifact test-msgpass-artifact pipe-artifact \
+        rust-slogger-boot-smoke \
+        rust-virtio-boot-smoke rust-virtio-file-smoke \
+        rust-test-msgpass-smoke pipe-smoke rust-pipe-smoke \
         procfs-smoke \
         container-toolchain-build container-shell container-check \
         container-index-c container-index-c-static container-index-c-compile-db \
@@ -42,9 +50,14 @@ SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
         container-rust-coverage \
         container-rust-qsoe-link-smoke \
         container-rust-slogger-link-smoke container-rust-service-example-link-smoke \
-        container-rust-virtio-link-smoke container-slogger-artifact \
-        container-virtio-artifact container-rust-virtio-boot-smoke \
+        container-rust-virtio-link-smoke container-rust-test-msgpass-link-smoke \
+        container-rust-pipe-link-smoke \
+        container-slogger-artifact container-virtio-artifact \
+        container-test-msgpass-artifact container-pipe-artifact \
+        container-rust-virtio-boot-smoke \
+        container-rust-slog-readback-smoke container-rust-test-msgpass-smoke \
         container-rust-virtio-file-smoke container-pipe-smoke \
+        container-rust-pipe-smoke \
         container-procfs-smoke \
         container-source-build
 
@@ -102,7 +115,7 @@ FSQRV_SYSINIT  := quser/sbin/sysinit
 # before emu.sh delegates here).  Each "<src>:<name>" pair becomes
 # /usr/bin/<name> under the mount.  The test binaries live here rather than
 # in the boot cpio -- modpkg carries only what bring-up needs.
-FSQRV_BINS     := quser/build/test/suite/suite.elf:suite \
+FSQRV_BINS     ?= quser/build/test/suite/suite.elf:suite \
                   quser/build/test/msgpass/test_msgpass.elf:test_msgpass \
                   quser/build/test/syncspace/test_syncspace.elf:test_syncspace \
                   quser/build/utils/time.elf:time \
@@ -159,6 +172,12 @@ check-elf-reloc-fixture:
 
 check-gpt-fixture:
 	@scripts/check-gpt-fixture.py
+
+slog-readback-smoke:
+	@scripts/slog-readback-smoke.py
+
+rust-slog-readback-smoke:
+	@scripts/slog-readback-smoke.py --rust-slogger
 
 index-c: index-c-static
 
@@ -226,6 +245,12 @@ rust-virtio-link-smoke:
 	    RUST_EXTRA_LDLIBS="-lressrv" \
 	    scripts/rust-qsoe-link-smoke.sh
 
+rust-test-msgpass-link-smoke:
+	@RUST_PACKAGE=qsoe-test-msgpass-rs scripts/rust-qsoe-link-smoke.sh
+
+rust-pipe-link-smoke:
+	@RUST_PACKAGE=qsoe-pipe-rs scripts/rust-qsoe-link-smoke.sh
+
 slogger-artifact:
 	@QSOE_RUST_SLOGGER=$(QSOE_RUST_SLOGGER) \
 	    SELECTED_SLOGGER_ELF=$(SELECTED_SLOGGER_ELF) \
@@ -236,6 +261,16 @@ virtio-artifact:
 	    SELECTED_VIRTIO_ELF=$(SELECTED_VIRTIO_ELF) \
 	    scripts/select-virtio-artifact.sh
 
+test-msgpass-artifact:
+	@QSOE_RUST_TEST_MSGPASS=$(QSOE_RUST_TEST_MSGPASS) \
+	    SELECTED_TEST_MSGPASS_ELF=$(SELECTED_TEST_MSGPASS_ELF) \
+	    scripts/select-test-msgpass-artifact.sh
+
+pipe-artifact:
+	@QSOE_RUST_PIPE=$(QSOE_RUST_PIPE) \
+	    SELECTED_PIPE_ELF=$(SELECTED_PIPE_ELF) \
+	    scripts/select-pipe-artifact.sh
+
 rust-slogger-boot-smoke:
 	@scripts/rust-slogger-boot-smoke.sh
 
@@ -245,8 +280,14 @@ rust-virtio-boot-smoke:
 rust-virtio-file-smoke:
 	@scripts/rust-virtio-file-smoke.sh
 
+rust-test-msgpass-smoke:
+	@scripts/rust-test-msgpass-smoke.sh
+
 pipe-smoke:
 	@scripts/pipe-smoke.sh
+
+rust-pipe-smoke:
+	@scripts/rust-pipe-smoke.sh
 
 procfs-smoke:
 	@scripts/procfs-smoke.sh
@@ -307,6 +348,12 @@ container-rust-service-example-link-smoke:
 container-rust-virtio-link-smoke:
 	@scripts/container-toolchain.sh run make rust-virtio-link-smoke
 
+container-rust-test-msgpass-link-smoke:
+	@scripts/container-toolchain.sh run make rust-test-msgpass-link-smoke
+
+container-rust-pipe-link-smoke:
+	@scripts/container-toolchain.sh run make rust-pipe-link-smoke
+
 container-slogger-artifact:
 	@scripts/container-toolchain.sh run make slogger-artifact \
 	    QSOE_RUST_SLOGGER=$(QSOE_RUST_SLOGGER) \
@@ -317,14 +364,33 @@ container-virtio-artifact:
 	    QSOE_RUST_VIRTIO=$(QSOE_RUST_VIRTIO) \
 	    SELECTED_VIRTIO_ELF=$(SELECTED_VIRTIO_ELF)
 
+container-test-msgpass-artifact:
+	@scripts/container-toolchain.sh run make test-msgpass-artifact \
+	    QSOE_RUST_TEST_MSGPASS=$(QSOE_RUST_TEST_MSGPASS) \
+	    SELECTED_TEST_MSGPASS_ELF=$(SELECTED_TEST_MSGPASS_ELF)
+
+container-pipe-artifact:
+	@scripts/container-toolchain.sh run make pipe-artifact \
+	    QSOE_RUST_PIPE=$(QSOE_RUST_PIPE) \
+	    SELECTED_PIPE_ELF=$(SELECTED_PIPE_ELF)
+
 container-rust-virtio-boot-smoke:
 	@scripts/container-toolchain.sh run make rust-virtio-boot-smoke
+
+container-rust-slog-readback-smoke:
+	@scripts/container-toolchain.sh run make rust-slog-readback-smoke
+
+container-rust-test-msgpass-smoke:
+	@scripts/container-toolchain.sh run make rust-test-msgpass-smoke
 
 container-rust-virtio-file-smoke:
 	@scripts/container-toolchain.sh run make rust-virtio-file-smoke
 
 container-pipe-smoke:
 	@scripts/container-toolchain.sh run make pipe-smoke
+
+container-rust-pipe-smoke:
+	@scripts/container-toolchain.sh run make rust-pipe-smoke
 
 container-procfs-smoke:
 	@scripts/container-toolchain.sh run make procfs-smoke

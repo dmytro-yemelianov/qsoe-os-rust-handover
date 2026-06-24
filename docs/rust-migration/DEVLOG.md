@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 02:34 CEST.
+Last updated: 2026-06-24 08:32 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,265 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 08:32 CEST - Rust Pipe Opt-In
+
+Scope:
+
+- Added `qsoe-pipe`, a dependency-free no-std state machine for the current C
+  `/sbin/pipe` behavior: fixed pipe pool, 4 KiB rings, badge decode,
+  wrong-end errors, parked reader/writer wakeups, close handling, EOF, and pool
+  exhaustion.
+- Added `qsoe-pipe-rs`, a direct QSOE resource-server wrapper for `/dev/pipe`.
+- Added `QSOE_RUST_PIPE=1 make pipe-artifact`, `make rust-pipe-link-smoke`,
+  `make rust-pipe-smoke`, and container wrappers.
+- Updated pipe migration docs and the root progress README.
+
+Commands:
+
+- `cargo fmt --manifest-path rust/Cargo.toml --all`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-pipe`
+- `cargo check --manifest-path rust/Cargo.toml -p qsoe-pipe-rs --target riscv64gc-unknown-none-elf`
+- `bash -n scripts/select-pipe-artifact.sh scripts/rust-pipe-smoke.sh`
+- `make -n rust-pipe-link-smoke pipe-artifact rust-pipe-smoke container-rust-pipe-link-smoke container-pipe-artifact container-rust-pipe-smoke`
+- `make rust-pipe-link-smoke`
+- `QSOE_RUST_PIPE=1 make pipe-artifact`
+- `scripts/rust-pipe-smoke.sh -t 180 -o build/rust-pipe/boot-smoke-lq-rust-pipe.log`
+
+Result:
+
+- `qsoe-pipe` passed 11 host tests.
+- `qsoe-pipe-rs` linked as a QSOE RISC-V userland ELF and passed the strict
+  ELF audit.
+- The Rust-selected LQ boot smoke reached `login:` and found both
+  `[pipe-rs] /dev/pipe registered` and
+  `rust-pipe-smoke: started /sbin/pipe` in the boot log.
+
+Follow-up:
+
+- Keep the C pipe manager as the default until a data-path smoke exists for
+  real pipe creation through libc/taskman and a Rust-default release candidate
+  with C rollback is approved. The data-path smoke is tracked by #90.
+
+## 2026-06-24 07:54 CEST - Rust Test Msgpass Helper Opt-In
+
+Scope:
+
+- Added `qsoe-test-msgpass-rs`, a no-std Rust replacement for the C
+  `/usr/bin/test_msgpass` helper.
+- Added the `QSOE_RUST_TEST_MSGPASS=1` selector and
+  `make test-msgpass-artifact`.
+- Added `make rust-test-msgpass-link-smoke` and
+  `make rust-test-msgpass-smoke`.
+- Made top-level `FSQRV_BINS` environment-overridable so focused smokes can
+  preserve an explicit qrvfs binary list through `lq/emu.sh`'s idempotent
+  `make virtio` rebuild without editing the nested `lq` component.
+- Added the root `README.md` migration-progress handover.
+
+Commands:
+
+- `bash -n scripts/rust-test-msgpass-smoke.sh scripts/select-test-msgpass-artifact.sh lq/emu.sh`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-test-msgpass-rs --features host-tests`
+- `make rust-test-msgpass-link-smoke`
+- `QSOE_RUST_TEST_MSGPASS=1 make test-msgpass-artifact`
+- `scripts/rust-test-msgpass-smoke.sh -t 240 -o build/rust-test-msgpass/boot-smoke-lq-rust-test-msgpass-env-override.log`
+
+Result:
+
+- The initial fixed 4 MiB Rust `.bss` buffer failed QSOE/L spawn with
+  `frame table overflow (>256 pages)`. The helper now allocates the receive
+  buffer at runtime through libc `malloc`/`free`.
+- The first Rust-selected round trip passes the 4 MiB minus 2 byte bulk IPC
+  payload and halfword-swap checks.
+- The helper retries `/dev/msgpass` registration so the `--no-reply` subcase
+  waits for stale path cleanup instead of attaching to an old channel.
+- `rust-test-msgpass-smoke.sh` passed. The wider suite still contains the
+  known unrelated QSOE/L sync failure, so this smoke verifies the `[msgpass]`
+  markers and boot-to-login rather than requiring a clean full-suite exit.
+
+Follow-up:
+
+- Keep the C helper as the default until CI/runner evidence supports a
+  Rust-default test-image decision.
+
+## 2026-06-24 07:31 CEST - Rust Slogger Readback Smoke
+
+Scope:
+
+- Added `--rust-slogger` to `scripts/slog-readback-smoke.py`.
+- Made the default readback smoke prepare a C-slogger LQ image before checking
+  `[slogger] alive`.
+- Added `--prepare-only` to `scripts/rust-slogger-boot-smoke.sh` so narrower
+  smokes can reuse the Rust-slogger CPIO/image preparation without running the
+  login boot smoke first.
+- Added `make rust-slog-readback-smoke` and
+  `make container-rust-slog-readback-smoke`.
+- Updated `SLOGGER.md`, `STATUS.md`, and `rust/README.md` for the new parity
+  evidence.
+
+Commands:
+
+- `python3 -m py_compile scripts/slog-readback-smoke.py`
+- `bash -n scripts/rust-slogger-boot-smoke.sh`
+- `make -n slog-readback-smoke rust-slog-readback-smoke container-rust-slog-readback-smoke`
+- `git diff --check`
+- `scripts/slog-readback-smoke.py -t 180 -o build/slog-readback-smoke-lq-c-slogger-after-rust.log`
+- `scripts/slog-readback-smoke.py --rust-slogger -t 180 -o build/slog-readback-smoke-lq-rust-slogger-final.log`
+
+Result:
+
+- The default C-selected readback smoke rebuilt a C-slogger LQ image and
+  observed the `pci-server` slog entry through `/bin/sloginfo`.
+- The Rust-selected readback smoke rebuilt an opt-in `slogger-rs` LQ image and
+  observed the same `pci-server` slog entry through `/bin/sloginfo`.
+
+Follow-up:
+
+- Use the #86 evidence for #85 before any Rust-default release-candidate
+  decision.
+- The next `slogger` gate remains a Rust-default release candidate with C
+  rollback.
+
+## 2026-06-24 07:25 CEST - Current Follow-up Issues Created
+
+Scope:
+
+- Created GitHub issues for the current handover blockers and next execution
+  steps:
+  - #82: restore self-hosted runner availability for the draft stack.
+  - #83: resolve or explicitly record the CodeRabbit usage-credit blocker.
+  - #84: prepare the draft stack for bottom-up merge.
+  - #85: add Rust-selected `/dev/slog` readback parity smoke.
+- Updated `HANDOVER.md` to reference those issue numbers from the blocker and
+  next-work sections.
+
+Commands:
+
+- `gh issue list --state all --limit 120 --json number,title,state,labels,url`
+- GitHub issue creation through the connected GitHub tool.
+
+Result:
+
+- The latest plan is tracked in GitHub instead of only in local migration docs.
+
+Follow-up:
+
+- Use #82 and #83 to decide when the draft stack can become ready for review.
+- Use #85 as the next slogger parity task after the current stack lands.
+
+## 2026-06-24 07:21 CEST - Handover Status Refreshed
+
+Scope:
+
+- Updated `HANDOVER.md` from the old macOS/GitLab snapshot to the current Linux
+  GitHub handover repository.
+- Recorded the active stacked PR chain from #42 through #80.
+- Documented the #42 self-hosted runner queue and #60 CodeRabbit credit status
+  as external blockers.
+- Replaced stale next-work items with current merge-readiness and post-stack
+  implementation tasks.
+
+Commands:
+
+- `git remote -v`
+- `gh pr list --state open --limit 120 --json number,title,headRefName,baseRefName,isDraft,mergeable,statusCheckRollup,url`
+- `gh run list --limit 20 --json databaseId,displayTitle,status,conclusion,workflowName,headBranch,event,createdAt,updatedAt,url`
+
+Result:
+
+- The checked-in handover now matches the current machine, branch tip, stack
+  shape, validation state, and remaining blockers.
+
+Follow-up:
+
+- Update `HANDOVER.md` again after the draft stack is marked ready, merged, or
+  retargeted.
+
+## 2026-06-24 02:46 CEST - Slog Readback Smoke Stacked
+
+Scope:
+
+- Ported the existing `/dev/slog` readback smoke into the active migration
+  stack.
+- Added `scripts/slog-readback-smoke.py`.
+- Added `make slog-readback-smoke`.
+- Documented the smoke in `SLOGGER.md`.
+- Marked the `/dev/slog` smoke backlog item complete in the stacked docs.
+
+Commands:
+
+- `git cherry-pick 0971d1faf80f0416339875aa7ea36cf761f40201`
+- `python3 -m py_compile scripts/slog-readback-smoke.py`
+- `make -n slog-readback-smoke`
+- `scripts/slog-readback-smoke.py -t 120 -o build/slog-readback-smoke-stacked.log`
+
+Result:
+
+- The stack now carries the readback smoke that had previously lived only on
+  side PR #43. This prevents later stacked docs from reopening the completed
+  `/dev/slog` smoke task.
+- The stacked smoke run observed a `pci-server:` entry through `/bin/sloginfo`.
+- Follow-up docs now distinguish the C readback baseline from the later
+  Rust-selected readback parity gate.
+
+Follow-up:
+
+- Keep the side PR closed once this stacked PR is open, so issue #2 has one
+  active implementation path.
+
+## 2026-06-24 02:42 CEST - Release Note Template Added
+
+Scope:
+
+- Added `RELEASE_NOTE_TEMPLATE.md` for Rust migration release notes.
+- Required language-change, rollback, test-evidence, known-limitation, and
+  unsafe-review fields in the template.
+- Linked the template from the migration index, release/rollback policy, and
+  retirement checklist.
+- Marked the release-note-template task complete.
+
+Commands:
+
+- `gh issue view 40 --json number,title,body,state,url,labels`
+- `rg -n "release note|release-note|language change|rollback|known limitations|template|Release And Rollback|C rollback|Rust default|Retired" docs .github Makefile scripts -g "!build/**" -g "!rust/target/**" -g "!rust/fuzz/target/**"`
+
+Result:
+
+- Future Rust opt-in, Rust-default, and C-retirement notes have one template for
+  language changes, rollback flags, test evidence, and limitations.
+
+Follow-up:
+
+- Use the template when a component changes selector state, default language, or
+  retirement status.
+
+## 2026-06-24 02:38 CEST - Migration Status Matrix Added
+
+Scope:
+
+- Added `STATUS.md` as the current migration status matrix.
+- Listed every tracked replacement candidate with C default, Rust opt-in, Rust
+  default, and retired status.
+- Linked the matrix from the migration index and retirement gate.
+- Marked the migration-status-table task complete.
+
+Commands:
+
+- `gh issue view 39 --json number,title,body,state,url,labels`
+- `rg -n "status|default|opt-in|retired|retirement|component|slogger|virtio|pipe|procfs|minimal|service-example|Rust" docs/rust-migration -g "*.md"`
+- `rg -n "QSOE_RUST|USE_RUST|RUST_.*=|rust-.*smoke|link-smoke|boot|artifact|retire|default" Makefile scripts rust quser lq docs/rust-migration/SLOGGER.md docs/rust-migration/SLOGGER_BOOT_COMPARE.md docs/rust-migration/VIRTIO_BLOCK.md docs/rust-migration/PIPE.md docs/rust-migration/TEST_HELPER.md docs/rust-migration/TASK_MANAGER_PROCFS_BOUNDARY.md -g "!rust/target/**" -g "!rust/fuzz/target/**"`
+
+Result:
+
+- The docs now show that the host `treeqrvfs` inspector, `slogger`, and
+  `devb-virtio` are C-default with Rust opt-in coverage, while `pipe`,
+  `test_msgpass`, and `tm_procfs` remain C-default future candidates. No
+  component is Rust-default or retired.
+
+Follow-up:
+
+- Update `STATUS.md` whenever a component gains a Rust selector, flips default,
+  or enters a retirement PR.
 
 ## 2026-06-24 02:34 CEST - Unsafe Review Checklist Added
 
