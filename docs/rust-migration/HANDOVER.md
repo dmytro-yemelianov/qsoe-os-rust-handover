@@ -1,6 +1,6 @@
 # QSOE Migration Handover
 
-Last updated: 2026-06-24 14:09 CEST.
+Last updated: 2026-06-24 14:20 CEST.
 
 This handover captures the current QSOE Rust migration and workflow work so it
 can move from the macOS/container setup to a native Linux development machine.
@@ -22,7 +22,7 @@ origin git@github.com:dmytro-yemelianov/qsoe-os-rust-handover.git
 Current main tip:
 
 ```text
-df8549d0c302ef882ce888410337e7a5298dd720
+8af4927a611e0e97cd4c2144a12b1c3b5f77e2f0
 ```
 
 The local tree adds:
@@ -69,15 +69,15 @@ the C rollback drill and was squash-merged into `main` at
 
 PR #94 added the Rust pipe data-path smoke to CI, PR #99 added the Rust
 `test_msgpass` smoke to CI, PR #100 added both `slogger-rs` RC readback smokes
-to CI, PR #101 added host-model coverage for `tm_procfs`, and PR #104 added
-the Rust `tm_procfs` opt-in provider. The current `main` tip is
-`df8549d0c302ef882ce888410337e7a5298dd720`.
+to CI, PR #101 added host-model coverage for `tm_procfs`, PR #104 added the
+Rust `tm_procfs` opt-in provider, and PR #105 added the `tm_procfs` evidence
+gate. The current `main` tip is
+`8af4927a611e0e97cd4c2144a12b1c3b5f77e2f0`.
 
 Current open follow-ups:
 
-- #26: keep C retirement blocked until the `slogger-rs` RC evidence window is
-  accepted and the retirement checklist in `RETIREMENT.md` is satisfied.
-- #95: accept the `slogger-rs` Rust-default RC evidence window.
+- #26: keep C retirement blocked until the retirement checklist in
+  `RETIREMENT.md` is satisfied and a separate removal PR is reviewed.
 - #96: capture trusted CI evidence for the Rust pipe data-path smoke.
 - #97: capture trusted CI evidence for the Rust `test_msgpass` smoke.
 - #103: capture `tm_procfs` Rust opt-in evidence before any default-selection
@@ -266,8 +266,9 @@ The strict ELF audit showed:
 - `slogger` has C-selected and Rust-selected `/dev/slog` readback baselines.
   It also has a Rust-default RC path with `make slogger-rc-readback-smoke` and
   a C rollback drill with `make slogger-rc-rollback-smoke`. CI includes both
-  container RC readback smokes for trusted PRs and pushes. C retirement is still
-  blocked until #95's RC evidence window is accepted.
+  container RC readback smokes for trusted PRs and pushes. #95's
+  local-equivalent RC evidence window is accepted; C retirement is still
+  blocked by #26.
 - `test_msgpass` has an opt-in Rust helper and Rust-selected suite `[msgpass]`
   smoke. CI includes `container-rust-test-msgpass-smoke` for trusted PRs and
   pushes. The wider suite still reports the known unrelated QSOE/L sync
@@ -297,9 +298,8 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 
 ## Next Recommended Work
 
-1. Use green trusted CI runs of `make container-slogger-rc-readback-smoke` and
-   `make container-slogger-rc-rollback-smoke` for #95; do not retire the C
-   `slogger` until #26's retirement checklist is satisfied.
+1. Keep C `slogger` retirement blocked until #26's retirement checklist is
+   satisfied and a separate removal PR is reviewed.
 2. Use a green trusted CI run of `make container-rust-pipe-data-smoke` on the
    configured `[self-hosted, X64]` runner as hosted-runner evidence before
    considering Rust pipe for a default-selection release candidate.

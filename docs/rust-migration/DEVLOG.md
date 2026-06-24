@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 14:09 CEST.
+Last updated: 2026-06-24 14:20 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,38 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 14:20 CEST - Slogger RC Evidence Accepted
+
+Scope:
+
+- Accepted #95's local-equivalent `slogger-rs` Rust-default RC evidence window.
+- Re-ran the Rust-default RC readback smoke and the C rollback readback smoke
+  on current `main`.
+- Updated `SLOGGER_RC.md`, STATUS, HANDOVER, and README to record the accepted
+  evidence while keeping C retirement blocked by #26.
+
+Commands:
+
+- `make slogger-rc-readback-smoke`
+- `make slogger-rc-rollback-smoke`
+- `git diff --check`
+
+Result:
+
+- Rust-default RC readback passed and observed `pci-server:` through
+  `/bin/sloginfo` in
+  `build/slog-readback-smoke-lq-slogger-rc-rust-default-20260624-142035.log`.
+- C rollback readback passed and observed `pci-server:` through `/bin/sloginfo`
+  in
+  `build/slog-readback-smoke-lq-slogger-rc-c-rollback-20260624-142039.log`.
+- `SLOGGER_RC.md` keeps the rollback command and rollback window. No C
+  implementation is removed or disabled.
+
+Follow-up:
+
+- Keep #26 blocked until `RETIREMENT.md` is satisfied and a separate removal PR
+  is reviewed.
 
 ## 2026-06-24 14:09 CEST - tm_procfs Evidence Gate
 

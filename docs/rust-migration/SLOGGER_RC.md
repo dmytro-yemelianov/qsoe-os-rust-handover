@@ -1,6 +1,6 @@
 # `slogger-rs` Rust-Default Release Candidate
 
-Captured: 2026-06-24 12:21 CEST.
+Captured: 2026-06-24 14:20 CEST.
 
 This note records the first `slogger` Rust-default release-candidate path. It
 does not retire the C implementation. Normal source builds still preserve the C
@@ -46,8 +46,8 @@ Equivalent boot-only rollback drill:
 QSOE_SLOGGER_RC_ROLLBACK=1 make slogger-rc-boot-smoke
 ```
 
-Rollback window: until the `slogger-rs` release-candidate evidence window is
-accepted and the C retirement gate in `RETIREMENT.md` is satisfied.
+Rollback window: still open until the C retirement gate in `RETIREMENT.md` is
+satisfied and a separate removal PR is reviewed.
 
 Rollback limitations: none known for the QSOE/L smoke paths. The rollback image
 uses the same C `/sbin/slogger` artifact as the pre-RC path.
@@ -59,7 +59,12 @@ uses the same C `/sbin/slogger` artifact as the pre-RC path.
 - Rust-default RC boot smoke: `make slogger-rc-boot-smoke`
 - Rust-default RC readback smoke: `make slogger-rc-readback-smoke`
 - C rollback readback smoke: `make slogger-rc-rollback-smoke`
-- CI or local-equivalent run: local QEMU evidence captured in `DEVLOG.md`
+- CI or local-equivalent run: accepted on 2026-06-24 14:20 CEST with local
+  QEMU evidence captured in `DEVLOG.md`
+- Rust-default RC readback log:
+  `build/slog-readback-smoke-lq-slogger-rc-rust-default-20260624-142035.log`
+- C rollback readback log:
+  `build/slog-readback-smoke-lq-slogger-rc-c-rollback-20260624-142039.log`
 
 The readback smoke boots QSOE/L into the rescue shell, runs `/bin/sloginfo`,
 and verifies a boot-time `pci-server:` slog entry is readable through
@@ -71,8 +76,8 @@ and verifies a boot-time `pci-server:` slog entry is readable through
 - The RC covers QSOE/L QEMU readback behavior, not a full hardware release.
 - The Rust startup text remains shorter than the C startup text as documented
   in `SLOGGER_BOOT_COMPARE.md`.
-- C retirement remains blocked by #26 until the full release-candidate and
-  rollback evidence window is complete.
+- C retirement remains blocked by #26 until the retirement checklist is
+  reviewed; this RC evidence does not remove or disable the C implementation.
 
 ## Review Notes
 

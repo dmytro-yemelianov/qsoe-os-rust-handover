@@ -21,7 +21,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | Baseline and tooling | Complete | Linux/container workflows, boot smokes, artifact audit, C indexing, clangd, clang-tidy wrapper, pinned Rust toolchain, cargo-deny, fuzz smoke, and coverage targets are in place. |
 | Rust ABI/FFI foundation | Complete | `qsoe-abi`, `qsoe-ffi`, and `qsoe-ressrv` compile for the QSOE target with layout tests and reviewed unsafe boundaries. |
 | Host qrvfs parser | Rust opt-in | Rust fixture checks compare against the existing C host tool; C remains the fixture oracle. |
-| `slogger` service | Rust default RC | `slogger-rs` links, boots, registers `/dev/slog`, has C-selected plus Rust-selected `/dev/slog` readback smokes, and now has `slogger-rc-*` targets with C rollback. Next gate: complete #95's trusted CI RC evidence window before any C retirement decision. |
+| `slogger` service | Rust default RC | `slogger-rs` links, boots, registers `/dev/slog`, has C-selected plus Rust-selected `/dev/slog` readback smokes, and has accepted #95 local-equivalent RC evidence for `slogger-rc-*` targets with C rollback. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
 | `devb-virtio` block driver | Rust opt-in | Rust MMIO/virtqueue model, host queue tests, opt-in boot smoke, and file-read smoke exist. Next gate: Rust-default release candidate with C rollback. |
 | Shared parsers | Complete for current scope | CPIO, syscfg/sysmap, and ELF inspection crates exist with host tests and host/guest reuse coverage. |
 | `pipe` service | Rust opt-in | `qsoe-pipe` host tests pass, `pipe-rs` links and audits, `make rust-pipe-smoke` boots LQ with Rust `/sbin/pipe` registered, and `make rust-pipe-data-smoke` proves a libc/taskman `pipe(2)` write/read round trip. Next gate: green CI evidence for the data-path smoke before a Rust-default release candidate with C rollback. |
@@ -39,8 +39,8 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
   release-candidate decision. CI now includes `container-rust-pipe-data-smoke`
   on the configured `[self-hosted, X64]` runner for trusted PRs and pushes.
 - `slogger-rs` now has a Rust-default release-candidate path with explicit C
-  rollback. Keep C retirement blocked until that RC evidence window is accepted.
-  Tracked by #95 and #26.
+  rollback. #95's local-equivalent RC evidence window is accepted; keep C
+  retirement blocked until #26's checklist and a separate removal PR.
 - Track the Rust `test_msgpass` trusted-CI evidence gate in #97 before any
   default test-image decision.
 - `tm_procfs` now has a Rust opt-in provider behind `QSOE_RUST_TM_PROCFS=1`.
