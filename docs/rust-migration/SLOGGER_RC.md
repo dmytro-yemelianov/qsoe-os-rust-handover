@@ -46,8 +46,8 @@ Equivalent boot-only rollback drill:
 QSOE_SLOGGER_RC_ROLLBACK=1 make slogger-rc-boot-smoke
 ```
 
-Rollback window: until at least one accepted release candidate has shipped and
-the C retirement gate in `RETIREMENT.md` is satisfied.
+Rollback window: until the `slogger-rs` release-candidate evidence window is
+accepted and the C retirement gate in `RETIREMENT.md` is satisfied.
 
 Rollback limitations: none known for the QSOE/L smoke paths. The rollback image
 uses the same C `/sbin/slogger` artifact as the pre-RC path.

@@ -9,6 +9,7 @@ import os
 import pathlib
 import subprocess
 import sys
+from collections.abc import Callable
 
 try:
     import pexpect
@@ -143,7 +144,7 @@ def prepare_rust_slogger_image() -> None:
     )
 
 
-def prepare_slogger_rc_image(rollback: bool) -> None:
+def prepare_slogger_rc_image(*, rollback: bool) -> None:
     env = os.environ.copy()
     env["QSOE_SLOGGER_RC_ROLLBACK"] = "1" if rollback else "0"
     run_command(
@@ -158,12 +159,27 @@ def main() -> int:
         print("slog-readback-smoke.py: timeout must be positive", file=sys.stderr)
         return 2
 
+    slogger_modes: dict[str, tuple[str, str, Callable[[], None]]] = {
+        "rust_slogger": (
+            "rust-slogger",
+            r"\[slogger-rs\] alive",
+            prepare_rust_slogger_image,
+        ),
+        "slogger_rc": (
+            "slogger-rc-rust-default",
+            r"\[slogger-rs\] alive",
+            lambda: prepare_slogger_rc_image(rollback=False),
+        ),
+        "slogger_rc_rollback": (
+            "slogger-rc-c-rollback",
+            r"\[slogger\] alive",
+            lambda: prepare_slogger_rc_image(rollback=True),
+        ),
+    }
     selected_modes = [
-        args.rust_slogger,
-        args.slogger_rc,
-        args.slogger_rc_rollback,
+        mode for mode in slogger_modes if getattr(args, mode)
     ]
-    if sum(1 for selected in selected_modes if selected) > 1:
+    if len(selected_modes) > 1:
         print(
             "slog-readback-smoke.py: select only one slogger mode",
             file=sys.stderr,
@@ -171,18 +187,10 @@ def main() -> int:
         return 2
 
     log = args.log
-    if args.slogger_rc:
-        slogger_mode = "slogger-rc-rust-default"
-        startup_pattern = r"\[slogger-rs\] alive"
-    elif args.slogger_rc_rollback:
-        slogger_mode = "slogger-rc-c-rollback"
-        startup_pattern = r"\[slogger\] alive"
-    elif args.rust_slogger:
-        slogger_mode = "rust-slogger"
-        startup_pattern = r"\[slogger-rs\] alive"
-    else:
-        slogger_mode = "c-slogger"
-        startup_pattern = r"\[slogger\] alive"
+    default_mode = ("c-slogger", r"\[slogger\] alive", prepare_c_slogger_image)
+    slogger_mode, startup_pattern, prepare_image = (
+        slogger_modes[selected_modes[0]] if selected_modes else default_mode
+    )
 
     if log is None:
         stamp = dt.datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -194,14 +202,7 @@ def main() -> int:
     elif not log.is_absolute():
         log = ROOT / log
 
-    if args.slogger_rc:
-        prepare_slogger_rc_image(rollback=False)
-    elif args.slogger_rc_rollback:
-        prepare_slogger_rc_image(rollback=True)
-    elif args.rust_slogger:
-        prepare_rust_slogger_image()
-    else:
-        prepare_c_slogger_image()
+    prepare_image()
 
     log.parent.mkdir(parents=True, exist_ok=True)
     child: pexpect.spawn | None = None
