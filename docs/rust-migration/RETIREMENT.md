@@ -60,7 +60,8 @@ Use this checklist when a future component is eligible for removal:
 - [ ] C behavior spec and Rust differences are linked.
 - [ ] Rust host tests and in-guest smokes are linked.
 - [ ] Strict ELF audit output is linked.
-- [ ] Release notes describe the language change and rollback window.
+- [ ] Release notes use `RELEASE_NOTE_TEMPLATE.md` and describe the language
+      change and rollback window.
 - [ ] The PR removes only the C implementation and stale C-specific build paths.
 ```
 

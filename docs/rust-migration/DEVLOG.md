@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 02:38 CEST.
+Last updated: 2026-06-24 02:42 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,32 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 02:42 CEST - Release Note Template Added
+
+Scope:
+
+- Added `RELEASE_NOTE_TEMPLATE.md` for Rust migration release notes.
+- Required language-change, rollback, test-evidence, known-limitation, and
+  unsafe-review fields in the template.
+- Linked the template from the migration index, release/rollback policy, and
+  retirement checklist.
+- Marked the release-note-template task complete.
+
+Commands:
+
+- `gh issue view 40 --json number,title,body,state,url,labels`
+- `rg -n "release note|release-note|language change|rollback|known limitations|template|Release And Rollback|C rollback|Rust default|Retired" docs .github Makefile scripts -g "!build/**" -g "!rust/target/**" -g "!rust/fuzz/target/**"`
+
+Result:
+
+- Future Rust opt-in, Rust-default, and C-retirement notes have one template for
+  language changes, rollback flags, test evidence, and limitations.
+
+Follow-up:
+
+- Use the template when a component changes selector state, default language, or
+  retirement status.
 
 ## 2026-06-24 02:38 CEST - Migration Status Matrix Added
 

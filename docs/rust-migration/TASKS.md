@@ -314,6 +314,6 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: docs show C default, Rust opt-in, Rust default, and retired
     status for each component.
 
-- [ ] Add release-note template.
+- [x] Add release-note template.
   - Acceptance: template records language changes, rollback flags, test
     evidence, and known limitations.
