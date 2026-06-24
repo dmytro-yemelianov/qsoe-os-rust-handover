@@ -40,7 +40,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         rust-service-example-link-smoke rust-virtio-link-smoke \
         rust-test-msgpass-link-smoke rust-pipe-link-smoke \
         slogger-artifact virtio-artifact test-msgpass-artifact pipe-artifact \
-        rust-tm-procfs-provider \
+        rust-tm-procfs-provider tm-procfs-evidence \
         rust-slogger-boot-smoke \
         rust-virtio-boot-smoke rust-virtio-file-smoke \
         rust-test-msgpass-smoke pipe-smoke rust-pipe-smoke \
@@ -59,7 +59,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-pipe-link-smoke \
         container-slogger-artifact container-virtio-artifact \
         container-test-msgpass-artifact container-pipe-artifact \
-        container-rust-tm-procfs-provider \
+        container-rust-tm-procfs-provider container-tm-procfs-evidence \
         container-rust-virtio-boot-smoke \
         container-rust-slog-readback-smoke container-slogger-rc-boot-smoke \
         container-slogger-rc-readback-smoke container-slogger-rc-rollback-smoke \
@@ -294,6 +294,9 @@ pipe-artifact:
 rust-tm-procfs-provider:
 	@scripts/build-rust-tm-procfs-provider.sh
 
+tm-procfs-evidence:
+	@scripts/tm-procfs-evidence.sh
+
 rust-slogger-boot-smoke:
 	@scripts/rust-slogger-boot-smoke.sh
 
@@ -402,6 +405,9 @@ container-pipe-artifact:
 
 container-rust-tm-procfs-provider:
 	@scripts/container-toolchain.sh run make rust-tm-procfs-provider
+
+container-tm-procfs-evidence:
+	@scripts/container-toolchain.sh run make tm-procfs-evidence
 
 container-rust-virtio-boot-smoke:
 	@scripts/container-toolchain.sh run make rust-virtio-boot-smoke

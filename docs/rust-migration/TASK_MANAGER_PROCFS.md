@@ -97,12 +97,16 @@ cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-procfs --features host-tes
 Image-level validation stays simple for the opt-in provider:
 
 - boot to the normal login milestone;
-- run `QSOE_RUST_TM_PROCFS=1 make procfs-smoke`, which exercises `/proc`
-  readdir and `/proc/1/info` reads through the Rust provider;
+- run `make tm-procfs-evidence`, which audits the Rust provider archive,
+  verifies C-default and Rust-selected taskman archive membership, checks NQ/LQ
+  taskman ELF flags/sections, and runs both C-default and Rust-selected
+  `/proc` smokes;
 - verify existing process creation and boot markers are unchanged.
 
-Next gate: #103 collects accepted hosted/Linux evidence before any
-Rust-default selection decision.
+Trusted CI runs `make container-tm-procfs-evidence` on the configured
+`[self-hosted, X64]` runner for same-repository PRs, pushes, and manual
+dispatches. Next gate: use a green #103 evidence run before any Rust-default
+selection decision.
 
 ## Selection Result
 

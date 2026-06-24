@@ -109,9 +109,12 @@ Before selecting the Rust object by default in any image:
 - the selected taskman artifact passes the existing ELF audit expectations for
   taskman;
 - boot smoke reaches the normal login milestone;
-- `QSOE_RUST_TM_PROCFS=1 make procfs-smoke` lists `/proc`, reads
-  `/proc/1/info`, and verifies the basic `pid:`, `ppid:`, `state:`, and
-  `name:` lines.
+- `make tm-procfs-evidence` audits the Rust provider archive, verifies that
+  C-default taskman archives contain `tm_procfs.o` and Rust-selected archives
+  do not, checks NQ/LQ taskman ELF flags/sections, and runs C-default plus
+  Rust-selected `/proc` smokes;
+- `make container-tm-procfs-evidence` passes on the configured trusted Linux
+  runner before any separate default-selection decision.
 
 ## Boundary Review Result
 

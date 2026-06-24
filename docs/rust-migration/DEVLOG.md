@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 14:00 CEST.
+Last updated: 2026-06-24 14:09 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,44 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 14:09 CEST - tm_procfs Evidence Gate
+
+Scope:
+
+- Added `scripts/tm-procfs-evidence.sh`, which builds the Rust provider,
+  audits provider/taskman ELF properties, verifies C-default and Rust-selected
+  archive membership, and runs both C-default and Rust-selected `/proc` smokes.
+- Added `make tm-procfs-evidence` and `make container-tm-procfs-evidence`.
+- Added the trusted CI step on the configured `[self-hosted, X64]` runner and
+  uploads for `build/tm-procfs-evidence/**/*.log` and `*.txt`.
+- Updated README, STATUS, HANDOVER, `TASK_MANAGER_PROCFS.md`, and
+  `TASK_MANAGER_PROCFS_BOUNDARY.md` to track #103 without changing the default
+  provider.
+
+Commands:
+
+- `bash -n scripts/tm-procfs-evidence.sh`
+- `make -n tm-procfs-evidence container-tm-procfs-evidence`
+- `make tm-procfs-evidence`
+- `make container-toolchain-build`
+- `make container-tm-procfs-evidence`
+- `git diff --check`
+
+Result:
+
+- The #103 gate now has one command that captures the Rust opt-in evidence and
+  the C rollback evidence side by side.
+- The CI job runs the evidence command only for trusted contexts, matching the
+  existing smoke-test trust boundary.
+- The refreshed Debian toolchain image includes the taskman soft-float Rust
+  target and passes the container evidence wrapper.
+- C remains the default `tm_procfs` provider.
+
+Follow-up:
+
+- Use a green trusted CI run of `container-tm-procfs-evidence` before opening
+  any separate Rust-default `tm_procfs` selection PR.
 
 ## 2026-06-24 13:55 CEST - tm_procfs Rust Opt-In Provider
 
