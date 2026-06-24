@@ -73,6 +73,17 @@ as the current C `slogger`, it also exposes a safe direct-service surface:
 - `DirectServer` and `DirectRequestHandler` provide the shared register,
   daemon-ready, receive-loop, pulse, and receive-error path for direct services.
   `slogger-rs` and `qsoe-service-example-rs` both use this bootstrap.
+  The example service documents and tests a minimal request/reply policy for
+  lifecycle, read, write, and unsupported operations.
+- `DirectServer::dispatch_received` is the host-testable receive-state step
+  used by the infinite `run` loop; tests cover message, pulse, and receive
+  error dispatch without requiring QEMU.
+- `ReplyStatus` models direct `MsgReply` labels: `0`/`EOK` on success and a
+  positive QSOE errno on failure.
+- `MethodStatus` models the C resource-server method convention: non-negative
+  success values, `-errno` failures, or the existing `QSOE_DEFER` sentinel.
+  It only converts into `ReplyStatus` for the `-errno` case, preserving the
+  current QSOE ABI instead of adding a Rust-specific status layer.
 
 Layout tests assert the current RV64 C ABI sizes and alignments.
 

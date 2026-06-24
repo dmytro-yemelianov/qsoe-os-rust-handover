@@ -27,6 +27,8 @@ reported by lq/emu.sh or nq/emu.sh and captured in the log.
 Environment:
   QSOE_BOOT_SLOGGER_PATTERN   slogger startup milestone; defaults to
                               "[slogger] alive"
+  QSOE_BOOT_VIRTIO_PATTERN    LQ virtio block milestone; defaults to
+                              "devb-virtio: /dev/vblk0 ready"
 EOF
 }
 
@@ -37,6 +39,7 @@ log=
 keep_running=0
 emu_args=()
 slogger_pattern=${QSOE_BOOT_SLOGGER_PATTERN:-"[slogger] alive"}
+virtio_pattern=${QSOE_BOOT_VIRTIO_PATTERN:-"devb-virtio: /dev/vblk0 ready"}
 
 while [ "$#" -gt 0 ]; do
     case "$1" in
@@ -125,7 +128,7 @@ if [ "$variant" = "lq" ]; then
     patterns+=(
         "spawning /sbin/init"
         "dispatcher ready"
-        "devb-virtio: /dev/vblk0 ready"
+        "$virtio_pattern"
     )
 else
     patterns+=(

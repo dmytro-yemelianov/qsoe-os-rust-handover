@@ -7,9 +7,10 @@ use core::ptr;
 use core::slice;
 
 pub use qsoe_abi::{
-    GidT, ModeT, OffT, QsoeMsgInfo, QsoeTimeT, SizeT, SsizeT, TmStat, UidT, ENOSYS, EOK, IO_CLOSE,
-    IO_CONNECT, IO_DUP, IO_FSTAT, IO_READ, IO_READDIR, IO_WRITE, QSOE_MI_PULSE, TM_IO_MAX,
-    TM_REQ_CLOSE, TM_REQ_FSTAT, TM_REQ_IO_READ, TM_REQ_IO_WRITE, TM_S_IFCHR, TM_WIRE_BASE_BYTES,
+    GidT, ModeT, OffT, QsoeMsgInfo, QsoeTimeT, SizeT, SsizeT, TmStat, UidT, EBUSY, EINVAL, EIO,
+    ENODEV, ENOSYS, EOK, IO_CLOSE, IO_CONNECT, IO_DUP, IO_FSTAT, IO_READ, IO_READDIR, IO_WRITE,
+    QSOE_MI_PULSE, TM_IO_MAX, TM_REQ_CLOSE, TM_REQ_FSTAT, TM_REQ_IO_READ, TM_REQ_IO_WRITE,
+    TM_S_IFBLK, TM_S_IFCHR, TM_WIRE_BASE_BYTES,
 };
 
 pub const QSOE_ATTR_MODE: c_uint = 0x01;
@@ -232,13 +233,72 @@ impl ReplyStatus {
         Self(status)
     }
 
-    pub const fn from_errno(errno: c_int) -> Self {
-        Self(errno)
+    pub fn from_errno(errno: c_int) -> Self {
+        Self(errno_code(errno))
+    }
+
+    pub fn from_method_status(status: MethodStatus) -> Option<Self> {
+        status.errno().map(Self::from_errno)
     }
 
     pub const fn raw(self) -> c_int {
         self.0
     }
+}
+
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct MethodStatus(SsizeT);
+
+impl MethodStatus {
+    pub const DEFER: Self = Self(QSOE_DEFER as SsizeT);
+
+    pub fn success(value: SsizeT) -> Self {
+        debug_assert!(value >= 0);
+        Self(value)
+    }
+
+    pub fn from_errno(errno: c_int) -> Self {
+        let errno = errno_code(errno);
+        if errno == EOK {
+            Self::success(0)
+        } else {
+            Self(-(errno as SsizeT))
+        }
+    }
+
+    pub const fn from_raw(status: SsizeT) -> Self {
+        Self(status)
+    }
+
+    pub const fn raw(self) -> SsizeT {
+        self.0
+    }
+
+    pub const fn is_deferred(self) -> bool {
+        self.0 == QSOE_DEFER as SsizeT
+    }
+
+    pub const fn is_success(self) -> bool {
+        self.0 >= 0
+    }
+
+    pub const fn is_error(self) -> bool {
+        self.0 < 0 && !self.is_deferred()
+    }
+
+    pub fn errno(self) -> Option<c_int> {
+        if self.is_error() {
+            Some((-self.0) as c_int)
+        } else {
+            None
+        }
+    }
+}
+
+fn errno_code(errno: c_int) -> c_int {
+    let code = errno.saturating_abs();
+    debug_assert!(code <= QSOE_ERRNO_MAX);
+    code
 }
 
 pub struct Channel {
@@ -426,14 +486,23 @@ impl<H> DirectServer<H> {
 }
 
 impl<H: DirectRequestHandler> DirectServer<H> {
+    fn dispatch_received_to(handler: &mut H, receive: DirectResult<Receive>, request: &IoRequest) {
+        match receive {
+            Ok(Receive::Message(message)) => handler.handle_message(message, request),
+            Ok(Receive::Pulse(info)) => handler.handle_pulse(info),
+            Err(error) => handler.handle_receive_error(error),
+        }
+    }
+
+    pub fn dispatch_received(&mut self, receive: DirectResult<Receive>, request: &IoRequest) {
+        Self::dispatch_received_to(&mut self.handler, receive, request);
+    }
+
     pub fn run(&mut self) -> ! {
         loop {
             let mut req = IoRequest::zeroed();
-            match self.service.receive_request(&mut req) {
-                Ok(Receive::Message(message)) => self.handler.handle_message(message, &req),
-                Ok(Receive::Pulse(info)) => self.handler.handle_pulse(info),
-                Err(error) => self.handler.handle_receive_error(error),
-            }
+            let receive = self.service.receive_request(&mut req);
+            self.dispatch_received(receive, &req);
         }
     }
 }
@@ -618,6 +687,43 @@ extern crate std;
 mod tests {
     use super::*;
     use core::mem::{align_of, size_of};
+    use std::vec::Vec;
+
+    #[derive(Debug, Eq, PartialEq)]
+    enum HandlerEvent {
+        Message {
+            rcvid: c_int,
+            opcode: u64,
+            count: u64,
+        },
+        Pulse {
+            flags: c_int,
+        },
+        Error(DirectError),
+    }
+
+    #[derive(Default)]
+    struct RecordingHandler {
+        events: Vec<HandlerEvent>,
+    }
+
+    impl DirectRequestHandler for RecordingHandler {
+        fn handle_message(&mut self, message: ReceivedMessage, request: &IoRequest) {
+            self.events.push(HandlerEvent::Message {
+                rcvid: message.rcvid(),
+                opcode: request.opcode(),
+                count: request.requested_count(),
+            });
+        }
+
+        fn handle_pulse(&mut self, info: QsoeMsgInfo) {
+            self.events.push(HandlerEvent::Pulse { flags: info.flags });
+        }
+
+        fn handle_receive_error(&mut self, error: DirectError) {
+            self.events.push(HandlerEvent::Error(error));
+        }
+    }
 
     #[test]
     fn resource_server_layouts_match_rv64_c_abi() {
@@ -664,6 +770,82 @@ mod tests {
                 requested: TM_IO_MAX + 1,
                 max: TM_IO_MAX,
             })
+        );
+    }
+
+    #[test]
+    fn direct_reply_status_uses_positive_errno_labels() {
+        assert_eq!(ReplyStatus::OK.raw(), EOK);
+        assert_eq!(ReplyStatus::from_errno(ENOSYS).raw(), ENOSYS);
+        assert_eq!(ReplyStatus::from_errno(-ENOSYS).raw(), ENOSYS);
+    }
+
+    #[test]
+    fn method_status_uses_negative_errno_results() {
+        let ok = MethodStatus::success(17);
+        assert_eq!(ok.raw(), 17);
+        assert!(ok.is_success());
+        assert!(!ok.is_error());
+        assert_eq!(ok.errno(), None);
+
+        let err = MethodStatus::from_errno(ENOSYS);
+        assert_eq!(err.raw(), -(ENOSYS as SsizeT));
+        assert!(err.is_error());
+        assert_eq!(err.errno(), Some(ENOSYS));
+        assert_eq!(
+            ReplyStatus::from_method_status(err),
+            Some(ReplyStatus::from_errno(ENOSYS))
+        );
+    }
+
+    #[test]
+    fn deferred_status_does_not_collide_with_errno_range() {
+        let deferred = MethodStatus::DEFER;
+        assert_eq!(deferred.raw(), QSOE_DEFER as SsizeT);
+        assert!(deferred.is_deferred());
+        assert!(!deferred.is_error());
+        assert_eq!(deferred.errno(), None);
+        assert_eq!(ReplyStatus::from_method_status(deferred), None);
+    }
+
+    #[test]
+    fn direct_server_dispatches_decoded_receive_states() {
+        let mut handler = RecordingHandler::default();
+
+        let mut request = IoRequest::zeroed();
+        request.type_ = TM_REQ_IO_WRITE;
+        request.count = 12;
+        let mut info = QsoeMsgInfo::zeroed();
+        info.flags = QSOE_MI_PULSE as c_int;
+
+        DirectServer::dispatch_received_to(
+            &mut handler,
+            Ok(Receive::Message(ReceivedMessage {
+                rcvid: 7,
+                info: QsoeMsgInfo::zeroed(),
+            })),
+            &request,
+        );
+        DirectServer::dispatch_received_to(&mut handler, Ok(Receive::Pulse(info)), &request);
+        DirectServer::dispatch_received_to(
+            &mut handler,
+            Err(DirectError::ReceiveFailed(-2)),
+            &request,
+        );
+
+        assert_eq!(
+            handler.events,
+            [
+                HandlerEvent::Message {
+                    rcvid: 7,
+                    opcode: TM_REQ_IO_WRITE,
+                    count: 12,
+                },
+                HandlerEvent::Pulse {
+                    flags: QSOE_MI_PULSE as c_int,
+                },
+                HandlerEvent::Error(DirectError::ReceiveFailed(-2)),
+            ]
         );
     }
 }

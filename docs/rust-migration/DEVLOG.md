@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-23 22:47 CEST.
+Last updated: 2026-06-24 00:56 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,298 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 00:56 CEST - CPIO Parser Crate Added
+
+Scope:
+
+- Added `qsoe-cpio`, a dependency-free `no_std` crate for parsing `newc` CPIO
+  archives.
+- Covered valid archives, ordered iteration, lookup by index/name, archive
+  info, and malformed header/name/data cases without panics.
+- Added the crate to the normal Rust workflow gates.
+- Marked the Phase 7 CPIO parser crate task complete.
+
+Commands:
+
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-cpio`
+
+Result:
+
+- `qsoe-cpio` parsed the valid fixture and rejected truncated, bad-magic,
+  invalid-hex, zero-name-size, unterminated-name, invalid-UTF-8-name, and
+  truncated-data fixtures through typed errors.
+
+Follow-up:
+
+- Add syscfg/sysmap read-only view coverage next.
+
+## 2026-06-24 00:45 CEST - Rust Virtio File Access Smoke Added
+
+Scope:
+
+- Added `scripts/rust-virtio-file-smoke.sh` to boot with `devb-virtio-rs` and
+  a temporary `/usr/conf/sysinit` fragment that runs inside the guest.
+- Extended qrvfs image staging to include `/usr/conf/sysinit` fragments.
+- Added `make rust-virtio-file-smoke` and a container wrapper.
+- Marked the Phase 6 Rust virtio file-access smoke task complete.
+
+Commands:
+
+- `scripts/rust-virtio-file-smoke.sh -t 240 -o build/boot-smoke-lq-rust-virtio-file.log`
+- `strings build/boot-smoke-lq-rust-virtio-file.log | rg "rust-virtio-file-smoke|devb-virtio-rs|fs-qrv: mounted|login:"`
+
+Result:
+
+- QEMU reached `login:` with `[devb-virtio-rs] /dev/vblk0 ready`,
+  `fs-qrv: mounted qrvfs at /usr (dev=/dev/vblk0)`, and
+  `rust-virtio-file-smoke: read /usr/conf/passwd ok` in the console log.
+
+Follow-up:
+
+- Continue Phase 7 shared-parser work.
+
+## 2026-06-24 00:37 CEST - Rust Virtio Boot Smoke Passed
+
+Scope:
+
+- Added `scripts/rust-virtio-boot-smoke.sh` to build a temporary QSOE/L boot
+  CPIO with `qsoe-devb-virtio-rs` installed as `/sbin/devb-virtio`.
+- Added `QSOE_BOOT_VIRTIO_PATTERN` to `scripts/boot-smoke.sh` so the same boot
+  gate can validate C or Rust virtio driver milestones.
+- Added `make rust-virtio-boot-smoke` and a container wrapper.
+- Marked the Phase 6 Rust virtio boot task complete.
+
+Commands:
+
+- `scripts/rust-virtio-boot-smoke.sh -t 240 -o build/boot-smoke-lq-rust-virtio.log`
+- `strings build/boot-smoke-lq-rust-virtio.log | rg "devb-virtio-rs|fs-qrv: mounted|login:|dispatcher ready|spawning /sbin/init|\\[slogger\\] alive"`
+
+Result:
+
+- QEMU reached `login:` with `[devb-virtio-rs] /dev/vblk0 ready` and
+  `fs-qrv: mounted qrvfs at /usr (dev=/dev/vblk0)` in the console log.
+
+Follow-up:
+
+- Run a file access smoke through `/usr` while booted with the Rust virtio
+  driver.
+
+## 2026-06-24 00:32 CEST - Opt-In Rust Virtio Driver Added
+
+Scope:
+
+- Added `qsoe-devb-virtio-rs`, a no-std Rust `devb-virtio` staticlib that
+  discovers QEMU virtio-mmio block slots, initializes the legacy block queue,
+  and publishes `/dev/vblk0` through `libressrv`.
+- Added QSOE ABI errno/block-mode constants and FFI bindings needed by the
+  driver (`munmap`, `sched_yield`).
+- Extended the Rust link-smoke script with optional extra link flags/libs so
+  Rust resource-server binaries can link `libressrv`.
+- Added `make rust-virtio-link-smoke`, `make virtio-artifact`, and container
+  wrappers; `QSOE_RUST_VIRTIO=0` keeps the C driver selected by default, while
+  `QSOE_RUST_VIRTIO=1` stages the audited Rust ELF.
+- Marked the Phase 6 opt-in Rust virtio block driver task complete.
+
+Commands:
+
+- `make rust-quality`
+- `make rust-virtio-link-smoke`
+- `QSOE_RUST_VIRTIO=1 make virtio-artifact`
+- `make virtio-artifact`
+
+Result:
+
+- `build/rust/qsoe-devb-virtio-rs.elf` links as a QSOE RISC-V userland ELF and
+  passes `scripts/audit-elf.sh --strict-qsoe-user`.
+- The selected artifact path exists for both C-default and Rust opt-in modes.
+
+Follow-up:
+
+- Build an opt-in QSOE/L boot image with the Rust virtio artifact and verify
+  `/dev/vblk0`, `/usr` mount, and login.
+
+## 2026-06-24 00:20 CEST - Host-Side Virtqueue Tests Added
+
+Scope:
+
+- Added `DescriptorBuffer`, `DescriptorFreeList`, and queue errors to
+  `qsoe-virtio` for fixed-size descriptor chain allocation without hardware.
+- Mirrored the C driver's first-free descriptor map behavior.
+- Added host tests for three-descriptor request chaining, exhaustion without
+  partial consumption, device-owned chain rejection, reclaim, reuse, and double
+  free rejection.
+- Marked the Phase 6 host-side queue tests task complete.
+
+Commands:
+
+- `make rust-quality`
+
+Result:
+
+- Descriptor chaining and free-list behavior are covered by host-side Rust
+  tests before implementing the opt-in Rust block driver.
+
+Follow-up:
+
+- Implement the opt-in Rust virtio block driver binary.
+
+## 2026-06-24 00:16 CEST - Virtqueue Descriptor Model Added
+
+Scope:
+
+- Added C-compatible Rust virtqueue layouts to `qsoe-virtio`: descriptor,
+  available ring, used ring, used element, and virtio-blk request header.
+- Added `DescriptorIndex`, `DescriptorAccess`, `DescriptorOwner`, and
+  `DescriptorModel` so descriptor bounds, device mutability, and
+  driver/device ownership are represented explicitly.
+- Added host tests for layout sizes, bounded descriptor ids, descriptor flag
+  conversion, ownership transitions, and block request direction encoding.
+- Marked the Phase 6 virtqueue descriptor model task complete.
+
+Commands:
+
+- `make rust-quality`
+
+Result:
+
+- The Rust virtio pilot has a typed descriptor model without adding allocator
+  or free-list behavior yet.
+
+Follow-up:
+
+- Add host-side queue tests for descriptor chain allocation and free-list
+  behavior.
+
+## 2026-06-23 23:52 CEST - Virtio MMIO Wrapper Added
+
+Scope:
+
+- Added the `qsoe-virtio` crate with legacy virtio-mmio register constants and
+  a `VirtioMmio` volatile register wrapper.
+- Isolated volatile pointer reads and writes inside the wrapper; callers only
+  provide the mapped register base through an unsafe constructor.
+- Added host tests for device probing, register reads/writes, feature masking,
+  config reads, and interrupt acknowledgement.
+- Included `qsoe-virtio` in the Rust workspace, Rust README, and
+  `make rust-quality`.
+- Marked the Phase 6 volatile MMIO wrapper task complete.
+
+Commands:
+
+- `make rust-quality`
+
+Result:
+
+- Unsafe MMIO pointer access for the Rust virtio pilot is contained in one
+  reviewed wrapper and covered by host tests.
+
+Follow-up:
+
+- Build the virtqueue descriptor model.
+
+## 2026-06-23 23:44 CEST - Virtio Block Behavior Specified
+
+Scope:
+
+- Added `VIRTIO_BLOCK.md` to specify the current C `devb-virtio` behavior
+  before starting the Rust driver pilot.
+- Documented QEMU virtio-mmio discovery, DMA layout, legacy queue setup,
+  request lifecycle, `/dev/vblk0` resource-server surface, and `/usr` mount
+  dependency.
+- Linked the new spec from the Rust migration README.
+- Marked the Phase 6 current-behavior specification task complete.
+
+Commands:
+
+- `git diff --check`
+
+Result:
+
+- The Rust `devb-virtio-rs` pilot now has a concrete behavior contract and
+  acceptance baseline.
+
+Follow-up:
+
+- Build typed volatile MMIO wrappers for the virtio-mmio register block.
+
+## 2026-06-23 23:22 CEST - Wrapper State Tests Added
+
+Scope:
+
+- Added `DirectServer::dispatch_received`, the single receive-state dispatch
+  step used by the direct-service run loop.
+- Added host tests for message, pulse, and receive-error dispatch transitions
+  without creating a live QSOE channel.
+- Documented that host tests cover wrapper state transitions, while link and
+  boot smokes cover QSOE IPC behavior.
+- Marked the Phase 5 wrapper-level tests task complete.
+
+Commands:
+
+- `make rust-quality`
+- `make container-rust-slogger-link-smoke`
+- `make container-rust-service-example-link-smoke`
+
+Result:
+
+- Direct-service wrapper transitions are covered by the normal host test gate
+  without requiring QEMU.
+
+Follow-up:
+
+- Start Phase 6 by specifying the current virtio block driver behavior.
+
+## 2026-06-23 23:11 CEST - Error Mapping Defined
+
+Scope:
+
+- Added explicit Rust wrappers for the two existing QSOE status conventions:
+  `ReplyStatus` for direct `MsgReply` labels and `MethodStatus` for
+  resource-server method returns.
+- Added host tests for positive direct errno labels, negative method errno
+  results, and the `QSOE_DEFER` sentinel.
+- Documented that Rust code preserves the current `0`/positive errno and
+  `>=0`/`-errno`/defer ABI conventions.
+- Marked the Phase 5 error-mapping task complete.
+
+Commands:
+
+- `make rust-quality`
+
+Result:
+
+- Direct-service and method-style Rust error mapping is explicit and covered
+  by the normal host quality gate.
+
+Follow-up:
+
+- Add wrapper-level tests for state transitions and receive-loop behavior.
+
+## 2026-06-23 23:01 CEST - Resource Server Example Documented
+
+Scope:
+
+- Turned `qsoe-service-example-rs` into a documented direct resource-server
+  example with a named request classifier.
+- Added `host-tests` feature coverage for lifecycle acknowledgements, write
+  byte counts, read payload caps, and unsupported request handling.
+- Included the example package in `make rust-quality` host tests.
+- Marked the Phase 5 resource-server example task complete.
+
+Commands:
+
+- `make rust-quality`
+- `make container-rust-service-example-link-smoke`
+
+Result:
+
+- The example compiles, documents its minimal request/reply loop, and links
+  through the QSOE userland CRT/libc path.
+
+Follow-up:
+
+- Define common error mapping for Rust direct services.
 
 ## 2026-06-23 22:47 CEST - Direct Service Bootstrap Extracted
 

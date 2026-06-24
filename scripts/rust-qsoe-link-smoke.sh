@@ -9,6 +9,8 @@ MANIFEST="$ROOT/rust/Cargo.toml"
 RUST_TARGET=${RUST_TARGET:-riscv64gc-unknown-none-elf}
 RUST_PACKAGE=${RUST_PACKAGE:-qsoe-minimal-rs}
 RUST_LIB=${RUST_LIB:-$(printf '%s' "$RUST_PACKAGE" | tr '-' '_')}
+RUST_EXTRA_LDFLAGS=${RUST_EXTRA_LDFLAGS:-}
+RUST_EXTRA_LDLIBS=${RUST_EXTRA_LDLIBS:-}
 CROSS=${CROSS:-riscv64-linux-gnu-}
 CC=${CC:-${CROSS}gcc}
 OBJCOPY=${OBJCOPY:-${CROSS}objcopy}
@@ -61,13 +63,14 @@ LIBGCC=$("$CC" $ARCHFLAGS -print-libgcc-file-name)
     -nostdlib -no-pie \
     -Wl,--dynamic-linker=/lib/ld-qsoe.so.1 \
     -L"$LIBC_DIR" -Wl,-rpath,"$LIBC_DIR" \
+    $RUST_EXTRA_LDFLAGS \
     -Wl,--no-warn-rwx-segments \
     -Wl,--no-eh-frame-hdr \
     -Wl,--gc-sections \
     -Wl,-z,now \
     -Wl,--unresolved-symbols=ignore-in-shared-libs \
     -o "$OUT" \
-    "$CRT0" "$STATICLIB" -lc "$LIBGCC"
+    "$CRT0" "$STATICLIB" $RUST_EXTRA_LDLIBS -lc "$LIBGCC"
 
 if command -v "$OBJCOPY" >/dev/null 2>&1; then
     "$OBJCOPY" \
