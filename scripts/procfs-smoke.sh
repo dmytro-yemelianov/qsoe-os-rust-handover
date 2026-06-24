@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Boot QSOE/L with a temporary sysinit fragment that exercises the current
-# taskman /proc path before any Rust taskman pilot is wired in.
+# Boot QSOE/L with a temporary sysinit fragment that exercises the selected
+# taskman /proc provider.
 
 set -eu
 
@@ -15,6 +15,7 @@ taskman's /proc model can list /proc and read /proc/1/info.
 
 Environment:
   PROCFS_SMOKE_WORKDIR   output directory, default build/procfs-smoke
+  QSOE_RUST_TM_PROCFS    set to 1 to select the Rust tm_procfs provider
 EOF
 }
 
@@ -128,7 +129,7 @@ if [ "${#emu_args[@]}" -gt 0 ]; then
     boot_args+=(-- "${emu_args[@]}")
 fi
 
-echo "procfs-smoke.sh: booting C procfs smoke"
+echo "procfs-smoke.sh: booting selected procfs smoke"
 QSOE_BOOT_VIRTIO_PATTERN="/dev/vblk0 ready" \
     "$ROOT/scripts/boot-smoke.sh" "${boot_args[@]}"
 

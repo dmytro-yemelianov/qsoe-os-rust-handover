@@ -81,16 +81,16 @@ documented malformed inputs must use the return values above.
 
 ## Build And Rollback Plan
 
-The first implementation must keep the C object as the default:
+The implementation keeps the C object as the default:
 
 ```text
 QSOE_RUST_TM_PROCFS=0  -> build libtaskman's C tm_procfs.o
 QSOE_RUST_TM_PROCFS=1  -> build and link the Rust tm_procfs provider
 ```
 
-The Rust artifact should live under the existing Rust workspace, with a
-`no_std`, `panic = "abort"` crate and no allocator. The LQ taskman build should
-select either the C object or the Rust staticlib, not both.
+The Rust artifact lives under the existing Rust workspace as `qsoe-tm-procfs`,
+with a `no_std`, `panic = "abort"` crate and no allocator. The NQ and LQ
+taskman builds select either the C object or the Rust staticlib, not both.
 
 Rollback is one build flag away:
 
@@ -99,18 +99,19 @@ Rollback is one build flag away:
 - keep `libtaskman/src/tm_procfs.c` in tree until the global retirement gate in
   `RETIREMENT.md` is satisfied.
 
-## Validation Required Before Wiring
+## Validation Required Before Default Selection
 
-Before selecting the Rust object in any image:
+Before selecting the Rust object by default in any image:
 
 - host tests compare path resolution, info formatting, and readdir behavior
   against the current C contract;
-- the Rust crate builds for host tests and the QSOE no-std target;
+- the Rust crate builds for host tests and the taskman soft-float no-std target;
 - the selected taskman artifact passes the existing ELF audit expectations for
   taskman;
 - boot smoke reaches the normal login milestone;
-- `make procfs-smoke` lists `/proc`, reads `/proc/1/info`, and verifies the
-  basic `pid:`, `ppid:`, `state:`, and `name:` lines.
+- `QSOE_RUST_TM_PROCFS=1 make procfs-smoke` lists `/proc`, reads
+  `/proc/1/info`, and verifies the basic `pid:`, `ppid:`, `state:`, and
+  `name:` lines.
 
 ## Boundary Review Result
 

@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 13:29 CEST.
+Last updated: 2026-06-24 14:00 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,58 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 13:55 CEST - tm_procfs Rust Opt-In Provider
+
+Scope:
+
+- Added `qsoe-tm-procfs`, a no-std Rust staticlib exporting the existing
+  `tm_procfs.h` ABI.
+- Added `scripts/build-rust-tm-procfs-provider.sh` and
+  `make rust-tm-procfs-provider`.
+- Added `QSOE_RUST_TM_PROCFS=1` build selection for NQ and LQ taskman:
+  selected builds omit C `tm_procfs.o` from `libtaskman.a` and link the Rust
+  staticlib separately.
+- Added `riscv64imac-unknown-none-elf` to the Debian toolchain image for
+  taskman-compatible soft-float Rust archives.
+- Updated README, STATUS, HANDOVER, `TASK_MANAGER_PROCFS.md`, and
+  `TASK_MANAGER_PROCFS_BOUNDARY.md`.
+
+Commands:
+
+- `cargo fmt --manifest-path rust/Cargo.toml --all --check`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-procfs --features host-tests`
+- `cargo clippy --manifest-path rust/Cargo.toml -p qsoe-tm-procfs -- -D warnings`
+- `bash -n scripts/build-rust-tm-procfs-provider.sh scripts/check-tm-procfs-model.sh scripts/procfs-smoke.sh`
+- `make -n rust-tm-procfs-provider container-rust-tm-procfs-provider`
+- `make rust-tm-procfs-provider`
+- `make -C libtaskman O=/tmp/qsoe-libtaskman-c QSOE_RUST_TM_PROCFS=0`
+- `make -C libtaskman O=/tmp/qsoe-libtaskman-rust QSOE_RUST_TM_PROCFS=1`
+- `make -C nq/taskman QSOE_RUST_TM_PROCFS=0`
+- `make -C nq/taskman QSOE_RUST_TM_PROCFS=1`
+- `make -C lq QSOE_RUST_TM_PROCFS=0 taskman`
+- `make -C lq QSOE_RUST_TM_PROCFS=1 taskman`
+- `QSOE_RUST_TM_PROCFS=1 make procfs-smoke`
+
+Result:
+
+- The Rust provider host test passed the same path-resolution, formatting,
+  readdir, unset-callback, and disappeared-pid contract as the C model.
+- `libqsoe_tm_procfs.a` is built for `riscv64imac-unknown-none-elf` and reports
+  RVC soft-float ELF flags.
+- C-default `libtaskman.a` includes `tm_procfs.o`; Rust-selected
+  `libtaskman.a` contains zero `tm_procfs.o` members after fixing stale archive
+  replacement.
+- NQ and LQ taskman both link with `QSOE_RUST_TM_PROCFS=1`, and both selector
+  flips preserve the C rollback archive membership.
+- The Rust-selected LQ image passed `/proc` smoke and reached the normal login
+  markers.
+
+Follow-up:
+
+- Use #103 to collect accepted hosted/Linux evidence before any Rust-default
+  `tm_procfs` selection decision.
+- Keep `QSOE_RUST_TM_PROCFS=0` as the normal default and rollback path.
 
 ## 2026-06-24 13:29 CEST - tm_procfs Host Model Tests
 

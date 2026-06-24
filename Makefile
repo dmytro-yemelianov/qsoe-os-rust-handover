@@ -19,6 +19,7 @@ QSOE_RUST_SLOGGER ?= 0
 QSOE_RUST_VIRTIO ?= 0
 QSOE_RUST_TEST_MSGPASS ?= 0
 QSOE_RUST_PIPE ?= 0
+QSOE_RUST_TM_PROCFS ?= 0
 SELECTED_SLOGGER_ELF ?= build/rust/selected/sbin/slogger.elf
 SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
 SELECTED_TEST_MSGPASS_ELF ?= build/rust/selected/usr/bin/test_msgpass.elf
@@ -39,6 +40,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         rust-service-example-link-smoke rust-virtio-link-smoke \
         rust-test-msgpass-link-smoke rust-pipe-link-smoke \
         slogger-artifact virtio-artifact test-msgpass-artifact pipe-artifact \
+        rust-tm-procfs-provider \
         rust-slogger-boot-smoke \
         rust-virtio-boot-smoke rust-virtio-file-smoke \
         rust-test-msgpass-smoke pipe-smoke rust-pipe-smoke \
@@ -57,6 +59,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-pipe-link-smoke \
         container-slogger-artifact container-virtio-artifact \
         container-test-msgpass-artifact container-pipe-artifact \
+        container-rust-tm-procfs-provider \
         container-rust-virtio-boot-smoke \
         container-rust-slog-readback-smoke container-slogger-rc-boot-smoke \
         container-slogger-rc-readback-smoke container-slogger-rc-rollback-smoke \
@@ -67,8 +70,8 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-source-build
 
 all:
-	$(MAKE) -C nq
-	$(MAKE) -C lq
+	$(MAKE) -C nq QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)
+	$(MAKE) -C lq QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)
 
 prepare:
 	./proj_obtain.sh
@@ -288,6 +291,9 @@ pipe-artifact:
 	    SELECTED_PIPE_ELF=$(SELECTED_PIPE_ELF) \
 	    scripts/select-pipe-artifact.sh
 
+rust-tm-procfs-provider:
+	@scripts/build-rust-tm-procfs-provider.sh
+
 rust-slogger-boot-smoke:
 	@scripts/rust-slogger-boot-smoke.sh
 
@@ -393,6 +399,9 @@ container-pipe-artifact:
 	@scripts/container-toolchain.sh run make pipe-artifact \
 	    QSOE_RUST_PIPE=$(QSOE_RUST_PIPE) \
 	    SELECTED_PIPE_ELF=$(SELECTED_PIPE_ELF)
+
+container-rust-tm-procfs-provider:
+	@scripts/container-toolchain.sh run make rust-tm-procfs-provider
 
 container-rust-virtio-boot-smoke:
 	@scripts/container-toolchain.sh run make rust-virtio-boot-smoke

@@ -10,6 +10,7 @@ members = [
     "crates/qsoe-ressrv",
     "crates/qsoe-slogger",
     "crates/qsoe-sysview",
+    "crates/qsoe-tm-procfs",
     "crates/qsoe-virtio",
     "bins/minimal-rs",
     "bins/service-example-rs",

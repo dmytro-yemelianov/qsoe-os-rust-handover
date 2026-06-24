@@ -97,5 +97,9 @@ dependencies = [
 ]
 
 [[package]]
+name = "qsoe-tm-procfs"
+version = "0.0.0"
+
+[[package]]
 name = "qsoe-virtio"
 version = "0.0.0"

@@ -60,10 +60,25 @@ These files stay C for the first pilot:
 | `rsrcdb` | Good later accounting candidate, but it is a service-facing allocation API. |
 | `devnull` / `devzero` | Small, but they enter through taskman's IO dispatch and cap-backed fd flow. |
 
-## Required Evidence Before Implementation
+## Rust Opt-In Provider
 
-Before a Rust `tm_procfs` module is wired into taskman, run
-`make check-tm-procfs-model`. The host test covers:
+`qsoe-tm-procfs` now exports the existing `tm_procfs.h` ABI behind the
+reserved selector:
+
+```text
+QSOE_RUST_TM_PROCFS=0  -> C `libtaskman/src/tm_procfs.c` remains default
+QSOE_RUST_TM_PROCFS=1  -> Rust `qsoe-tm-procfs` staticlib is linked instead
+```
+
+The selector removes `tm_procfs.o` from `libtaskman.a` when Rust is selected,
+then links `libqsoe_tm_procfs.a` into NQ and LQ taskman. The Rust archive is
+built for `riscv64imac-unknown-none-elf` so it matches taskman's soft-float
+ABI.
+
+## Evidence
+
+The C rollback model remains covered by `make check-tm-procfs-model`, which
+tests:
 
 - path resolution for `/proc`, `/proc/`, `/proc/<pid>`, `/proc/<pid>/`,
   `/proc/<pid>/info`, unknown pids, malformed pids, and unknown entries;
@@ -73,12 +88,21 @@ Before a Rust `tm_procfs` module is wired into taskman, run
 - per-pid directory `readdir` behavior for the single `info` entry;
 - behavior when callbacks are unset or a pid disappears between operations.
 
-Image-level validation should stay simple for the first integration:
+The Rust provider has equivalent host coverage through:
+
+```sh
+cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-procfs --features host-tests
+```
+
+Image-level validation stays simple for the opt-in provider:
 
 - boot to the normal login milestone;
-- run `make procfs-smoke`, which exercises `/proc` readdir and
-  `/proc/1/info` reads before any Rust taskman wiring;
+- run `QSOE_RUST_TM_PROCFS=1 make procfs-smoke`, which exercises `/proc`
+  readdir and `/proc/1/info` reads through the Rust provider;
 - verify existing process creation and boot markers are unchanged.
+
+Next gate: #103 collects accepted hosted/Linux evidence before any
+Rust-default selection decision.
 
 ## Selection Result
 

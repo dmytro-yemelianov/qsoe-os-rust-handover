@@ -18,6 +18,7 @@
 CROSS    ?= riscv64-linux-gnu-
 CC       := $(CROSS)gcc
 AR       := $(CROSS)ar
+QSOE_RUST_TM_PROCFS ?= 0
 
 O           ?= build
 LIBC_INC    ?= ../libc/include
@@ -42,15 +43,27 @@ CFLAGS := $(ARCHFLAGS) -std=c11 -D_XOPEN_SOURCE=700 \
           -Iinclude \
           $(EXTRA_CFLAGS)
 
-SRCS := $(wildcard src/*.c)
+ifneq ($(filter $(QSOE_RUST_TM_PROCFS),0 1),$(QSOE_RUST_TM_PROCFS))
+$(error QSOE_RUST_TM_PROCFS must be 0 or 1)
+endif
+
+SRCS_ALL := $(wildcard src/*.c)
+ifeq ($(QSOE_RUST_TM_PROCFS),1)
+SRCS := $(filter-out src/tm_procfs.c,$(SRCS_ALL))
+else
+SRCS := $(SRCS_ALL)
+endif
 OBJS := $(addprefix $(O)/,$(notdir $(SRCS:.c=.o)))
 DEPS := $(OBJS:.o=.d)
 
-.PHONY: all clean
+.PHONY: all clean FORCE
 all: $(O)/libtaskman.a
 
-$(O)/libtaskman.a: $(OBJS)
-	$(AR) rcs $@ $^
+$(O)/libtaskman.a: $(OBJS) FORCE
+	rm -f $@
+	$(AR) rcs $@ $(OBJS)
+
+FORCE:
 
 $(O)/%.o: src/%.c
 	@mkdir -p $(dir $@)

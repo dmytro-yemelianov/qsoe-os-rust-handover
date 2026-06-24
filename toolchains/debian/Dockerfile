@@ -3,6 +3,7 @@ FROM debian:trixie
 ARG DEBIAN_FRONTEND=noninteractive
 ARG RUST_TOOLCHAIN=1.95.0
 ARG RUST_TARGET=riscv64gc-unknown-none-elf
+ARG RUST_TASKMAN_TARGET=riscv64imac-unknown-none-elf
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -79,6 +80,8 @@ RUN curl --proto '=https' --tlsv1.2 -fsSLo /tmp/rustup-init https://sh.rustup.rs
         --component rust-analyzer \
         --component rustfmt \
         --target "${RUST_TARGET}" && \
+    /opt/rust/cargo/bin/rustup target add "${RUST_TASKMAN_TARGET}" \
+        --toolchain "${RUST_TOOLCHAIN}" && \
     rm -f /tmp/rustup-init && \
     mkdir -p "${CARGO_HOME}" && \
     chmod -R a+rwX /opt/rust "${CARGO_HOME}"
