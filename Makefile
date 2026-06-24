@@ -26,7 +26,8 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
 
 .PHONY: all prepare clean nvme nvme-populate virtio fsqrv-image tree \
         check-host-tools check-qrvfs-fixture check-qrvfs-rust-fixture \
-        check-elf-reloc-fixture check-gpt-fixture slog-readback-smoke \
+        check-elf-reloc-fixture check-gpt-fixture check-tm-procfs-model \
+        slog-readback-smoke \
         rust-slog-readback-smoke slogger-rc-boot-smoke \
         slogger-rc-readback-smoke slogger-rc-rollback-smoke \
         index-c index-c-files index-c-tags index-c-cscope index-c-global \
@@ -163,7 +164,7 @@ tree: $(TREEQRVFS) fsqrv-image
 	@if [ -f $(FSQRV_IMG) ]; then "$(TREEQRVFS)" $(FSQRV_IMG); \
 	else echo "make tree: $(FSQRV_IMG) not built (build quser first)"; fi
 
-check-host-tools: check-qrvfs-fixture check-gpt-fixture
+check-host-tools: check-qrvfs-fixture check-gpt-fixture check-tm-procfs-model
 
 check-qrvfs-fixture:
 	@scripts/check-qrvfs-fixture.sh
@@ -176,6 +177,9 @@ check-elf-reloc-fixture:
 
 check-gpt-fixture:
 	@scripts/check-gpt-fixture.py
+
+check-tm-procfs-model:
+	@scripts/check-tm-procfs-model.sh
 
 slog-readback-smoke:
 	@scripts/slog-readback-smoke.py

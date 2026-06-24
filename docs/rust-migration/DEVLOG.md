@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 13:22 CEST.
+Last updated: 2026-06-24 13:29 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,41 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 13:29 CEST - tm_procfs Host Model Tests
+
+Scope:
+
+- Added `tests/tm_procfs_model_test.c`, a host-side fixture that links the
+  current C `libtaskman/src/tm_procfs.c` model directly.
+- Added `scripts/check-tm-procfs-model.sh`.
+- Added `make check-tm-procfs-model` and included it in `make check-host-tools`
+  so `container-check` also picks it up.
+- Updated README, STATUS, HANDOVER, and the `tm_procfs` selection doc to record
+  the host-model evidence before any Rust task-manager provider wiring.
+
+Commands:
+
+- `bash -n scripts/check-tm-procfs-model.sh`
+- `make -n check-tm-procfs-model check-host-tools`
+- `make check-tm-procfs-model`
+- `make check-host-tools`
+- `git diff --check`
+
+Result:
+
+- The host fixture covers `/proc` path resolution, malformed and unknown pid
+  failure behavior, alive/zombie `info` formatting, the maximum carried process
+  name, root readdir cursor behavior, per-pid `info` readdir behavior, unset
+  callbacks, and a pid disappearing between operations.
+- No task-manager runtime wiring changed; the C `tm_procfs` model remains the
+  default and rollback path.
+
+Follow-up:
+
+- Implement a Rust `tm_procfs` provider behind `QSOE_RUST_TM_PROCFS=1`, then
+  run artifact audit, boot smoke, and `make procfs-smoke` before any default
+  selection decision.
 
 ## 2026-06-24 13:22 CEST - Slogger RC Smokes Added To Trusted CI
 

@@ -1,6 +1,6 @@
 # QSOE Migration Handover
 
-Last updated: 2026-06-24 13:22 CEST.
+Last updated: 2026-06-24 13:29 CEST.
 
 This handover captures the current QSOE Rust migration and workflow work so it
 can move from the macOS/container setup to a native Linux development machine.
@@ -22,7 +22,7 @@ origin git@github.com:dmytro-yemelianov/qsoe-os-rust-handover.git
 Current main tip:
 
 ```text
-338517613bd507db18bfe82da8c9d2818bc67dfe
+fc5857a7178ded9f90aeab9be46e68cd553b429c
 ```
 
 The local tree adds:
@@ -67,14 +67,21 @@ PR #93 added the first `slogger-rs` Rust-default release-candidate path with
 the C rollback drill and was squash-merged into `main` at
 `338517613bd507db18bfe82da8c9d2818bc67dfe`.
 
-Current open follow-up:
+PR #94 added the Rust pipe data-path smoke to CI, PR #99 added the Rust
+`test_msgpass` smoke to CI, and PR #100 added both `slogger-rs` RC readback
+smokes to CI. The current `main` tip is
+`fc5857a7178ded9f90aeab9be46e68cd553b429c`.
+
+Current open follow-ups:
 
 - #26: keep C retirement blocked until the `slogger-rs` RC evidence window is
   accepted and the retirement checklist in `RETIREMENT.md` is satisfied.
 - #95: accept the `slogger-rs` Rust-default RC evidence window.
 - #96: capture trusted CI evidence for the Rust pipe data-path smoke.
 - #97: capture trusted CI evidence for the Rust `test_msgpass` smoke.
-- #98: add host tests for the portable `tm_procfs` model.
+
+The #98 host-test gate for the portable `tm_procfs` model is satisfied by
+`make check-tm-procfs-model`; runtime wiring remains future work.
 
 ## Linux Machine Setup
 
@@ -199,6 +206,7 @@ make rust-quality
 make rust-deep
 make check-qrvfs-rust-fixture
 make check-elf-reloc-fixture
+make check-tm-procfs-model
 cargo deny --manifest-path rust/Cargo.toml check -c rust/deny.toml
 make container-toolchain-build
 make container-check
@@ -263,6 +271,9 @@ The strict ELF audit showed:
   `[self-hosted, X64]` runner for trusted PRs and pushes, so a green run can be
   used as hosted-runner evidence before any Rust-default pipe release
   candidate. C remains rollback.
+- `tm_procfs` now has a host model fixture covering path resolution, info
+  formatting, root and pid-directory readdir, unset callbacks, and disappeared
+  pids. No Rust task-manager provider is wired yet.
 
 ## Current Decisions
 
@@ -285,8 +296,8 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 3. Use a green trusted CI run of `make container-rust-test-msgpass-smoke` for
    #97 before any Rust-default test-image decision; keep C rollback paths
    available.
-4. Continue with a Rust `tm_procfs` provider only after adding host tests for
-   the portable procfs model.
+4. Continue with a Rust `tm_procfs` provider behind `QSOE_RUST_TM_PROCFS=1`,
+   keeping the current C model as the default and rollback path.
 5. Keep the hosted runner and CodeRabbit account healthy for new PRs, but the
    old #42/#60 external states no longer block `main`.
 6. Do not start C retirement until the release-candidate gate in

@@ -62,7 +62,8 @@ These files stay C for the first pilot:
 
 ## Required Evidence Before Implementation
 
-Before a Rust `tm_procfs` module is wired into taskman, add host tests covering:
+Before a Rust `tm_procfs` module is wired into taskman, run
+`make check-tm-procfs-model`. The host test covers:
 
 - path resolution for `/proc`, `/proc/`, `/proc/<pid>`, `/proc/<pid>/`,
   `/proc/<pid>/info`, unknown pids, malformed pids, and unknown entries;
