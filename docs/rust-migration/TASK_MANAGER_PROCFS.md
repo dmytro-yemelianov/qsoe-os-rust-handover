@@ -75,7 +75,8 @@ Before a Rust `tm_procfs` module is wired into taskman, add host tests covering:
 Image-level validation should stay simple for the first integration:
 
 - boot to the normal login milestone;
-- run a small `/proc` read smoke such as `cat /proc/1/info`;
+- run `make procfs-smoke`, which exercises `/proc` readdir and
+  `/proc/1/info` reads before any Rust taskman wiring;
 - verify existing process creation and boot markers are unchanged.
 
 ## Selection Result

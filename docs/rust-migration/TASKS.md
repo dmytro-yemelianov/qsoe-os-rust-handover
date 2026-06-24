@@ -245,7 +245,7 @@ small reviewable change unless it explicitly says otherwise.
 - [x] Design C/Rust boundary for task-manager pilot.
   - Acceptance: boundary review includes failure behavior and rollback plan.
 
-- [ ] Add targeted boot coverage.
+- [x] Add targeted boot coverage.
   - Acceptance: smoke tests exercise the selected path before Rust changes land.
 
 ## Phase 10: Kernel Reassessment

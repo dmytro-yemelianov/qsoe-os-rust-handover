@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 02:03 CEST.
+Last updated: 2026-06-24 02:05 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,34 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 02:05 CEST - Procfs Boot Smoke Added
+
+Scope:
+
+- Added `scripts/procfs-smoke.sh`.
+- Added `make procfs-smoke` and `make container-procfs-smoke`.
+- The smoke injects a temporary `/usr/conf/sysinit` fragment, rebuilds the
+  normal C-default QSOE/L image, lists `/proc`, reads `/proc/1/info`, and
+  verifies the `taskman` process info lines in the console log.
+- Updated the `tm_procfs` selection and boundary docs to require the smoke.
+- Marked the Phase 9 targeted-coverage task complete.
+
+Commands:
+
+- `bash -n scripts/procfs-smoke.sh`
+- `make -n procfs-smoke container-procfs-smoke`
+- `make procfs-smoke`
+
+Result:
+
+- The current C `tm_procfs` path has targeted boot coverage before any Rust
+  taskman changes land.
+
+Follow-up:
+
+- Start the Phase 10 kernel reassessment decision record after the Phase 9
+  stack lands.
 
 ## 2026-06-24 02:03 CEST - Procfs Boundary Designed
 

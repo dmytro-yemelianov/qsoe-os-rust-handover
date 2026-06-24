@@ -109,8 +109,8 @@ Before selecting the Rust object in any image:
 - the selected taskman artifact passes the existing ELF audit expectations for
   taskman;
 - boot smoke reaches the normal login milestone;
-- a targeted `/proc` smoke reads `/proc/1/info` and verifies the basic
-  `pid:`, `ppid:`, `state:`, and `name:` lines.
+- `make procfs-smoke` lists `/proc`, reads `/proc/1/info`, and verifies the
+  basic `pid:`, `ppid:`, `state:`, and `name:` lines.
 
 ## Boundary Review Result
 
