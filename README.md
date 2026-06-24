@@ -8,7 +8,7 @@ window with C rollback still available.
 
 Detailed planning lives under `docs/rust-migration/`. Start with:
 
-- `docs/rust-migration/HANDOVER.md` for the current stack, blockers, and next
+- `docs/rust-migration/HANDOVER.md` for the current repository state and next
   work.
 - `docs/rust-migration/STATUS.md` for component-by-component migration state.
 - `docs/rust-migration/RETIREMENT.md` for the gate before any C code removal.
@@ -30,14 +30,15 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | Kernel Rust | Deferred | Current decision rejects near-term Rust in `nq` kernel code; only fixture/audit candidates are documented. |
 | C retirement | Blocked by policy | No C implementation is approved for removal until at least one component ships through a Rust-default release candidate with C rollback. |
 
-## Active Blockers
+## Current Follow-ups
 
-- GitHub Actions run for PR #42 is queued on the self-hosted `[self-hosted,
-  X64]` runner. Tracked by issue #82.
-- PR #60 has a CodeRabbit status blocked by usage credits. Tracked by issue
-  #83.
-- The draft stack is ready for bottom-up review only after those external
-  states are resolved or explicitly accepted. Tracked by issue #84.
+- The draft PR stack through #89 was merged into `main` on 2026-06-24. The
+  former #42 runner blocker, #60 CodeRabbit blocker, and bottom-up merge tracker
+  are closed as #82, #83, and #84.
+- Add a Rust pipe data-path smoke before any Rust-default pipe decision.
+  Tracked by #90.
+- Keep C retirement blocked until at least one component ships through a
+  Rust-default release candidate with C rollback. Tracked by #26.
 
 ## Useful Commands
 

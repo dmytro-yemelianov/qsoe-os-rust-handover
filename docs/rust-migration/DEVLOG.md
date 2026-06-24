@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 08:32 CEST.
+Last updated: 2026-06-24 11:23 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,39 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 11:23 CEST - Stack Merged To Main
+
+Scope:
+
+- Merged the stacked handover PR chain through #89 into `main`.
+- Closed completed GitHub issues whose `Closes` references landed through the
+  non-default stacked merges.
+- Closed the old #82/#83 external blocker trackers and #84 bottom-up merge
+  tracker after accepting those states for the merge decision.
+- Updated the root README and this handover to remove stale active-blocker
+  text.
+
+Commands:
+
+- GitHub connector PR merge and issue update operations.
+- `git fetch origin`
+- `git switch main`
+- `git pull --ff-only origin main`
+- `git status --short --branch`
+
+Result:
+
+- `main` is at `a3e75dbc47d1fadc99360f4476147a526f521d9b`.
+- The local checkout is on `main` and matches `origin/main`.
+- Open issues are #26 for the C retirement gate and #90 for the Rust pipe
+  data-path smoke.
+
+Follow-up:
+
+- Continue with #90 or the next bounded `tm_procfs` Rust provider work.
+- Keep C retirement blocked by the release-candidate policy in
+  `RETIREMENT.md`.
 
 ## 2026-06-24 08:32 CEST - Rust Pipe Opt-In
 

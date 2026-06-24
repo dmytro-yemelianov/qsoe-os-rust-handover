@@ -1,6 +1,6 @@
 # QSOE Migration Handover
 
-Last updated: 2026-06-24 08:36 CEST.
+Last updated: 2026-06-24 11:23 CEST.
 
 This handover captures the current QSOE Rust migration and workflow work so it
 can move from the macOS/container setup to a native Linux development machine.
@@ -19,10 +19,10 @@ Current GitHub remote:
 origin git@github.com:dmytro-yemelianov/qsoe-os-rust-handover.git
 ```
 
-Current stack tip:
+Current main tip:
 
 ```text
-PR #89: codex/rust-pipe-opt-in
+a3e75dbc47d1fadc99360f4476147a526f521d9b
 ```
 
 The local tree adds:
@@ -44,79 +44,30 @@ rust/target/
 sel4-bootstrap/
 ```
 
-## GitHub Stack
+## GitHub State
 
-The active handover stack is a linear draft PR chain:
-
-```text
-#42  main -> codex/handover-ci-slogger-prep
-#44  -> codex/slogger-rs-entrypoint
-#45  -> codex/slogger-build-flag
-#46  -> codex/slogger-rs-boot-image
-#47  -> codex/slogger-boot-log-compare
-#48  -> codex/direct-service-bootstrap
-#49  -> codex/resource-server-example
-#50  -> codex/error-mapping
-#51  -> codex/wrapper-level-tests
-#52  -> codex/virtio-block-spec
-#53  -> codex/virtio-mmio-wrapper
-#54  -> codex/virtqueue-descriptor-model
-#55  -> codex/host-side-queue-tests
-#56  -> codex/virtio-rust-driver-opt-in
-#57  -> codex/rust-virtio-boot-smoke
-#58  -> codex/rust-virtio-file-smoke
-#59  -> codex/cpio-parser-crate
-#60  -> codex/syscfg-sysmap-view-crate
-#61  -> codex/elf-inspection-crate
-#62  -> codex/parser-host-guest-reuse
-#63  -> codex/rank-userland-services
-#64  -> codex/pick-pipe-second-service
-#65  -> codex/pick-rust-test-helper
-#66  -> codex/c-retirement-gate
-#67  -> codex/taskman-module-inventory
-#68  -> codex/select-taskman-procfs-pilot
-#69  -> codex/taskman-procfs-boundary
-#70  -> codex/procfs-boot-smoke
-#71  -> codex/kernel-rust-decision
-#72  -> codex/kernel-safe-candidates
-#73  -> codex/kernel-artifact-audit
-#74  -> codex/audit-artifacts-target
-#75  -> codex/rust-parser-fuzz-targets
-#76  -> codex/rust-coverage-reporting
-#77  -> codex/unsafe-review-checklist
-#78  -> codex/migration-status-table
-#79  -> codex/release-note-template
-#80  -> codex/slog-readback-smoke-stacked
-#81  -> codex/handover-stack-status
-#86  -> codex/rust-slog-readback-smoke
-#88  -> codex/test-msgpass-rs-helper
-#89  -> codex/rust-pipe-opt-in
-```
+The previous linear draft PR chain through #89 was merged bottom-up on
+2026-06-24. PR #60 was retargeted into #42, and #42 was then merged into
+`main` at `a3e75dbc47d1fadc99360f4476147a526f521d9b`.
 
 PR #43 was closed as superseded by #80 because it was a side branch from
-`main`; #80 carries the same `/dev/slog` readback smoke on top of the active
+`main`; #80 carried the same `/dev/slog` readback smoke on top of the merged
 stack.
 
-PR #88 adds the opt-in Rust `test_msgpass` helper and a root migration progress
-`README.md`. It closes #87 and remains stacked on #86.
+The former stack blockers are no longer active merge blockers:
 
-PR #89 adds the opt-in Rust `pipe` state machine and `/dev/pipe` service
-wrapper, selector, link smoke, registration boot smoke, and docs updates. It
-remains stacked on #88. The next pipe gate is the data-path smoke tracked by
-#90.
+- #82 recorded the self-hosted `[self-hosted, X64]` runner queue state for #42
+  and was closed after the stack merge decision.
+- #83 recorded the CodeRabbit usage-credit status for #60 and was closed after
+  the stack merge decision.
+- #84 tracked bottom-up merge preparation and was closed after #60 and #42 were
+  merged.
 
-Current external blockers:
+Current open follow-ups:
 
-- #42 CI uses `runs-on: [self-hosted, X64]`, matching the active Rapsody CI
-  runner label, but run `28054197652` has been queued since
-  `2026-06-23 20:16 UTC` with no steps started. This is runner
-  availability/access, not a workflow-label mismatch. Tracked by #82.
-- #60 has a red CodeRabbit status due to insufficient usage credits. The
-  earlier actionable sysview findings have been fixed at the branch tip.
-  Tracked by #83.
-- The only unchecked backlog item is C retirement, which is intentionally
-  blocked until a component completes a Rust-default release candidate with C
-  rollback. Tracked by #26.
+- #90: add a Rust pipe data-path smoke before any Rust-default pipe decision.
+- #26: keep C retirement blocked until a Rust-default release candidate ships
+  with C rollback available.
 
 ## Linux Machine Setup
 
@@ -310,16 +261,16 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 
 ## Next Recommended Work
 
-1. Restore runner availability for #42 or rerun the queued workflow once the
-   `[self-hosted, X64]` runner is available; see #82.
-2. Decide whether to mark the draft stack ready for review and merge it
-   bottom-up from #42 through #89; see #84.
-3. Resolve the #60 CodeRabbit usage-credit status or record it as an external
-   billing blocker when merging; see #83.
-4. Use the #86 Rust-selected readback evidence if planning a Rust-default
-   `slogger` release candidate, use #88 if planning a Rust-default
-   `test_msgpass` test-image decision, and use #89 only after the #90 pipe
-   data-path smoke exists; keep C rollback paths available.
-5. Continue with the #90 pipe data-path smoke or a Rust `tm_procfs` provider.
-   Do not start C retirement until the release-candidate gate in
+1. Continue with the #90 pipe data-path smoke. Do not consider Rust pipe for
+   default selection until real pipe creation and round-trip I/O are proven
+   through libc/taskman.
+2. Use the Rust-selected readback evidence if planning a Rust-default
+   `slogger` release candidate, and use the `test_msgpass-rs` smoke evidence
+   if planning a Rust-default test-image decision; keep C rollback paths
+   available.
+3. Continue with a Rust `tm_procfs` provider only after adding host tests for
+   the portable procfs model.
+4. Keep the hosted runner and CodeRabbit account healthy for new PRs, but the
+   old #42/#60 external states no longer block `main`.
+5. Do not start C retirement until the release-candidate gate in
    `RETIREMENT.md` is satisfied; see #26.
