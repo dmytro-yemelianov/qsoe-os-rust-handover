@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 00:20 CEST.
+Last updated: 2026-06-24 00:56 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,116 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 00:56 CEST - CPIO Parser Crate Added
+
+Scope:
+
+- Added `qsoe-cpio`, a dependency-free `no_std` crate for parsing `newc` CPIO
+  archives.
+- Covered valid archives, ordered iteration, lookup by index/name, archive
+  info, and malformed header/name/data cases without panics.
+- Added the crate to the normal Rust workflow gates.
+- Marked the Phase 7 CPIO parser crate task complete.
+
+Commands:
+
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-cpio`
+
+Result:
+
+- `qsoe-cpio` parsed the valid fixture and rejected truncated, bad-magic,
+  invalid-hex, zero-name-size, unterminated-name, invalid-UTF-8-name, and
+  truncated-data fixtures through typed errors.
+
+Follow-up:
+
+- Add syscfg/sysmap read-only view coverage next.
+
+## 2026-06-24 00:45 CEST - Rust Virtio File Access Smoke Added
+
+Scope:
+
+- Added `scripts/rust-virtio-file-smoke.sh` to boot with `devb-virtio-rs` and
+  a temporary `/usr/conf/sysinit` fragment that runs inside the guest.
+- Extended qrvfs image staging to include `/usr/conf/sysinit` fragments.
+- Added `make rust-virtio-file-smoke` and a container wrapper.
+- Marked the Phase 6 Rust virtio file-access smoke task complete.
+
+Commands:
+
+- `scripts/rust-virtio-file-smoke.sh -t 240 -o build/boot-smoke-lq-rust-virtio-file.log`
+- `strings build/boot-smoke-lq-rust-virtio-file.log | rg "rust-virtio-file-smoke|devb-virtio-rs|fs-qrv: mounted|login:"`
+
+Result:
+
+- QEMU reached `login:` with `[devb-virtio-rs] /dev/vblk0 ready`,
+  `fs-qrv: mounted qrvfs at /usr (dev=/dev/vblk0)`, and
+  `rust-virtio-file-smoke: read /usr/conf/passwd ok` in the console log.
+
+Follow-up:
+
+- Continue Phase 7 shared-parser work.
+
+## 2026-06-24 00:37 CEST - Rust Virtio Boot Smoke Passed
+
+Scope:
+
+- Added `scripts/rust-virtio-boot-smoke.sh` to build a temporary QSOE/L boot
+  CPIO with `qsoe-devb-virtio-rs` installed as `/sbin/devb-virtio`.
+- Added `QSOE_BOOT_VIRTIO_PATTERN` to `scripts/boot-smoke.sh` so the same boot
+  gate can validate C or Rust virtio driver milestones.
+- Added `make rust-virtio-boot-smoke` and a container wrapper.
+- Marked the Phase 6 Rust virtio boot task complete.
+
+Commands:
+
+- `scripts/rust-virtio-boot-smoke.sh -t 240 -o build/boot-smoke-lq-rust-virtio.log`
+- `strings build/boot-smoke-lq-rust-virtio.log | rg "devb-virtio-rs|fs-qrv: mounted|login:|dispatcher ready|spawning /sbin/init|\\[slogger\\] alive"`
+
+Result:
+
+- QEMU reached `login:` with `[devb-virtio-rs] /dev/vblk0 ready` and
+  `fs-qrv: mounted qrvfs at /usr (dev=/dev/vblk0)` in the console log.
+
+Follow-up:
+
+- Run a file access smoke through `/usr` while booted with the Rust virtio
+  driver.
+
+## 2026-06-24 00:32 CEST - Opt-In Rust Virtio Driver Added
+
+Scope:
+
+- Added `qsoe-devb-virtio-rs`, a no-std Rust `devb-virtio` staticlib that
+  discovers QEMU virtio-mmio block slots, initializes the legacy block queue,
+  and publishes `/dev/vblk0` through `libressrv`.
+- Added QSOE ABI errno/block-mode constants and FFI bindings needed by the
+  driver (`munmap`, `sched_yield`).
+- Extended the Rust link-smoke script with optional extra link flags/libs so
+  Rust resource-server binaries can link `libressrv`.
+- Added `make rust-virtio-link-smoke`, `make virtio-artifact`, and container
+  wrappers; `QSOE_RUST_VIRTIO=0` keeps the C driver selected by default, while
+  `QSOE_RUST_VIRTIO=1` stages the audited Rust ELF.
+- Marked the Phase 6 opt-in Rust virtio block driver task complete.
+
+Commands:
+
+- `make rust-quality`
+- `make rust-virtio-link-smoke`
+- `QSOE_RUST_VIRTIO=1 make virtio-artifact`
+- `make virtio-artifact`
+
+Result:
+
+- `build/rust/qsoe-devb-virtio-rs.elf` links as a QSOE RISC-V userland ELF and
+  passes `scripts/audit-elf.sh --strict-qsoe-user`.
+- The selected artifact path exists for both C-default and Rust opt-in modes.
+
+Follow-up:
+
+- Build an opt-in QSOE/L boot image with the Rust virtio artifact and verify
+  `/dev/vblk0`, `/usr` mount, and login.
 
 ## 2026-06-24 00:20 CEST - Host-Side Virtqueue Tests Added
 

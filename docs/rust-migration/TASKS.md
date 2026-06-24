@@ -189,18 +189,18 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: tests cover descriptor chaining and free-list behavior without
     hardware.
 
-- [ ] Implement opt-in Rust virtio block driver.
+- [x] Implement opt-in Rust virtio block driver.
   - Acceptance: binary links and passes artifact audit.
 
-- [ ] Boot with Rust virtio block driver.
+- [x] Boot with Rust virtio block driver.
   - Acceptance: `/dev/vblk0` appears, qrvfs mounts at `/usr`, and login starts.
 
-- [ ] Run file access smoke.
+- [x] Run file access smoke.
   - Acceptance: an in-guest command can read files from `/usr`.
 
 ## Phase 7: Shared Parsers
 
-- [ ] Add CPIO parser crate.
+- [x] Add CPIO parser crate.
   - Acceptance: parser handles valid and malformed fixtures without panics.
 
 - [ ] Add syscfg/sysmap view crate.
