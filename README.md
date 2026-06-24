@@ -24,7 +24,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | `slogger` service | Rust opt-in | `slogger-rs` links, boots, registers `/dev/slog`, and has C-selected plus Rust-selected `/dev/slog` readback smokes. Next gate: Rust-default release candidate with C rollback. |
 | `devb-virtio` block driver | Rust opt-in | Rust MMIO/virtqueue model, host queue tests, opt-in boot smoke, and file-read smoke exist. Next gate: Rust-default release candidate with C rollback. |
 | Shared parsers | Complete for current scope | CPIO, syscfg/sysmap, and ELF inspection crates exist with host tests and host/guest reuse coverage. |
-| `pipe` service | Selected, not implemented in Rust | C registration smoke passes. Next gate: `qsoe-pipe` state-machine crate and opt-in Rust service artifact. |
+| `pipe` service | Rust opt-in | `qsoe-pipe` host tests pass, `pipe-rs` links and audits, and `make rust-pipe-smoke` boots LQ with Rust `/sbin/pipe` registered. Next gate: data-path smoke once libc/taskman pipe creation is wired; tracked by #90. |
 | `test_msgpass` helper | Rust opt-in | `test_msgpass-rs` links, can be selected into the qrvfs test image, and passes the existing suite `[msgpass]` section through `make rust-test-msgpass-smoke`. C remains the default helper. |
 | `tm_procfs` task-manager pilot | Selected, not implemented in Rust | Boundary and C smoke are documented. Next gate: host tests for the portable procfs model before any task-manager wiring. |
 | Kernel Rust | Deferred | Current decision rejects near-term Rust in `nq` kernel code; only fixture/audit candidates are documented. |
@@ -50,6 +50,7 @@ make rust-slog-readback-smoke
 make rust-virtio-file-smoke
 make rust-test-msgpass-smoke
 make pipe-smoke
+make rust-pipe-smoke
 make procfs-smoke
 ```
 

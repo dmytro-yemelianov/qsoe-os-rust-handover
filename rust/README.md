@@ -179,6 +179,40 @@ fragment runs after `/usr` is mounted and prints
 `rust-virtio-file-smoke: read /usr/conf/passwd ok` only after `/bin/cat` can
 read the file through the Rust-backed `/dev/vblk0` mount.
 
+## Pipe Selection
+
+The opt-in Rust pipe manager can be linked and audited without changing the
+boot default:
+
+```sh
+make rust-pipe-link-smoke
+```
+
+It builds `qsoe-pipe-rs` as a no-std staticlib and links it through the same
+QSOE userland CRT/libc path. The selected artifact target mirrors the other
+service opt-ins:
+
+```sh
+make pipe-artifact
+QSOE_RUST_PIPE=1 make pipe-artifact
+```
+
+With the default `QSOE_RUST_PIPE=0`, the target stages the existing C
+`quser/build/sbin/pipe/pipe.elf`. With `QSOE_RUST_PIPE=1`, it first links and
+audits `qsoe-pipe-rs`. Both modes write the selected binary to
+`build/rust/selected/sbin/pipe.elf`; the C service remains the boot default.
+
+The opt-in LQ boot smoke replaces only `/sbin/pipe` in a temporary boot CPIO:
+
+```sh
+make rust-pipe-smoke
+```
+
+It injects a temporary `/usr/conf/sysinit` fragment that starts `/sbin/pipe`,
+then verifies `[pipe-rs] /dev/pipe registered`, the fragment marker, and the
+normal login boot milestones. This is a registration smoke; a pipe data-path
+smoke still depends on the libc/taskman pipe-creation path being fully wired.
+
 ## Parser Fuzzing
 
 Parser fuzz targets live under `rust/fuzz` and are intentionally outside the

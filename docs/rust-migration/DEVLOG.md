@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 07:54 CEST.
+Last updated: 2026-06-24 08:32 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,45 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 08:32 CEST - Rust Pipe Opt-In
+
+Scope:
+
+- Added `qsoe-pipe`, a dependency-free no-std state machine for the current C
+  `/sbin/pipe` behavior: fixed pipe pool, 4 KiB rings, badge decode,
+  wrong-end errors, parked reader/writer wakeups, close handling, EOF, and pool
+  exhaustion.
+- Added `qsoe-pipe-rs`, a direct QSOE resource-server wrapper for `/dev/pipe`.
+- Added `QSOE_RUST_PIPE=1 make pipe-artifact`, `make rust-pipe-link-smoke`,
+  `make rust-pipe-smoke`, and container wrappers.
+- Updated pipe migration docs and the root progress README.
+
+Commands:
+
+- `cargo fmt --manifest-path rust/Cargo.toml --all`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-pipe`
+- `cargo check --manifest-path rust/Cargo.toml -p qsoe-pipe-rs --target riscv64gc-unknown-none-elf`
+- `bash -n scripts/select-pipe-artifact.sh scripts/rust-pipe-smoke.sh`
+- `make -n rust-pipe-link-smoke pipe-artifact rust-pipe-smoke container-rust-pipe-link-smoke container-pipe-artifact container-rust-pipe-smoke`
+- `make rust-pipe-link-smoke`
+- `QSOE_RUST_PIPE=1 make pipe-artifact`
+- `scripts/rust-pipe-smoke.sh -t 180 -o build/rust-pipe/boot-smoke-lq-rust-pipe.log`
+
+Result:
+
+- `qsoe-pipe` passed 11 host tests.
+- `qsoe-pipe-rs` linked as a QSOE RISC-V userland ELF and passed the strict
+  ELF audit.
+- The Rust-selected LQ boot smoke reached `login:` and found both
+  `[pipe-rs] /dev/pipe registered` and
+  `rust-pipe-smoke: started /sbin/pipe` in the boot log.
+
+Follow-up:
+
+- Keep the C pipe manager as the default until a data-path smoke exists for
+  real pipe creation through libc/taskman and a Rust-default release candidate
+  with C rollback is approved. The data-path smoke is tracked by #90.
 
 ## 2026-06-24 07:54 CEST - Rust Test Msgpass Helper Opt-In
 
