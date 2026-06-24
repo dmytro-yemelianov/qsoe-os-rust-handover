@@ -143,64 +143,64 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: host tests cover wraparound, full buffer behavior, and message
     truncation if applicable.
 
-- [ ] Implement QSOE service entry point.
+- [x] Implement QSOE service entry point.
   - Acceptance: `slogger-rs` links as a QSOE userland binary.
 
-- [ ] Add build flag for Rust `slogger`.
+- [x] Add build flag for Rust `slogger`.
   - Acceptance: C `slogger` remains default; Rust version is selected by one
     explicit make variable.
 
-- [ ] Boot image with Rust `slogger`.
+- [x] Boot image with Rust `slogger`.
   - Acceptance: QEMU reaches login and console logs show `slogger-rs` alive.
 
-- [ ] Compare C and Rust boot logs.
+- [x] Compare C and Rust boot logs.
   - Acceptance: differences are reviewed and documented.
 
 ## Phase 5: Resource-Server Pattern Promotion
 
-- [ ] Extract common service bootstrap.
+- [x] Extract common service bootstrap.
   - Acceptance: `slogger-rs` and a trivial example service share the same
     wrapper path.
 
-- [ ] Add resource-server example.
+- [x] Add resource-server example.
   - Acceptance: example compiles and demonstrates a minimal request/reply loop.
 
-- [ ] Define error mapping.
+- [x] Define error mapping.
   - Acceptance: Rust errors map to existing QSOE negative errno or status
     conventions without inventing a new ABI.
 
-- [ ] Add wrapper-level tests.
+- [x] Add wrapper-level tests.
   - Acceptance: host-side tests cover state transitions that do not require
     QEMU; in-guest smoke covers the rest.
 
 ## Phase 6: `devb-virtio-rs`
 
-- [ ] Specify current virtio block driver behavior.
+- [x] Specify current virtio block driver behavior.
   - Acceptance: docs cover device discovery, queue setup, request lifecycle,
     exposed device path, and mount dependency.
 
-- [ ] Build volatile MMIO wrapper.
+- [x] Build volatile MMIO wrapper.
   - Acceptance: unsafe pointer access is isolated and reviewed.
 
-- [ ] Build virtqueue descriptor model.
+- [x] Build virtqueue descriptor model.
   - Acceptance: descriptor ownership and mutability are represented explicitly.
 
-- [ ] Add host-side queue tests.
+- [x] Add host-side queue tests.
   - Acceptance: tests cover descriptor chaining and free-list behavior without
     hardware.
 
-- [ ] Implement opt-in Rust virtio block driver.
+- [x] Implement opt-in Rust virtio block driver.
   - Acceptance: binary links and passes artifact audit.
 
-- [ ] Boot with Rust virtio block driver.
+- [x] Boot with Rust virtio block driver.
   - Acceptance: `/dev/vblk0` appears, qrvfs mounts at `/usr`, and login starts.
 
-- [ ] Run file access smoke.
+- [x] Run file access smoke.
   - Acceptance: an in-guest command can read files from `/usr`.
 
 ## Phase 7: Shared Parsers
 
-- [ ] Add CPIO parser crate.
+- [x] Add CPIO parser crate.
   - Acceptance: parser handles valid and malformed fixtures without panics.
 
 - [ ] Add syscfg/sysmap view crate.

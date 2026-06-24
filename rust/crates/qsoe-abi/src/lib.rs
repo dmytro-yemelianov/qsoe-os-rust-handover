@@ -11,6 +11,13 @@ pub type SizeT = usize;
 pub type SsizeT = isize;
 pub type QsoeTimeT = u64;
 
+pub const EOK: i32 = 0;
+pub const EIO: i32 = 5;
+pub const EBUSY: i32 = 15;
+pub const ENODEV: i32 = 18;
+pub const EINVAL: i32 = 21;
+pub const ENOSYS: i32 = 37;
+
 pub const TASKMAN_PID: i32 = 1;
 pub const QSOE_SIDE_CHANNEL: u32 = 0x4000_0000;
 pub const TASKMAN_COID: i32 = QSOE_SIDE_CHANNEL as i32;
@@ -47,6 +54,7 @@ pub const TM_IO_MAX: usize = 896;
 pub const TM_S_IFMT: ModeT = 0o170000;
 pub const TM_S_IFREG: ModeT = 0o100000;
 pub const TM_S_IFCHR: ModeT = 0o020000;
+pub const TM_S_IFBLK: ModeT = 0o060000;
 pub const TM_S_IFDIR: ModeT = 0o040000;
 
 pub const QSOE_RUST_SPIKE_MARKER: u64 = 0x5153_4f45_5255_5354;
@@ -199,11 +207,19 @@ mod tests {
 
     #[test]
     fn qsoe_io_constants_match_c_headers() {
+        assert_eq!(EOK, 0);
+        assert_eq!(EIO, 5);
+        assert_eq!(EBUSY, 15);
+        assert_eq!(ENODEV, 18);
+        assert_eq!(EINVAL, 21);
+        assert_eq!(ENOSYS, 37);
         assert_eq!(TM_WIRE_BASE_BYTES, 40);
         assert_eq!(TM_IO_MAX, 896);
         assert_eq!(TM_REQ_IO_WRITE, 0x304);
         assert_eq!(TM_REQ_IO_READ, 0x305);
         assert_eq!(TM_REQ_FSTAT, 0x307);
         assert_eq!(TM_REQ_CLOSE, 0x303);
+        assert_eq!(TM_S_IFCHR, 0o020000);
+        assert_eq!(TM_S_IFBLK, 0o060000);
     }
 }

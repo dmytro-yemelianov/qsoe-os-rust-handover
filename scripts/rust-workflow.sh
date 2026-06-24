@@ -53,6 +53,7 @@ run_fast() {
     cargo check --manifest-path "$MANIFEST" --workspace
     cargo test --manifest-path "$MANIFEST" \
         -p qsoe-abi \
+        -p qsoe-cpio \
         -p qsoe-ressrv \
         -p qsoe-slogger \
         -p qsoe-qrvfs \
@@ -73,6 +74,7 @@ run_deep() {
     else
         cargo test --manifest-path "$MANIFEST" \
             -p qsoe-abi \
+            -p qsoe-cpio \
             -p qsoe-ressrv \
             -p qsoe-slogger \
             -p qsoe-qrvfs
@@ -81,6 +83,7 @@ run_deep() {
     if run_optional "cargo-miri" cargo miri; then
         cargo miri test --manifest-path "$MANIFEST" \
             -p qsoe-abi \
+            -p qsoe-cpio \
             -p qsoe-qrvfs
         ran_optional=1
     fi

@@ -91,4 +91,10 @@ unsafe extern "C" {
     ) -> *mut c_void;
     #[link_name = "qsoe_alloc_phys"]
     pub fn qsoe_alloc_phys(length: usize, prot: c_int, pa_out: *mut u64) -> *mut c_void;
+
+    #[link_name = "munmap"]
+    pub fn munmap(addr: *mut c_void, length: usize) -> c_int;
+
+    #[link_name = "sched_yield"]
+    pub fn sched_yield() -> c_int;
 }

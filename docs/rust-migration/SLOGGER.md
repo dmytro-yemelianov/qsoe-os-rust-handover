@@ -261,6 +261,8 @@ Before `slogger-rs` is linked into an image:
 - `_IO_CONNECT`, `_IO_DUP`, and close remain state-free `EOK` replies.
 - FSTAT values match the C implementation.
 - Unknown opcodes reply `ENOSYS`.
+- `make rust-slogger-link-smoke` links `qsoe-slogger-rs` through the same QSOE
+  `crt0.o` and `libc.so` userland path as the minimal Rust smoke.
 - The artifact passes `scripts/audit-elf.sh --strict-qsoe-user`.
 - C `slogger` remains the default until Rust boot smoke and readback smoke pass.
 

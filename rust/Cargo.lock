@@ -7,6 +7,19 @@ name = "qsoe-abi"
 version = "0.0.0"
 
 [[package]]
+name = "qsoe-cpio"
+version = "0.0.0"
+
+[[package]]
+name = "qsoe-devb-virtio-rs"
+version = "0.0.0"
+dependencies = [
+ "qsoe-ffi",
+ "qsoe-ressrv",
+ "qsoe-virtio",
+]
+
+[[package]]
 name = "qsoe-ffi"
 version = "0.0.0"
 dependencies = [
@@ -33,5 +46,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "qsoe-service-example-rs"
+version = "0.0.0"
+dependencies = [
+ "qsoe-ffi",
+ "qsoe-ressrv",
+]
+
+[[package]]
 name = "qsoe-slogger"
+version = "0.0.0"
+
+[[package]]
+name = "qsoe-slogger-rs"
+version = "0.0.0"
+dependencies = [
+ "qsoe-ffi",
+ "qsoe-ressrv",
+ "qsoe-slogger",
+]
+
+[[package]]
+name = "qsoe-virtio"
 version = "0.0.0"
