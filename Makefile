@@ -40,6 +40,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         rust-slogger-boot-smoke \
         rust-virtio-boot-smoke rust-virtio-file-smoke \
         rust-test-msgpass-smoke pipe-smoke rust-pipe-smoke \
+        rust-pipe-data-smoke \
         procfs-smoke \
         container-toolchain-build container-shell container-check \
         container-index-c container-index-c-static container-index-c-compile-db \
@@ -57,7 +58,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-virtio-boot-smoke \
         container-rust-slog-readback-smoke container-rust-test-msgpass-smoke \
         container-rust-virtio-file-smoke container-pipe-smoke \
-        container-rust-pipe-smoke \
+        container-rust-pipe-smoke container-rust-pipe-data-smoke \
         container-procfs-smoke \
         container-source-build
 
@@ -289,6 +290,9 @@ pipe-smoke:
 rust-pipe-smoke:
 	@scripts/rust-pipe-smoke.sh
 
+rust-pipe-data-smoke:
+	@scripts/rust-pipe-data-smoke.sh
+
 procfs-smoke:
 	@scripts/procfs-smoke.sh
 
@@ -391,6 +395,9 @@ container-pipe-smoke:
 
 container-rust-pipe-smoke:
 	@scripts/container-toolchain.sh run make rust-pipe-smoke
+
+container-rust-pipe-data-smoke:
+	@scripts/container-toolchain.sh run make rust-pipe-data-smoke
 
 container-procfs-smoke:
 	@scripts/container-toolchain.sh run make procfs-smoke

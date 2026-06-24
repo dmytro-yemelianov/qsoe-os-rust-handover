@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 11:23 CEST.
+Last updated: 2026-06-24 11:46 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,44 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 11:46 CEST - Rust Pipe Data-Path Smoke
+
+Scope:
+
+- Added a script-generated `test_pipe_data` guest helper that calls normal libc
+  `pipe(2)`, writes a payload, reads it back, closes the writer, and verifies
+  EOF on the read end.
+- Added `scripts/rust-pipe-data-smoke.sh`.
+- Added `make rust-pipe-data-smoke` and `make container-rust-pipe-data-smoke`.
+- Updated pipe migration docs, status, and root README to record the new
+  data-path gate.
+
+Commands:
+
+- `bash -n scripts/rust-pipe-data-smoke.sh`
+- `make -n rust-pipe-data-smoke container-rust-pipe-data-smoke`
+- `make rust-pipe-data-smoke`
+- `make rust-quality`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-pipe`
+
+Result:
+
+- `test_pipe_data` was generated under `build/rust-pipe-data/` and linked
+  against the LQ libc path.
+- `make rust-pipe-data-smoke` passed.
+- `make rust-quality` passed.
+- `qsoe-pipe` passed 11 host tests.
+- The boot log reached `login:` and contained:
+  - `[pipe-rs] /dev/pipe registered`
+  - `[test_pipe_data] pipe round-trip ok`
+  - `[test_pipe_data] pipe eof ok`
+  - `rust-pipe-data-smoke: helper exited 0`
+
+Follow-up:
+
+- Repeat the smoke on the hosted runner before any Rust-default pipe
+  release-candidate decision.
 
 ## 2026-06-24 11:23 CEST - Stack Merged To Main
 

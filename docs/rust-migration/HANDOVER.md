@@ -1,6 +1,6 @@
 # QSOE Migration Handover
 
-Last updated: 2026-06-24 11:23 CEST.
+Last updated: 2026-06-24 11:46 CEST.
 
 This handover captures the current QSOE Rust migration and workflow work so it
 can move from the macOS/container setup to a native Linux development machine.
@@ -63,9 +63,8 @@ The former stack blockers are no longer active merge blockers:
 - #84 tracked bottom-up merge preparation and was closed after #60 and #42 were
   merged.
 
-Current open follow-ups:
+Current open follow-up:
 
-- #90: add a Rust pipe data-path smoke before any Rust-default pipe decision.
 - #26: keep C retirement blocked until a Rust-default release candidate ships
   with C rollback available.
 
@@ -209,6 +208,7 @@ scripts/rust-test-msgpass-smoke.sh -t 240 -o build/rust-test-msgpass/boot-smoke-
 make rust-pipe-link-smoke
 QSOE_RUST_PIPE=1 make pipe-artifact
 scripts/rust-pipe-smoke.sh -t 180 -o build/rust-pipe/boot-smoke-lq-rust-pipe.log
+scripts/rust-pipe-data-smoke.sh -t 240 -o build/rust-pipe-data/boot-smoke-lq-rust-pipe-data.log
 ```
 
 `make container-index-c-static` generated static C indexes for 816 QSOE-owned
@@ -245,9 +245,9 @@ The strict ELF audit showed:
 - `test_msgpass` has an opt-in Rust helper and Rust-selected suite `[msgpass]`
   smoke. The wider suite still reports the known unrelated QSOE/L sync failure,
   so the smoke gates targeted `[msgpass]` markers and boot-to-login.
-- `pipe` has an opt-in Rust service and registration boot smoke. It is not a
-  Rust-default candidate until a data-path smoke proves real pipe creation and
-  round-trip I/O through libc/taskman; see #90.
+- `pipe` has an opt-in Rust service, registration boot smoke, and data-path
+  smoke. A Rust-default release candidate still requires hosted-runner evidence
+  and C rollback.
 
 ## Current Decisions
 
@@ -261,9 +261,8 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 
 ## Next Recommended Work
 
-1. Continue with the #90 pipe data-path smoke. Do not consider Rust pipe for
-   default selection until real pipe creation and round-trip I/O are proven
-   through libc/taskman.
+1. Repeat `make rust-pipe-data-smoke` on the hosted runner before considering
+   Rust pipe for a default-selection release candidate.
 2. Use the Rust-selected readback evidence if planning a Rust-default
    `slogger` release candidate, and use the `test_msgpass-rs` smoke evidence
    if planning a Rust-default test-image decision; keep C rollback paths

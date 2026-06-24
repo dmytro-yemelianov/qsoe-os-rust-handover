@@ -24,7 +24,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | `slogger` service | Rust opt-in | `slogger-rs` links, boots, registers `/dev/slog`, and has C-selected plus Rust-selected `/dev/slog` readback smokes. Next gate: Rust-default release candidate with C rollback. |
 | `devb-virtio` block driver | Rust opt-in | Rust MMIO/virtqueue model, host queue tests, opt-in boot smoke, and file-read smoke exist. Next gate: Rust-default release candidate with C rollback. |
 | Shared parsers | Complete for current scope | CPIO, syscfg/sysmap, and ELF inspection crates exist with host tests and host/guest reuse coverage. |
-| `pipe` service | Rust opt-in | `qsoe-pipe` host tests pass, `pipe-rs` links and audits, and `make rust-pipe-smoke` boots LQ with Rust `/sbin/pipe` registered. Next gate: data-path smoke once libc/taskman pipe creation is wired; tracked by #90. |
+| `pipe` service | Rust opt-in | `qsoe-pipe` host tests pass, `pipe-rs` links and audits, `make rust-pipe-smoke` boots LQ with Rust `/sbin/pipe` registered, and `make rust-pipe-data-smoke` proves a libc/taskman `pipe(2)` write/read round trip. Next gate: Rust-default release candidate with C rollback. |
 | `test_msgpass` helper | Rust opt-in | `test_msgpass-rs` links, can be selected into the qrvfs test image, and passes the existing suite `[msgpass]` section through `make rust-test-msgpass-smoke`. C remains the default helper. |
 | `tm_procfs` task-manager pilot | Selected, not implemented in Rust | Boundary and C smoke are documented. Next gate: host tests for the portable procfs model before any task-manager wiring. |
 | Kernel Rust | Deferred | Current decision rejects near-term Rust in `nq` kernel code; only fixture/audit candidates are documented. |
@@ -35,8 +35,8 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 - The draft PR stack through #89 was merged into `main` on 2026-06-24. The
   former #42 runner blocker, #60 CodeRabbit blocker, and bottom-up merge tracker
   are closed as #82, #83, and #84.
-- Add a Rust pipe data-path smoke before any Rust-default pipe decision.
-  Tracked by #90.
+- Use the Rust pipe data-path smoke evidence before any Rust-default pipe
+  release-candidate decision.
 - Keep C retirement blocked until at least one component ships through a
   Rust-default release candidate with C rollback. Tracked by #26.
 
@@ -52,6 +52,7 @@ make rust-virtio-file-smoke
 make rust-test-msgpass-smoke
 make pipe-smoke
 make rust-pipe-smoke
+make rust-pipe-data-smoke
 make procfs-smoke
 ```
 

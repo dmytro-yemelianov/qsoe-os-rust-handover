@@ -85,6 +85,7 @@ The implemented opt-in targets are:
 make rust-pipe-link-smoke
 QSOE_RUST_PIPE=1 make pipe-artifact
 make rust-pipe-smoke
+make rust-pipe-data-smoke
 ```
 
 `make rust-pipe-smoke` replaces only `/sbin/pipe` in a temporary LQ boot CPIO,
@@ -92,6 +93,11 @@ starts it from a temporary sysinit fragment, reaches `login:`, and requires:
 
 - `[pipe-rs] /dev/pipe registered`
 - `rust-pipe-smoke: started /sbin/pipe`
+
+`make rust-pipe-data-smoke` uses the same opt-in replacement pattern and also
+stages `/usr/bin/test_pipe_data` into a temporary qrvfs image. That helper calls
+normal libc `pipe(2)`, writes to the write end, reads the same payload from the
+read end, closes the writer, and verifies EOF on the read end.
 
 ## C Baseline Smoke
 
@@ -122,5 +128,4 @@ Before selecting Rust `pipe` by default:
   `scripts/audit-elf.sh --strict-qsoe-user`
 - the opt-in boot smoke must continue to replace only `/sbin/pipe` and preserve
   login
-- once libc/taskman pipe creation is fully wired, add a data-path smoke for a
-  simple shell pipeline or a dedicated pipe helper; tracked by #90
+- keep `make rust-pipe-data-smoke` passing on the hosted runner

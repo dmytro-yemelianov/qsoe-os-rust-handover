@@ -210,8 +210,19 @@ make rust-pipe-smoke
 
 It injects a temporary `/usr/conf/sysinit` fragment that starts `/sbin/pipe`,
 then verifies `[pipe-rs] /dev/pipe registered`, the fragment marker, and the
-normal login boot milestones. This is a registration smoke; a pipe data-path
-smoke still depends on the libc/taskman pipe-creation path being fully wired.
+normal login boot milestones.
+
+The data-path smoke also stages a focused guest helper into the temporary
+qrvfs image:
+
+```sh
+make rust-pipe-data-smoke
+```
+
+It keeps C as the default outside the smoke, replaces only `/sbin/pipe` in a
+temporary boot CPIO, starts the Rust pipe service from sysinit, calls normal
+libc `pipe(2)`, and verifies one write/read round trip plus EOF after closing
+the writer.
 
 ## Parser Fuzzing
 
