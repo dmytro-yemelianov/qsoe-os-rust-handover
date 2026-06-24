@@ -7,9 +7,9 @@ use core::panic::PanicInfo;
 use core::slice;
 
 use qsoe_ressrv::{
-    DirectService, IoReply, IoRequest, Receive, ReceivedMessage, ReplyStatus, TmStat, ENOSYS,
-    IO_CONNECT, IO_DUP, TM_IO_MAX, TM_REQ_CLOSE, TM_REQ_FSTAT, TM_REQ_IO_READ, TM_REQ_IO_WRITE,
-    TM_S_IFCHR,
+    DirectRequestHandler, DirectServer, IoReply, IoRequest, ReceivedMessage, ReplyStatus, TmStat,
+    ENOSYS, IO_CONNECT, IO_DUP, TM_IO_MAX, TM_REQ_CLOSE, TM_REQ_FSTAT, TM_REQ_IO_READ,
+    TM_REQ_IO_WRITE, TM_S_IFCHR,
 };
 use qsoe_slogger::SlogRing;
 
@@ -34,6 +34,16 @@ impl RingCell {
 
 static RING: RingCell = RingCell::new();
 
+struct Slogger {
+    ring: &'static mut SlogRing,
+}
+
+impl DirectRequestHandler for Slogger {
+    fn handle_message(&mut self, message: ReceivedMessage, req: &IoRequest) {
+        handle_message(message, req, self.ring);
+    }
+}
+
 #[panic_handler]
 fn panic(_info: &PanicInfo<'_>) -> ! {
     debug_write(b"[slogger-rs] panic\n");
@@ -51,8 +61,11 @@ pub extern "C" fn qsoe_slogger_rust_marker() -> u64 {
 pub extern "C" fn main(_argc: isize, _argv: *const *const u8, _envp: *const *const u8) -> i32 {
     debug_write(b"[slogger-rs] alive\n");
 
-    let service = match DirectService::register(slog_path()) {
-        Ok(service) => service,
+    // SAFETY: see `RingCell`'s `Sync` safety note. This function never returns,
+    // so no second mutable borrow is created.
+    let ring = unsafe { &mut *RING.get() };
+    let mut server = match DirectServer::register(slog_path(), Slogger { ring }) {
+        Ok(server) => server,
         Err(_) => {
             debug_write(b"[slogger-rs] register failed\n");
             return 1;
@@ -61,33 +74,18 @@ pub extern "C" fn main(_argc: isize, _argv: *const *const u8, _envp: *const *con
 
     debug_write(b"[slogger-rs] /dev/slog registered\n");
 
-    if service.detach_ready(0).is_err() {
+    if server.detach_ready(0).is_err() {
         debug_write(b"[slogger-rs] procmgr_detach failed\n");
     }
 
     debug_write(b"[slogger-rs] entering MsgReceive loop\n");
-
-    // SAFETY: see `RingCell`'s `Sync` safety note. This function never returns,
-    // so no second mutable borrow is created.
-    let ring = unsafe { &mut *RING.get() };
-    dispatch_loop(&service, ring)
+    server.run()
 }
 
 fn slog_path() -> &'static CStr {
     // SAFETY: `SLOG_PATH` is a static byte string with exactly one trailing NUL
     // and no interior NUL bytes.
     unsafe { CStr::from_bytes_with_nul_unchecked(SLOG_PATH) }
-}
-
-fn dispatch_loop(service: &DirectService, ring: &mut SlogRing) -> ! {
-    loop {
-        let mut req = IoRequest::zeroed();
-        match service.receive_request(&mut req) {
-            Ok(Receive::Pulse(_)) => {}
-            Ok(Receive::Message(message)) => handle_message(message, &req, ring),
-            Err(_) => {}
-        }
-    }
 }
 
 fn handle_message(message: ReceivedMessage, req: &IoRequest, ring: &mut SlogRing) {

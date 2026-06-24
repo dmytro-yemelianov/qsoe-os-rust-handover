@@ -21,9 +21,12 @@ cargo check --manifest-path "$MANIFEST" --workspace
 cargo clippy --manifest-path "$MANIFEST" --workspace -- -D warnings
 cargo test --manifest-path "$MANIFEST" \
     -p qsoe-abi \
+    -p qsoe-cpio \
     -p qsoe-ressrv \
     -p qsoe-qrvfs \
     -p qsoe-slogger
+cargo test --manifest-path "$MANIFEST" -p qsoe-virtio
+cargo test --manifest-path "$MANIFEST" -p qsoe-service-example-rs --features host-tests
 
 if [ "${QSOE_RUST_COMPILE:-0}" = "1" ]; then
     if ! rustup target list --installed 2>/dev/null | grep -Fxq "$RUST_TARGET"; then

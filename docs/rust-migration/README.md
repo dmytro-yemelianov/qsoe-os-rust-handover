@@ -23,11 +23,14 @@ Read in this order:
 10. `BINDINGS.md`: current Rust ABI, FFI, and resource-server binding scope.
 11. `WORKFLOW.md`: Rust edit-loop, quality, ABI, and deep-check workflow.
 12. `SLOGGER.md`: current C `slogger` behavior and Rust pilot acceptance.
-13. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+13. `SLOGGER_BOOT_COMPARE.md`: C vs Rust `slogger` boot-log comparison.
+14. `VIRTIO_BLOCK.md`: current C `devb-virtio` behavior and Rust pilot
+   acceptance contract.
+15. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-14. `PLAN.md`: phased migration plan from baseline validation through possible
+16. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-15. `TASKS.md`: executable backlog with acceptance criteria.
+17. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust
