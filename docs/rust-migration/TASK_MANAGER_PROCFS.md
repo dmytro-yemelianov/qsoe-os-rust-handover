@@ -14,6 +14,9 @@ The first Rust pilot should target only that portable model. It should not
 replace LQ's process table, connection context handling, open/read dispatch, or
 any seL4 invocation code.
 
+The C/Rust boundary, failure behavior, and rollback plan are specified in
+`TASK_MANAGER_PROCFS_BOUNDARY.md`.
+
 ## Why This Module
 
 `tm_procfs` owns a small read-only diagnostic model:
@@ -72,7 +75,8 @@ Before a Rust `tm_procfs` module is wired into taskman, add host tests covering:
 Image-level validation should stay simple for the first integration:
 
 - boot to the normal login milestone;
-- run a small `/proc` read smoke such as `cat /proc/1/info`;
+- run `make procfs-smoke`, which exercises `/proc` readdir and
+  `/proc/1/info` reads before any Rust taskman wiring;
 - verify existing process creation and boot markers are unchanged.
 
 ## Selection Result
