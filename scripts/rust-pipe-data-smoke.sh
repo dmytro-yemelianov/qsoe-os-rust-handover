@@ -86,6 +86,7 @@ helper="$workdir/test_pipe_data.elf"
 source_conf="$ROOT/quser/conf"
 source_sysinit="$source_conf/sysinit"
 fragment=
+fragment_tmp=
 exit_marker="rust-pipe-data-smoke: helper exited 0"
 registration="[pipe-rs] /dev/pipe registered"
 round_trip="[test_pipe_data] pipe round-trip ok"
@@ -108,12 +109,22 @@ cleanup() {
     if [ -n "$fragment" ]; then
         rm -f "$fragment"
     fi
+    if [ -n "$fragment_tmp" ]; then
+        rm -f "$fragment_tmp"
+    fi
     rmdir "$source_sysinit" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
 mkdir -p "$source_sysinit"
-fragment=$(mktemp "$source_sysinit/10-rust-pipe-data-smoke.XXXXXX.sh")
+fragment_tmp=$(mktemp "$source_sysinit/10-rust-pipe-data-smoke.XXXXXX")
+fragment="$fragment_tmp.sh"
+if [ -e "$fragment" ]; then
+    echo "rust-pipe-data-smoke.sh: temporary fragment already exists: $fragment" >&2
+    exit 1
+fi
+mv "$fragment_tmp" "$fragment"
+fragment_tmp=
 cat > "$fragment" <<'EOF'
 if /sbin/pipe; then
     echo "rust-pipe-data-smoke: started /sbin/pipe"
@@ -137,6 +148,11 @@ echo "rust-pipe-data-smoke.sh: selecting Rust pipe artifact"
 QSOE_RUST_PIPE=1 \
     LIBC_SO="$lq_libc" \
     "$MAKE" -C "$ROOT" pipe-artifact --no-print-directory
+
+if [ ! -f "$selected_pipe" ]; then
+    echo "rust-pipe-data-smoke.sh: missing selected Rust pipe at $selected_pipe" >&2
+    exit 1
+fi
 
 echo "rust-pipe-data-smoke.sh: building pipe data helper"
 cat > "$helper_src" <<'EOF'

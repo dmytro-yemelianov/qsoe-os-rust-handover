@@ -129,3 +129,5 @@ Before selecting Rust `pipe` by default:
 - the opt-in boot smoke must continue to replace only `/sbin/pipe` and preserve
   login
 - keep `make rust-pipe-data-smoke` passing on the hosted runner
+- require Rust-default release-candidate evidence with C rollback available
+  before any default-selection decision
