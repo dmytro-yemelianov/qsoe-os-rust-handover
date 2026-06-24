@@ -1,6 +1,6 @@
 # QSOE Migration Handover
 
-Last updated: 2026-06-24 13:03 CEST.
+Last updated: 2026-06-24 13:16 CEST.
 
 This handover captures the current QSOE Rust migration and workflow work so it
 can move from the macOS/container setup to a native Linux development machine.
@@ -71,6 +71,10 @@ Current open follow-up:
 
 - #26: keep C retirement blocked until the `slogger-rs` RC evidence window is
   accepted and the retirement checklist in `RETIREMENT.md` is satisfied.
+- #95: accept the `slogger-rs` Rust-default RC evidence window.
+- #96: capture trusted CI evidence for the Rust pipe data-path smoke.
+- #97: capture trusted CI evidence for the Rust `test_msgpass` smoke.
+- #98: add host tests for the portable `tm_procfs` model.
 
 ## Linux Machine Setup
 
@@ -250,8 +254,9 @@ The strict ELF audit showed:
   a C rollback drill with `make slogger-rc-rollback-smoke`. C retirement is
   still blocked until the RC evidence window is accepted.
 - `test_msgpass` has an opt-in Rust helper and Rust-selected suite `[msgpass]`
-  smoke. The wider suite still reports the known unrelated QSOE/L sync failure,
-  so the smoke gates targeted `[msgpass]` markers and boot-to-login.
+  smoke. CI includes `container-rust-test-msgpass-smoke` for trusted PRs and
+  pushes. The wider suite still reports the known unrelated QSOE/L sync
+  failure, so the smoke gates targeted `[msgpass]` markers and boot-to-login.
 - `pipe` has an opt-in Rust service, registration boot smoke, and data-path
   smoke. CI includes `container-rust-pipe-data-smoke` on the configured
   `[self-hosted, X64]` runner for trusted PRs and pushes, so a green run can be
@@ -275,8 +280,9 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 2. Use a green trusted CI run of `make container-rust-pipe-data-smoke` on the
    configured `[self-hosted, X64]` runner as hosted-runner evidence before
    considering Rust pipe for a default-selection release candidate.
-3. Use the `test_msgpass-rs` smoke evidence if planning a Rust-default
-   test-image decision; keep C rollback paths available.
+3. Use a green trusted CI run of `make container-rust-test-msgpass-smoke` for
+   #97 before any Rust-default test-image decision; keep C rollback paths
+   available.
 4. Continue with a Rust `tm_procfs` provider only after adding host tests for
    the portable procfs model.
 5. Keep the hosted runner and CodeRabbit account healthy for new PRs, but the

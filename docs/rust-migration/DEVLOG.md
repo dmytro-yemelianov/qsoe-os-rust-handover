@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 13:03 CEST.
+Last updated: 2026-06-24 13:16 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,40 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 13:16 CEST - Test Msgpass Smoke Added To Trusted CI
+
+Scope:
+
+- Added `make container-rust-test-msgpass-smoke` to the main GitHub Actions CI
+  job on the configured `[self-hosted, X64]` runner.
+- Gated the self-hosted smoke step to trusted contexts only: push,
+  `workflow_dispatch`, and same-repository pull requests.
+- Extended CI artifact upload coverage to include `build/rust-test-msgpass/*.log`.
+- Updated README, STATUS, and HANDOVER to track the trusted-CI evidence gate
+  through #97.
+
+Commands:
+
+- `bash -n scripts/rust-test-msgpass-smoke.sh`
+- `make -n container-rust-test-msgpass-smoke`
+- `make rust-test-msgpass-smoke`
+- `git diff --check`
+
+Result:
+
+- The Rust-selected `test_msgpass-rs` smoke is now represented directly in CI
+  for trusted contexts. A green run can be used as evidence before any
+  Rust-default test-image decision.
+- Local host smoke still passes and verifies the targeted `[msgpass]` suite
+  markers before reaching `login:`.
+
+Follow-up:
+
+- Wait for #97's green trusted CI evidence before considering a Rust-default
+  test image.
+- Keep the C `/usr/bin/test_msgpass` helper as the default until a separate
+  default-selection decision lands.
 
 ## 2026-06-24 13:03 CEST - Pipe Data Smoke Added To CI
 

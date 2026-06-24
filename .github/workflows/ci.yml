@@ -52,6 +52,10 @@ jobs:
       - name: Boot smoke LQ image
         run: scripts/container-toolchain.sh run scripts/boot-smoke.sh -k lq -t 120
 
+      - name: Run Rust test_msgpass smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-rust-test-msgpass-smoke
+
       - name: Run Rust pipe data-path smoke
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-rust-pipe-data-smoke
@@ -63,5 +67,6 @@ jobs:
           name: qsoe-boot-smoke-logs
           path: |
             build/boot-smoke-*.log
+            build/rust-test-msgpass/*.log
             build/rust-pipe-data/*.log
           if-no-files-found: ignore
