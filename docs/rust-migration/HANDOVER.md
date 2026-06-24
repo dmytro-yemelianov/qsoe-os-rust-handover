@@ -1,6 +1,6 @@
 # QSOE Migration Handover
 
-Last updated: 2026-06-24 13:16 CEST.
+Last updated: 2026-06-24 13:22 CEST.
 
 This handover captures the current QSOE Rust migration and workflow work so it
 can move from the macOS/container setup to a native Linux development machine.
@@ -251,8 +251,9 @@ The strict ELF audit showed:
   tests, fixture parity, ELF audit, boot evidence, and documented differences.
 - `slogger` has C-selected and Rust-selected `/dev/slog` readback baselines.
   It also has a Rust-default RC path with `make slogger-rc-readback-smoke` and
-  a C rollback drill with `make slogger-rc-rollback-smoke`. C retirement is
-  still blocked until the RC evidence window is accepted.
+  a C rollback drill with `make slogger-rc-rollback-smoke`. CI includes both
+  container RC readback smokes for trusted PRs and pushes. C retirement is still
+  blocked until #95's RC evidence window is accepted.
 - `test_msgpass` has an opt-in Rust helper and Rust-selected suite `[msgpass]`
   smoke. CI includes `container-rust-test-msgpass-smoke` for trusted PRs and
   pushes. The wider suite still reports the known unrelated QSOE/L sync
@@ -275,8 +276,9 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 
 ## Next Recommended Work
 
-1. Run and accept the `slogger-rs` RC window from `SLOGGER_RC.md`; do not retire
-   the C `slogger` until #26's retirement checklist is satisfied.
+1. Use green trusted CI runs of `make container-slogger-rc-readback-smoke` and
+   `make container-slogger-rc-rollback-smoke` for #95; do not retire the C
+   `slogger` until #26's retirement checklist is satisfied.
 2. Use a green trusted CI run of `make container-rust-pipe-data-smoke` on the
    configured `[self-hosted, X64]` runner as hosted-runner evidence before
    considering Rust pipe for a default-selection release candidate.

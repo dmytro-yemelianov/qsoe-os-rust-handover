@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 13:16 CEST.
+Last updated: 2026-06-24 13:22 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,40 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 13:22 CEST - Slogger RC Smokes Added To Trusted CI
+
+Scope:
+
+- Added `make container-slogger-rc-readback-smoke` and
+  `make container-slogger-rc-rollback-smoke` to the main GitHub Actions CI job
+  on the configured `[self-hosted, X64]` runner.
+- Gated both self-hosted smoke steps to trusted contexts only: push,
+  `workflow_dispatch`, and same-repository pull requests.
+- Extended CI artifact upload coverage to include the default `slogger-rc`
+  readback log patterns.
+- Updated README, STATUS, and HANDOVER to track the trusted-CI RC evidence
+  window through #95 while keeping C retirement blocked by #26.
+
+Commands:
+
+- `bash -n scripts/rust-slogger-boot-smoke.sh scripts/slogger-rc-boot-smoke.sh`
+- `make -n container-slogger-rc-readback-smoke container-slogger-rc-rollback-smoke`
+- `make slogger-rc-readback-smoke && make slogger-rc-rollback-smoke`
+- `git diff --check`
+
+Result:
+
+- The `slogger-rs` Rust-default RC and C rollback readback smokes are now
+  represented directly in CI for trusted contexts. Green runs can be used as
+  #95 evidence before any #26 retirement decision.
+- Local serial RC readback smokes passed for `slogger-rc-rust-default` and
+  `slogger-rc-c-rollback`; both observed `pci-server:` through `/bin/sloginfo`.
+
+Follow-up:
+
+- Wait for green trusted CI RC evidence before considering C `slogger` removal.
+- Keep the C rollback path documented in release notes until #26 is satisfied.
 
 ## 2026-06-24 13:16 CEST - Test Msgpass Smoke Added To Trusted CI
 

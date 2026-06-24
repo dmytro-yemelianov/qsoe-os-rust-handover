@@ -52,6 +52,14 @@ jobs:
       - name: Boot smoke LQ image
         run: scripts/container-toolchain.sh run scripts/boot-smoke.sh -k lq -t 120
 
+      - name: Run slogger Rust-default RC readback smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-slogger-rc-readback-smoke
+
+      - name: Run slogger C rollback readback smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-slogger-rc-rollback-smoke
+
       - name: Run Rust test_msgpass smoke
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-rust-test-msgpass-smoke
@@ -67,6 +75,8 @@ jobs:
           name: qsoe-boot-smoke-logs
           path: |
             build/boot-smoke-*.log
+            build/slog-readback-smoke-lq-slogger-rc-*.log
+            build/slogger-rc/*.log
             build/rust-test-msgpass/*.log
             build/rust-pipe-data/*.log
           if-no-files-found: ignore
