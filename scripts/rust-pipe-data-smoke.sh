@@ -105,6 +105,13 @@ if [ ! -d "$source_conf" ]; then
     exit 1
 fi
 
+log_has_marker() {
+    local marker=$1
+
+    grep -Fq "$marker" "$log" ||
+        tr -d '\r\n' < "$log" | grep -Fq "$marker"
+}
+
 cleanup() {
     if [ -n "$fragment" ]; then
         rm -f "$fragment"
@@ -329,7 +336,7 @@ for expected in \
     "$round_trip" \
     "$eof_marker" \
     "$exit_marker"; do
-    if ! grep -Fq "$expected" "$log"; then
+    if ! log_has_marker "$expected"; then
         echo "rust-pipe-data-smoke.sh: missing marker in $log: $expected" >&2
         exit 1
     fi

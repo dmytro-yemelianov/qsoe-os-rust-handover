@@ -92,6 +92,13 @@ if [ ! -d "$source_conf" ]; then
     exit 1
 fi
 
+log_has_marker() {
+    local marker=$1
+
+    grep -Fq "$marker" "$log" ||
+        tr -d '\r\n' < "$log" | grep -Fq "$marker"
+}
+
 cleanup() {
     if [ -n "$fragment" ]; then
         rm -f "$fragment"
@@ -160,7 +167,7 @@ for expected in \
     "PASS  msgpass: server exited clean" \
     "SKIP  msgpass: no-reply exit -> ESRVRFAULT" \
     "rust-test-msgpass-smoke: suite exited"; do
-    if ! grep -Fq "$expected" "$log"; then
+    if ! log_has_marker "$expected"; then
         echo "rust-test-msgpass-smoke.sh: missing marker in $log: $expected" >&2
         exit 1
     fi
