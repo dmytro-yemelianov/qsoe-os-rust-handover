@@ -1,0 +1,18 @@
+[package]
+name = "qsoe-test-msgpass-rs"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+name = "qsoe_test_msgpass_rs"
+path = "src/lib.rs"
+crate-type = ["rlib", "staticlib"]
+
+[features]
+host-tests = []
+
+[dependencies]
+qsoe-ffi = { path = "../../crates/qsoe-ffi", version = "0.0.0" }
+qsoe-ressrv = { path = "../../crates/qsoe-ressrv", version = "0.0.0" }
