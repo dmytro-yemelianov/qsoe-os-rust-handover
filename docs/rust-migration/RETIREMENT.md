@@ -44,12 +44,9 @@ it must include evidence for all of these items:
 
 ## Current Component Status
 
-| Component | Rust state | Evidence present | Retirement status |
-| --- | --- | --- | --- |
-| `slogger` | Opt-in pilot | Behavior spec, Rust ring tests, link smoke, ELF audit, Rust boot comparison | Not retireable: missing readback smoke and Rust-default RC |
-| `devb-virtio` | Opt-in pilot | Behavior spec, MMIO/queue tests, link smoke, ELF audit, Rust boot smoke, file access smoke | Not retireable: missing Rust-default RC |
-| `pipe` | Selected future service | C behavior mini-spec and C registration smoke | Not retireable: no Rust implementation |
-| `test_msgpass` | Selected future test helper | C helper contract and selection rationale | Not retireable: no Rust implementation |
+The live status matrix is `STATUS.md`. It records C default, Rust opt-in, Rust
+default, and retired status for every tracked migration component. At this
+capture, no component has reached `Rust default` or `Retired`.
 
 ## Removal PR Checklist
 
@@ -63,7 +60,8 @@ Use this checklist when a future component is eligible for removal:
 - [ ] C behavior spec and Rust differences are linked.
 - [ ] Rust host tests and in-guest smokes are linked.
 - [ ] Strict ELF audit output is linked.
-- [ ] Release notes describe the language change and rollback window.
+- [ ] Release notes use `RELEASE_NOTE_TEMPLATE.md` and describe the language
+      change and rollback window.
 - [ ] The PR removes only the C implementation and stale C-specific build paths.
 ```
 
