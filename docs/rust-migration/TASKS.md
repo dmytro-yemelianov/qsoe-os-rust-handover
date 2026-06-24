@@ -310,7 +310,7 @@ small reviewable change unless it explicitly says otherwise.
 - [x] Add unsafe-code review checklist.
   - Acceptance: checklist is referenced by Rust migration PRs.
 
-- [ ] Add migration status table.
+- [x] Add migration status table.
   - Acceptance: docs show C default, Rust opt-in, Rust default, and retired
     status for each component.
 

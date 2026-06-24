@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 02:34 CEST.
+Last updated: 2026-06-24 02:38 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,34 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 02:38 CEST - Migration Status Matrix Added
+
+Scope:
+
+- Added `STATUS.md` as the current migration status matrix.
+- Listed every tracked replacement candidate with C default, Rust opt-in, Rust
+  default, and retired status.
+- Linked the matrix from the migration index and retirement gate.
+- Marked the migration-status-table task complete.
+
+Commands:
+
+- `gh issue view 39 --json number,title,body,state,url,labels`
+- `rg -n "status|default|opt-in|retired|retirement|component|slogger|virtio|pipe|procfs|minimal|service-example|Rust" docs/rust-migration -g "*.md"`
+- `rg -n "QSOE_RUST|USE_RUST|RUST_.*=|rust-.*smoke|link-smoke|boot|artifact|retire|default" Makefile scripts rust quser lq docs/rust-migration/SLOGGER.md docs/rust-migration/SLOGGER_BOOT_COMPARE.md docs/rust-migration/VIRTIO_BLOCK.md docs/rust-migration/PIPE.md docs/rust-migration/TEST_HELPER.md docs/rust-migration/TASK_MANAGER_PROCFS_BOUNDARY.md -g "!rust/target/**" -g "!rust/fuzz/target/**"`
+
+Result:
+
+- The docs now show that the host `treeqrvfs` inspector, `slogger`, and
+  `devb-virtio` are C-default with Rust opt-in coverage, while `pipe`,
+  `test_msgpass`, and `tm_procfs` remain C-default future candidates. No
+  component is Rust-default or retired.
+
+Follow-up:
+
+- Update `STATUS.md` whenever a component gains a Rust selector, flips default,
+  or enters a retirement PR.
 
 ## 2026-06-24 02:34 CEST - Unsafe Review Checklist Added
 

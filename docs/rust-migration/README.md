@@ -34,20 +34,22 @@ Read in this order:
    constraints.
 19. `RETIREMENT.md`: C removal gate, current retirement status, and future
    removal checklist.
-20. `TASK_MANAGER.md`: task-manager module inventory for Phase 9 candidate
+20. `STATUS.md`: current C default, Rust opt-in, Rust default, and retired
+   status for tracked migration components.
+21. `TASK_MANAGER.md`: task-manager module inventory for Phase 9 candidate
    selection.
-21. `TASK_MANAGER_PROCFS.md`: selected non-critical task-manager pilot module
+22. `TASK_MANAGER_PROCFS.md`: selected non-critical task-manager pilot module
    and scope exclusions.
-22. `TASK_MANAGER_PROCFS_BOUNDARY.md`: C/Rust ABI, failure behavior, and
+23. `TASK_MANAGER_PROCFS_BOUNDARY.md`: C/Rust ABI, failure behavior, and
    rollback plan for the selected pilot.
-23. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+24. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
-24. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
-25. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+25. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
+26. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-26. `PLAN.md`: phased migration plan from baseline validation through possible
+27. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-27. `TASKS.md`: executable backlog with acceptance criteria.
+28. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust
