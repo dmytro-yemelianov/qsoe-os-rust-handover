@@ -38,9 +38,9 @@ no direct seL4 object manipulation, not automatically low risk.
 | Simple pseudo-devices | `lq/taskman/sys/devnull.c`, `lq/taskman/sys/devzero.c` | Small read/write/stat handlers. | Low-medium: simple, but served through taskman's IO path. |
 | Logging formatter | `libtaskman/src/log.c`, `lq/taskman/tm_log.c` | Freestanding format subset and seL4 debug-console sink. | Low: diagnostic path, but useful during failures. |
 
-Best candidate for the next Phase 9 selection is the portable `/proc` model
-(`tm_procfs`) because it is read-only diagnostic logic, can be exercised with
-host callbacks, and has no direct effect on initial process creation.
+The selected Phase 9 pilot candidate is the portable `/proc` model
+(`tm_procfs`). See `TASK_MANAGER_PROCFS.md` for the scope exclusions and
+evidence required before implementation.
 
 ## Spawn-Critical Paths
 

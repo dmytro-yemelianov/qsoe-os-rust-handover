@@ -116,6 +116,10 @@ pass. A component that can enter an image needs:
   dynamic dependencies;
 - QEMU boot smoke before replacing a C default.
 
+Rust migration PRs must include an unsafe-review line. Use
+`UNSAFE_REVIEW.md` for the checklist, or state that the PR adds no new unsafe
+code or FFI boundary changes.
+
 For current pilot work, the order is:
 
 1. Prove behavior with host tests and fixtures.
@@ -133,6 +137,8 @@ For current pilot work, the order is:
   script falls back to `cargo test`.
 - `cargo miri test` is used when Miri is installed.
 - `cargo deny check -c rust/deny.toml` is used when cargo-deny is installed.
+- `scripts/rust-fuzz-smoke.sh` is used when nightly cargo-fuzz is available.
+- `scripts/rust-coverage.sh` is used when cargo-llvm-cov is installed.
 
 Set this when missing optional tools should fail the run:
 
@@ -144,6 +150,26 @@ Miri and fuzzing are deep gates for parser and unsafe-boundary work, not default
 edit-loop tools. Fuzz targets should be added for qrvfs, GPT, ELF, CPIO, and
 message parsers as they move from planning into implementation.
 
+Run the bounded parser fuzz smoke directly with:
+
+```sh
+make rust-fuzz-smoke
+```
+
+The current fuzz package covers `qrvfs`, `cpio`, `elf`, `syscfg`, and `sysmap`.
+The wrapper prefers `cargo +nightly fuzz` because cargo-fuzz needs sanitizer
+flags that are not available on the pinned stable toolchain. Add GPT to the
+same `rust/fuzz` package when a Rust GPT parser crate exists.
+
+Generate parser and ABI coverage reports with:
+
+```sh
+make rust-coverage
+```
+
+The coverage wrapper uses cargo-llvm-cov when installed and writes LCOV plus
+text summary output under `build/rust-coverage/`, which is ignored by git.
+
 ## CI Shape
 
 The checked-in GitHub Actions workflow keeps the same tiers and publishes
@@ -153,6 +179,7 @@ GitHub Checks for CodeRabbit review context:
 | --- | --- | --- |
 | Toolchain image | `make container-toolchain-build` | Builds the Debian trixie image used by all Linux-reproducible gates. |
 | Source build | `make container-source-build` | Runs `make prepare` when release components are missing, then builds NQ and LQ. |
+| Installed artifact audit | `make container-audit-artifacts` | Audits ELF files staged into the boot CPIO and qrvfs `/usr` roots. |
 | Fixtures and Rust quality | `make container-check` | Includes host tools, Rust quality, qrvfs Rust/C parity, and ELF relocation fixtures. |
 | Rust ABI | `make container-rust-abi` | Requires C source build artifacts. |
 | C analysis | `QSOE_INDEX_CLEAN=1 QSOE_INDEX_DB_FLAVOR=container make index-c-compile-db` and bounded `make tidy-c` | Rebuilds under Bear, then runs the curated clang-tidy pass against container paths. |

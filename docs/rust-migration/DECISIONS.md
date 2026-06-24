@@ -1,6 +1,6 @@
 # QSOE Rust Migration Decision Log
 
-Last updated: 2026-06-23 21:00 EEST.
+Last updated: 2026-06-24 02:09 CEST.
 
 This file records project decisions made during the Rust migration planning and
 toolchain setup. It is intended to be append-only except for status changes,
@@ -528,3 +528,55 @@ Verification:
 - `scripts/c-index.sh` implements file-list, tags, cscope, GNU Global, and Bear
   compile database modes.
 - `docs/rust-migration/INDEXING.md` documents the workflow.
+
+## D-021: Reject Near-Term Kernel Rust Implementation
+
+Status: Accepted.
+
+Decision:
+
+Do not start near-term Rust implementation work inside `nq`. Phase 10 may
+continue documenting safe candidates and kernel artifact audit requirements,
+but implementation stays out of scope until userland and task-manager evidence
+is stronger.
+
+Rationale:
+
+Completed migration work has proven useful building blocks:
+
+- Rust host parsers and inspectors now cover qrvfs, CPIO, syscfg/sysmap, and
+  ELF relocation fixtures.
+- Opt-in Rust userland pilots have linked under the QSOE userland contract and
+  booted for `slogger` and `devb-virtio`; virtio also has file-access smoke.
+- The task-manager `tm_procfs` pilot has an inventory, selection, C/Rust
+  boundary, rollback plan, and targeted C-default boot smoke.
+
+That is not enough evidence for kernel Rust yet:
+
+- no Rust component has completed a release-candidate period as the default
+  implementation with C rollback available;
+- no C implementation has reached the retirement gate;
+- task-manager Rust is still design-only, so mixed-language work has not
+  reached process-management internals;
+- kernel candidates touch traps, context switching, scheduling, boot assembly,
+  and low-level capability assumptions where rollback and debug cost are much
+  higher than userland.
+
+Consequences:
+
+- Phase 10 kernel work is limited to candidate and audit documentation.
+- No Rust crate or build flag should be wired into `nq` as part of near-term
+  migration work.
+- Userland and task-manager pilots remain the evidence path for later
+  reassessment.
+- Revisit this decision only after at least one Rust component has shipped
+  through a Rust-default release candidate with C rollback and after
+  task-manager pilot evidence exists beyond documentation.
+
+Verification:
+
+- `RETIREMENT.md` records that no C implementation is currently retireable.
+- `TASK_MANAGER_PROCFS_BOUNDARY.md` records the first task-manager Rust boundary
+  as future opt-in work.
+- `VIRTIO_BLOCK.md`, `SLOGGER_BOOT_COMPARE.md`, and `TASKS.md` record the
+  current userland evidence and remaining gates.

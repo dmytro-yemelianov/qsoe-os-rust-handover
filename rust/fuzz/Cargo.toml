@@ -1,0 +1,52 @@
+[package]
+name = "qsoe-fuzz"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+qsoe-cpio = { path = "../crates/qsoe-cpio" }
+qsoe-elf = { path = "../crates/qsoe-elf" }
+qsoe-qrvfs = { path = "../crates/qsoe-qrvfs" }
+qsoe-sysview = { path = "../crates/qsoe-sysview" }
+
+[workspace]
+
+[[bin]]
+name = "cpio"
+path = "fuzz_targets/cpio.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "elf"
+path = "fuzz_targets/elf.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "qrvfs"
+path = "fuzz_targets/qrvfs.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "syscfg"
+path = "fuzz_targets/syscfg.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "sysmap"
+path = "fuzz_targets/sysmap.rs"
+test = false
+doc = false
+bench = false

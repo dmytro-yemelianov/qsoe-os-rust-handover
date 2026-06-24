@@ -252,6 +252,8 @@ Crate intent:
   externally synchronized or single-threaded by construction.
 - Volatile MMIO access must use typed wrappers, not scattered raw pointer reads
   and writes.
+- Rust migration PRs must reference `UNSAFE_REVIEW.md` with either a completed
+  checklist summary or an explicit "no new unsafe code" statement.
 
 ## Acceptance Standard
 
