@@ -1,6 +1,6 @@
 # QSOE Migration Handover
 
-Last updated: 2026-06-24 15:38 CEST.
+Last updated: 2026-06-24 16:04 CEST.
 
 This handover captures the current QSOE Rust migration and workflow work so it
 can move from the macOS/container setup to a native Linux development machine.
@@ -22,7 +22,7 @@ origin git@github.com:dmytro-yemelianov/qsoe-os-rust-handover.git
 Current main tip:
 
 ```text
-1d7b706403b54e8a798d3b1f560f5473d33e020b
+cdebf687e870d417c32a166de18b23bc43421d17
 ```
 
 The local tree adds:
