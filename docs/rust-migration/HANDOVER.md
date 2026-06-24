@@ -1,6 +1,6 @@
 # QSOE Migration Handover
 
-Last updated: 2026-06-24 14:20 CEST.
+Last updated: 2026-06-24 15:38 CEST.
 
 This handover captures the current QSOE Rust migration and workflow work so it
 can move from the macOS/container setup to a native Linux development machine.
@@ -22,7 +22,7 @@ origin git@github.com:dmytro-yemelianov/qsoe-os-rust-handover.git
 Current main tip:
 
 ```text
-8af4927a611e0e97cd4c2144a12b1c3b5f77e2f0
+1d7b706403b54e8a798d3b1f560f5473d33e020b
 ```
 
 The local tree adds:
@@ -70,18 +70,19 @@ the C rollback drill and was squash-merged into `main` at
 PR #94 added the Rust pipe data-path smoke to CI, PR #99 added the Rust
 `test_msgpass` smoke to CI, PR #100 added both `slogger-rs` RC readback smokes
 to CI, PR #101 added host-model coverage for `tm_procfs`, PR #104 added the
-Rust `tm_procfs` opt-in provider, and PR #105 added the `tm_procfs` evidence
-gate. The current `main` tip is
-`8af4927a611e0e97cd4c2144a12b1c3b5f77e2f0`.
+Rust `tm_procfs` opt-in provider, PR #105 added the `tm_procfs` evidence gate,
+PR #107 applied tracked component overrides for CI, and PR #108 fixed
+line-split serial marker checks in the Rust smokes. The current `main` tip is
+`1d7b706403b54e8a798d3b1f560f5473d33e020b`.
 
 Current open follow-ups:
 
 - #26: keep C retirement blocked until the retirement checklist in
   `RETIREMENT.md` is satisfied and a separate removal PR is reviewed.
-- #96: capture trusted CI evidence for the Rust pipe data-path smoke.
-- #97: capture trusted CI evidence for the Rust `test_msgpass` smoke.
-- #103: capture `tm_procfs` Rust opt-in evidence before any default-selection
-  decision.
+
+The #96 Rust pipe data-path gate, #97 Rust `test_msgpass` gate, and #103
+`tm_procfs` opt-in gate are satisfied by trusted `main` CI run `28102250069` at
+`1d7b706403b54e8a798d3b1f560f5473d33e020b`.
 
 The #98 host-test gate for the portable `tm_procfs` model is satisfied by
 `make check-tm-procfs-model`. The #102 Rust provider gate is satisfied by
@@ -271,20 +272,25 @@ The strict ELF audit showed:
   blocked by #26.
 - `test_msgpass` has an opt-in Rust helper and Rust-selected suite `[msgpass]`
   smoke. CI includes `container-rust-test-msgpass-smoke` for trusted PRs and
-  pushes. The wider suite still reports the known unrelated QSOE/L sync
-  failure, so the smoke gates targeted `[msgpass]` markers and boot-to-login.
+  pushes. Trusted `main` run `28102250069` passed the smoke and uploaded the
+  targeted `[msgpass]` markers plus boot-to-login evidence. The wider suite
+  still reports the known unrelated QSOE/L sync failure, so the smoke gates
+  only the targeted `[msgpass]` markers and boot-to-login.
 - `pipe` has an opt-in Rust service, registration boot smoke, and data-path
   smoke. CI includes `container-rust-pipe-data-smoke` on the configured
-  `[self-hosted, X64]` runner for trusted PRs and pushes, so a green run can be
-  used as hosted-runner evidence before any Rust-default pipe release
-  candidate. C remains rollback.
+  `[self-hosted, X64]` runner for trusted PRs and pushes. Trusted `main` run
+  `28102250069` passed the hosted-runner data-path smoke and uploaded the
+  required pipe registration, round-trip, EOF, and helper-exit markers. C
+  remains rollback.
 - `tm_procfs` now has a Rust opt-in provider behind `QSOE_RUST_TM_PROCFS=1`.
   The selector removes C `tm_procfs.o` from `libtaskman.a`, links the
   soft-float `qsoe-tm-procfs` archive into NQ/LQ taskman. `make
   tm-procfs-evidence` audits the selected artifacts and runs both C-default and
   Rust-selected `/proc` smokes; CI includes `container-tm-procfs-evidence` on
-  the configured `[self-hosted, X64]` runner for trusted PRs and pushes. C
-  remains default and rollback.
+  the configured `[self-hosted, X64]` runner for trusted PRs and pushes.
+  Trusted `main` run `28102250069` passed the evidence step and uploaded both
+  C-default/Rust-selected procfs logs plus archive membership and readelf
+  summaries. C remains default and rollback.
 
 ## Current Decisions
 
@@ -300,14 +306,12 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 
 1. Keep C `slogger` retirement blocked until #26's retirement checklist is
    satisfied and a separate removal PR is reviewed.
-2. Use a green trusted CI run of `make container-rust-pipe-data-smoke` on the
-   configured `[self-hosted, X64]` runner as hosted-runner evidence before
-   considering Rust pipe for a default-selection release candidate.
-3. Use a green trusted CI run of `make container-rust-test-msgpass-smoke` for
-   #97 before any Rust-default test-image decision; keep C rollback paths
-   available.
-4. Use a green trusted CI run of `make container-tm-procfs-evidence` for #103
-   before any Rust-default `tm_procfs` selection decision.
+2. If desired, open a separate Rust-default pipe release-candidate PR with C
+   rollback. #96's hosted-runner evidence is complete.
+3. If desired, open a separate Rust-default `test_msgpass` test-image decision
+   PR with C rollback. #97's hosted-runner evidence is complete.
+4. If desired, open a separate Rust-default `tm_procfs` selection design/PR
+   with C rollback. #103's opt-in evidence is complete.
 5. Keep the hosted runner and CodeRabbit account healthy for new PRs, but the
    old #42/#60 external states no longer block `main`.
 6. Do not start C retirement until the release-candidate gate in

@@ -114,7 +114,8 @@ Before selecting the Rust object by default in any image:
   do not, checks NQ/LQ taskman ELF flags/sections, and runs C-default plus
   Rust-selected `/proc` smokes;
 - `make container-tm-procfs-evidence` passes on the configured trusted Linux
-  runner before any separate default-selection decision.
+  runner before any separate default-selection decision; trusted `main` CI run
+  `28102250069` accepted this evidence for #103.
 
 ## Boundary Review Result
 

@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 14:20 CEST.
+Last updated: 2026-06-24 15:38 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,48 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 15:38 CEST - Trusted CI Evidence Accepted
+
+Scope:
+
+- Accepted trusted `main` CI evidence for #96, #97, and #103 from run
+  `28102250069` at commit
+  `1d7b706403b54e8a798d3b1f560f5473d33e020b`.
+- Recorded the hosted-runner evidence in README, STATUS, HANDOVER, PIPE,
+  TEST_HELPER, TASK_MANAGER_PROCFS, and TASK_MANAGER_PROCFS_BOUNDARY.
+- Kept `pipe`, `test_msgpass`, and `tm_procfs` as Rust opt-in only; no default
+  selection or C retirement changed.
+
+Commands:
+
+- `gh run view 28102250069 --json url,createdAt,updatedAt,headSha,conclusion,status,jobs`
+- `gh run download 28102250069 -n qsoe-boot-smoke-logs -D /tmp/qsoe-run-28102250069-logs`
+- `rg` over downloaded `rust-test-msgpass`, `rust-pipe-data`, and
+  `tm-procfs-evidence` logs for the required markers.
+
+Result:
+
+- `container-rust-test-msgpass-smoke` passed on runner `qsoe-ci-x64`; the log
+  contains `[test_msgpass-rs] alive`, `[test_msgpass-rs] /dev/msgpass
+  registered`, targeted `[msgpass]` PASS/SKIP markers, suite exit, and
+  boot-to-login.
+- `container-rust-pipe-data-smoke` passed; the uploaded log contains
+  `[pipe-rs] /dev/pipe registered`, `[test_pipe_data] pipe round-trip ok`,
+  `[test_pipe_data] pipe eof ok`, `rust-pipe-data-smoke: helper exited 0`, and
+  boot-to-login.
+- `container-tm-procfs-evidence` passed; uploaded logs contain C-default and
+  Rust-selected `/proc` smoke markers, and archive membership summaries show
+  C-default `tm_procfs.o` count `1` and Rust-selected count `0` for both NQ and
+  LQ.
+- The artifact `qsoe-boot-smoke-logs` was uploaded as artifact ID
+  `7851201333`.
+
+Follow-up:
+
+- Close #96, #97, and #103 as evidence-complete.
+- Keep #26 blocked until the retirement checklist and a separate removal PR are
+  satisfied.
 
 ## 2026-06-24 14:20 CEST - Slogger RC Evidence Accepted
 

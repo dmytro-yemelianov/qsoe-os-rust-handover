@@ -105,8 +105,8 @@ Image-level validation stays simple for the opt-in provider:
 
 Trusted CI runs `make container-tm-procfs-evidence` on the configured
 `[self-hosted, X64]` runner for same-repository PRs, pushes, and manual
-dispatches. Next gate: use a green #103 evidence run before any Rust-default
-selection decision.
+dispatches. Trusted `main` CI run `28102250069` accepted the #103 evidence
+before any separate Rust-default selection decision.
 
 ## Selection Result
 

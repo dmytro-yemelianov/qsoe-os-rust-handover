@@ -128,6 +128,7 @@ Before selecting Rust `pipe` by default:
   `scripts/audit-elf.sh --strict-qsoe-user`
 - the opt-in boot smoke must continue to replace only `/sbin/pipe` and preserve
   login
-- keep `make rust-pipe-data-smoke` passing on the hosted runner
+- keep `make rust-pipe-data-smoke` passing on the hosted runner; trusted
+  `main` CI run `28102250069` accepted the #96 data-path evidence
 - require Rust-default release-candidate evidence with C rollback available
   before any default-selection decision

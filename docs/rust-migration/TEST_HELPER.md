@@ -115,3 +115,5 @@ Before any Rust helper is selected into a test image:
   `/usr/bin/test_msgpass`
 - the existing suite `[msgpass]` section passes with the Rust helper selected
 - boot still reaches login after the test-image staging change
+- trusted `main` CI run `28102250069` accepted the #97 hosted-runner evidence
+  for `container-rust-test-msgpass-smoke`
