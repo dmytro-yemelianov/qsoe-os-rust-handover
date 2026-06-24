@@ -1,6 +1,6 @@
 # QSOE Migration Handover
 
-Last updated: 2026-06-24 12:21 CEST.
+Last updated: 2026-06-24 13:03 CEST.
 
 This handover captures the current QSOE Rust migration and workflow work so it
 can move from the macOS/container setup to a native Linux development machine.
@@ -22,7 +22,7 @@ origin git@github.com:dmytro-yemelianov/qsoe-os-rust-handover.git
 Current main tip:
 
 ```text
-47421b760c02dd30aec226f2a0978653368e5e24
+338517613bd507db18bfe82da8c9d2818bc67dfe
 ```
 
 The local tree adds:
@@ -63,10 +63,14 @@ The former stack blockers are no longer active merge blockers:
 - #84 tracked bottom-up merge preparation and was closed after #60 and #42 were
   merged.
 
+PR #93 added the first `slogger-rs` Rust-default release-candidate path with
+the C rollback drill and was squash-merged into `main` at
+`338517613bd507db18bfe82da8c9d2818bc67dfe`.
+
 Current open follow-up:
 
-- #26: keep C retirement blocked until a Rust-default release candidate ships
-  with C rollback available.
+- #26: keep C retirement blocked until the `slogger-rs` RC evidence window is
+  accepted and the retirement checklist in `RETIREMENT.md` is satisfied.
 
 ## Linux Machine Setup
 
@@ -249,8 +253,9 @@ The strict ELF audit showed:
   smoke. The wider suite still reports the known unrelated QSOE/L sync failure,
   so the smoke gates targeted `[msgpass]` markers and boot-to-login.
 - `pipe` has an opt-in Rust service, registration boot smoke, and data-path
-  smoke. A Rust-default release candidate still requires hosted-runner evidence
-  and C rollback.
+  smoke. CI includes `container-rust-pipe-data-smoke` on the configured
+  `[self-hosted, X64]` runner so a green run can be used as hosted-runner
+  evidence before any Rust-default pipe release candidate. C remains rollback.
 
 ## Current Decisions
 
@@ -266,7 +271,8 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 
 1. Run and accept the `slogger-rs` RC window from `SLOGGER_RC.md`; do not retire
    the C `slogger` until #26's retirement checklist is satisfied.
-2. Repeat `make rust-pipe-data-smoke` on the hosted runner before considering
+2. Use a green CI run of `make container-rust-pipe-data-smoke` on the configured
+   `[self-hosted, X64]` runner as hosted-runner evidence before considering
    Rust pipe for a default-selection release candidate.
 3. Use the `test_msgpass-rs` smoke evidence if planning a Rust-default
    test-image decision; keep C rollback paths available.

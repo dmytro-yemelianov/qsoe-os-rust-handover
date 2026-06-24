@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 12:21 CEST.
+Last updated: 2026-06-24 13:03 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,38 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-24 13:03 CEST - Pipe Data Smoke Added To CI
+
+Scope:
+
+- Added `make container-rust-pipe-data-smoke` to the main GitHub Actions CI job
+  on the configured `[self-hosted, X64]` runner.
+- Extended CI artifact upload coverage to include `build/rust-pipe-data/*.log`.
+- Refreshed the handover and status docs after PR #93 landed at
+  `338517613bd507db18bfe82da8c9d2818bc67dfe`.
+
+Commands:
+
+- `bash -n scripts/rust-pipe-data-smoke.sh`
+- `make -n container-rust-pipe-data-smoke`
+- `make rust-pipe-data-smoke`
+- `git diff --check`
+
+Result:
+
+- The next pipe gate is now represented directly in CI. A green run of this
+  workflow provides the hosted-runner data-path evidence needed before a
+  Rust-default pipe release-candidate decision.
+- Local host smoke still passes and verifies `[pipe-rs] /dev/pipe registered`,
+  `[test_pipe_data] pipe round-trip ok`, `[test_pipe_data] pipe eof ok`, and
+  `rust-pipe-data-smoke: helper exited 0`.
+
+Follow-up:
+
+- Wait for a green CI run before opening a Rust-default pipe RC PR.
+- Keep #26 blocked until the `slogger-rs` RC evidence window is accepted and
+  `RETIREMENT.md` is satisfied.
 
 ## 2026-06-24 12:21 CEST - Slogger Rust-Default RC Path
 

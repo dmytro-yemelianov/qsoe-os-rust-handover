@@ -52,10 +52,15 @@ jobs:
       - name: Boot smoke LQ image
         run: scripts/container-toolchain.sh run scripts/boot-smoke.sh -k lq -t 120
 
+      - name: Run Rust pipe data-path smoke
+        run: make container-rust-pipe-data-smoke
+
       - name: Upload boot smoke logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: qsoe-boot-smoke-logs
-          path: build/boot-smoke-*.log
+          path: |
+            build/boot-smoke-*.log
+            build/rust-pipe-data/*.log
           if-no-files-found: ignore
