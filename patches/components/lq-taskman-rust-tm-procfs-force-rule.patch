@@ -1,0 +1,16 @@
+diff --git a/taskman/Makefile b/taskman/Makefile
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -237,9 +237,11 @@ TASKMAN_OBJS := \
+ # (portable taskman body).  No libc -- taskman is a freestanding
+ # rootserver.  Plain archive semantics on libtaskman: only objects whose
+ # symbols are referenced get pulled in, so LQ-side overrides (e.g.
+ # sys/syscfg.o, kept while the API still differs) suppress libtaskman's
+ # matching module cleanly.
+-$(RUST_TM_PROCFS_A):
++FORCE:
++
++$(RUST_TM_PROCFS_A): FORCE
+ 	@$(REPO_ROOT)/scripts/build-rust-tm-procfs-provider.sh $@
+ 
+ $(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)

@@ -93,6 +93,8 @@ if [ ! -d "$source_conf" ]; then
     exit 1
 fi
 
+"$ROOT/scripts/apply-component-overrides.sh"
+
 cleanup() {
     if [ -n "$fragment" ]; then
         rm -f "$fragment"

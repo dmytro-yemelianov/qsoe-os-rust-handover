@@ -1,0 +1,52 @@
+diff --git a/taskman/Makefile b/taskman/Makefile
+index 83fdf3c..9461d11 100644
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -19,6 +19,7 @@ CROSS    ?= riscv64-linux-gnu-
+ CC        = $(CROSS)gcc
+ LD        = $(CROSS)ld
+ OBJCOPY   = $(CROSS)objcopy
++QSOE_RUST_TM_PROCFS ?= 0
+ 
+ GCC_INCLUDE := $(shell $(CC) -print-file-name=include)
+ 
+@@ -51,6 +52,14 @@ OBJS      = $(addprefix $(BUILD)/, $(C_SRCS:.c=.c.o) $(S_SRCS:.S=.S.o))
+ LIBTASKMAN_DIR := ../../libtaskman
+ LIBTASKMAN_BUILD := $(abspath ../build/libtaskman)
+ LIBTASKMAN_A := $(LIBTASKMAN_BUILD)/libtaskman.a
++REPO_ROOT := $(abspath ../..)
++RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a
++
++ifeq ($(QSOE_RUST_TM_PROCFS),1)
++TASKMAN_RUST_LIBS := $(RUST_TM_PROCFS_A)
++else
++TASKMAN_RUST_LIBS :=
++endif
+ 
+ .PHONY: all clean libtaskman
+ all: $(BUILD)/taskman.bin
+@@ -62,7 +71,11 @@ $(LIBTASKMAN_A): FORCE
+ 	    O=$(LIBTASKMAN_BUILD) \
+ 	    LIBC_INC=$(abspath ../../libc/include) \
+ 	    PICFLAG=-fno-pic \
+-	    EXTRA_CFLAGS="-fno-builtin"
++	    EXTRA_CFLAGS="-fno-builtin" \
++	    QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)
++
++$(RUST_TM_PROCFS_A): FORCE
++	@$(REPO_ROOT)/scripts/build-rust-tm-procfs-provider.sh $@
+ 
+ FORCE:
+ 
+@@ -70,9 +83,9 @@ $(BUILD)/taskman.bin: $(BUILD)/taskman.elf
+ 	@echo "  OBJCOPY  $@"
+ 	@$(OBJCOPY) -O binary --set-section-flags .bss=alloc,load,contents $< $@
+ 
+-$(BUILD)/taskman.elf: $(OBJS) $(LIBTASKMAN_A) taskman.ld
++$(BUILD)/taskman.elf: $(OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS) taskman.ld
+ 	@echo "  LINK  $@"
+-	@$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBTASKMAN_A)
++	@$(CC) $(LDFLAGS) -o $@ $(OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)
+ 
+ $(BUILD)/%.c.o: %.c
+ 	@mkdir -p $(@D)

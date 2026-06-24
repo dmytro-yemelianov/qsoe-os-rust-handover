@@ -25,7 +25,7 @@ SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
 SELECTED_TEST_MSGPASS_ELF ?= build/rust/selected/usr/bin/test_msgpass.elf
 SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
 
-.PHONY: all prepare clean nvme nvme-populate virtio fsqrv-image tree \
+.PHONY: all prepare component-overrides clean nvme nvme-populate virtio fsqrv-image tree \
         check-host-tools check-qrvfs-fixture check-qrvfs-rust-fixture \
         check-elf-reloc-fixture check-gpt-fixture check-tm-procfs-model \
         slog-readback-smoke \
@@ -69,12 +69,16 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-procfs-smoke \
         container-source-build
 
-all:
+all: component-overrides
 	$(MAKE) -C nq QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)
 	$(MAKE) -C lq QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)
 
 prepare:
 	./proj_obtain.sh
+	./scripts/apply-component-overrides.sh
+
+component-overrides:
+	./scripts/apply-component-overrides.sh
 
 # Whole-tree clean: every component owns its clean; we just descend into
 # each, then drop the umbrella's own build/ (disk images + host tools).

@@ -118,6 +118,7 @@ case "$cmd" in
         ;;
     source-build)
         run_container bash -c '
+            set -eu
             missing=0
             for d in lq nq libc quser; do
                 [ -d "$d" ] || missing=1
@@ -125,6 +126,7 @@ case "$cmd" in
             if [ "$missing" -eq 1 ]; then
                 make prepare
             fi
+            scripts/apply-component-overrides.sh
             make
         '
         ;;

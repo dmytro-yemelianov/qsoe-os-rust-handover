@@ -62,6 +62,8 @@ NM=$(find_tool riscv64-linux-gnu-nm nm llvm-nm) || {
 
 mkdir -p "$WORKDIR"
 
+"$ROOT/scripts/apply-component-overrides.sh"
+
 fail() {
     echo "tm-procfs-evidence.sh: $*" >&2
     exit 1

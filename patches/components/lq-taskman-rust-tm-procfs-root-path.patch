@@ -1,0 +1,9 @@
+diff --git a/taskman/Makefile b/taskman/Makefile
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -1,4 +1,4 @@
+ LIBTASKMAN_INC ?= $(abspath $(TOP)/..)/libtaskman/include
+ LIBTASKMAN_A   ?= $(BUILD)/libtaskman/libtaskman.a
+ REPO_ROOT := $(abspath $(TOP)/..)
+-RUST_TM_PROCFS_A := $(BUILD)/rust/tm-procfs/libqsoe_tm_procfs.a
++RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a
