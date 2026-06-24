@@ -283,3 +283,5 @@ Explicitly out of early scope:
 - If a Rust component fails boot smoke, the default must automatically remain or
   return to the C implementation.
 - Release notes must list every component whose implementation language changed.
+- Use `RELEASE_NOTE_TEMPLATE.md` for any Rust opt-in selector, Rust-default
+  release candidate, or C retirement note.
