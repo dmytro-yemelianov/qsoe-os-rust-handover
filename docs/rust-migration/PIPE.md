@@ -7,7 +7,8 @@ Selected: 2026-06-24 01:47 CEST.
 and shaped like a resource manager without touching storage or console-driver
 hardware.
 
-The existing C implementation remains the default and rollback path.
+The existing C implementation remains the default and rollback path. A Rust
+implementation now exists as an explicit opt-in.
 
 ## Current C Component
 
@@ -66,19 +67,33 @@ Blocking behavior follows the current QNX-style saved-rcvid pattern:
 - write with remaining data fills the ring and may park the writer
 - close wakes parked opposite-end callers where required
 
-## Rust Implementation Constraints
+## Rust Opt-In Implementation
 
-The Rust version should be split before linking a service:
+The Rust version is split into:
 
 - `qsoe-pipe`: dependency-free `no_std` ring and state machine with host tests.
 - `qsoe-pipe-rs`: QSOE userland staticlib that owns only channel registration,
   request decode/reply, and calls into `qsoe-pipe`.
 
-Unsafe code should stay in the service boundary and FFI calls. The ring/state
-crate should not allocate and should expose explicit outcomes such as
-`ReplyNow`, `ParkReader`, `ParkWriter`, `WakeReader`, and `WakeWriter`.
+Unsafe code stays in the service boundary and FFI calls. The ring/state crate
+does not allocate and reports explicit reply outcomes for immediate replies,
+parked callers, and parked-caller wakeups.
 
-## Required Smoke Before Implementation
+The implemented opt-in targets are:
+
+```sh
+make rust-pipe-link-smoke
+QSOE_RUST_PIPE=1 make pipe-artifact
+make rust-pipe-smoke
+```
+
+`make rust-pipe-smoke` replaces only `/sbin/pipe` in a temporary LQ boot CPIO,
+starts it from a temporary sysinit fragment, reaches `login:`, and requires:
+
+- `[pipe-rs] /dev/pipe registered`
+- `rust-pipe-smoke: started /sbin/pipe`
+
+## C Baseline Smoke
 
 Run the C registration smoke:
 
@@ -99,11 +114,13 @@ implementation is introduced.
 
 ## Later Rust Acceptance
 
-Before selecting Rust `pipe` into any image:
+Before selecting Rust `pipe` by default:
 
-- host tests must cover ring wrap, EOF, wrong-end errors, parked reader,
-  parked writer, close wakeups, and pool exhaustion
-- the Rust binary must link and pass `scripts/audit-elf.sh --strict-qsoe-user`
-- an opt-in boot smoke must replace only `/sbin/pipe` and preserve login
+- host tests must continue to cover ring wrap, EOF, wrong-end errors, parked
+  reader, parked writer, close wakeups, and pool exhaustion
+- the Rust binary must continue to link and pass
+  `scripts/audit-elf.sh --strict-qsoe-user`
+- the opt-in boot smoke must continue to replace only `/sbin/pipe` and preserve
+  login
 - once libc/taskman pipe creation is fully wired, add a data-path smoke for a
-  simple shell pipeline or a dedicated pipe helper
+  simple shell pipeline or a dedicated pipe helper; tracked by #90

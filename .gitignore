@@ -21,3 +21,6 @@ build/
 
 # Rust migration spike build artifacts
 rust/target/
+rust/fuzz/artifacts/
+rust/fuzz/corpus/
+rust/fuzz/target/

@@ -135,7 +135,7 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: docs cover startup, device registration, ring size, message
     receive loop, overflow behavior, and observable logs.
 
-- [ ] Add `/dev/slog` smoke test.
+- [x] Add `/dev/slog` smoke test.
   - Acceptance: a test or helper writes a log message and verifies it is
     accepted or observable through the existing interface.
 
@@ -223,40 +223,42 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: selected component has a written mini-spec and smoke test before
     implementation.
 
-- [ ] Pick first Rust test helper.
+- [x] Pick first Rust test helper.
   - Acceptance: helper validates IPC or sync behavior and is safe to include in
     test images.
 
 - [ ] Retire one C implementation after proving parity.
   - Acceptance: removal is approved only after at least one release candidate
     with Rust default and C rollback available.
+  - Status: blocked until a component ships through that release-candidate
+    period; see `RETIREMENT.md` for the required evidence and current status.
 
 ## Phase 9: Task Manager Readiness
 
-- [ ] Inventory task-manager modules.
+- [x] Inventory task-manager modules.
   - Acceptance: docs separate pure logic from spawn, cap, relocation, and loader
     critical paths.
 
-- [ ] Select one non-critical internal module.
+- [x] Select one non-critical internal module.
   - Acceptance: module has no direct effect on initial process creation.
 
-- [ ] Design C/Rust boundary for task-manager pilot.
+- [x] Design C/Rust boundary for task-manager pilot.
   - Acceptance: boundary review includes failure behavior and rollback plan.
 
-- [ ] Add targeted boot coverage.
+- [x] Add targeted boot coverage.
   - Acceptance: smoke tests exercise the selected path before Rust changes land.
 
 ## Phase 10: Kernel Reassessment
 
-- [ ] Write kernel Rust decision record.
+- [x] Write kernel Rust decision record.
   - Acceptance: decision uses evidence from completed userland migrations and
     explicitly accepts or rejects near-term kernel Rust work.
 
-- [ ] Identify safe kernel candidates.
+- [x] Identify safe kernel candidates.
   - Acceptance: candidates exclude traps, context switching, scheduler core,
     boot assembly, and seL4 capability assumptions.
 
-- [ ] Define kernel artifact audit needs.
+- [x] Define kernel artifact audit needs.
   - Acceptance: audit covers codegen assumptions, sections, linker script
     compatibility, panic behavior, and forbidden runtime references.
 
@@ -286,7 +288,7 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: workflow scripts set `CARGO_TARGET_DIR` by default so macOS and
     Linux/container checks do not churn the same cache.
 
-- [ ] Add `make audit-artifacts`.
+- [x] Add `make audit-artifacts`.
   - Acceptance: audit can be run on all installed userland binaries.
 
 - [x] Add bounded clang-tidy wrapper.
@@ -297,21 +299,21 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: cargo-deny or cargo-vet configuration records allowed licenses,
     advisory handling, source policy, and review/audit expectations.
 
-- [ ] Add Rust parser fuzz targets.
+- [x] Add Rust parser fuzz targets.
   - Acceptance: qrvfs and future GPT/ELF/CPIO parsers have cargo-fuzz targets
     and a bounded smoke command suitable for a deep local gate.
 
-- [ ] Add Rust coverage reporting.
+- [x] Add Rust coverage reporting.
   - Acceptance: host crates can produce coverage for parser and ABI tests,
     preferably with generated output under ignored build directories.
 
-- [ ] Add unsafe-code review checklist.
+- [x] Add unsafe-code review checklist.
   - Acceptance: checklist is referenced by Rust migration PRs.
 
-- [ ] Add migration status table.
+- [x] Add migration status table.
   - Acceptance: docs show C default, Rust opt-in, Rust default, and retired
     status for each component.
 
-- [ ] Add release-note template.
+- [x] Add release-note template.
   - Acceptance: template records language changes, rollback flags, test
     evidence, and known limitations.
