@@ -192,6 +192,48 @@ fragment runs after `/usr` is mounted and prints
 `rust-virtio-file-smoke: read /usr/conf/passwd ok` only after `/bin/cat` can
 read the file through the Rust-backed `/dev/vblk0` mount.
 
+## Test Msgpass Selection
+
+The Rust `test_msgpass` helper can be linked and audited without changing the
+normal test-image default:
+
+```sh
+make rust-test-msgpass-link-smoke
+```
+
+The selected artifact target mirrors the service opt-ins:
+
+```sh
+make test-msgpass-artifact
+QSOE_RUST_TEST_MSGPASS=1 make test-msgpass-artifact
+```
+
+With the default `QSOE_RUST_TEST_MSGPASS=0`, the target stages the existing C
+`quser/build/test/msgpass/test_msgpass.elf`. With
+`QSOE_RUST_TEST_MSGPASS=1`, it first links and audits
+`qsoe-test-msgpass-rs`. Both modes write the selected binary to
+`build/rust/selected/usr/bin/test_msgpass.elf`.
+
+The opt-in smoke stages the Rust helper into a temporary qrvfs image and runs
+the existing suite `[msgpass]` path:
+
+```sh
+make rust-test-msgpass-smoke
+```
+
+The release-candidate path makes Rust the default for the targeted test image
+while keeping an explicit C rollback drill:
+
+```sh
+make test-msgpass-rc-smoke
+make test-msgpass-rc-rollback-smoke
+```
+
+`make test-msgpass-rc-smoke` selects `test_msgpass-rs` by default and verifies
+the suite `[msgpass]` PASS/SKIP markers. `make
+test-msgpass-rc-rollback-smoke` sets `QSOE_TEST_MSGPASS_RC_ROLLBACK=1` and
+verifies the same markers with the C helper restored.
+
 ## Pipe Selection
 
 The opt-in Rust pipe manager can be linked and audited without changing the
