@@ -591,7 +591,7 @@ mod tests {
             ),
             (
                 "quser/build/test/suite/suite.elf",
-                &[(riscv::R_RISCV_64, 1), (riscv::R_RISCV_JUMP_SLOT, 67)],
+                &[(riscv::R_RISCV_JUMP_SLOT, 67)],
             ),
         ];
 

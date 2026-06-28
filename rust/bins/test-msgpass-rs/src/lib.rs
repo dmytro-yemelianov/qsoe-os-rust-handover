@@ -120,7 +120,7 @@ pub extern "C" fn main(argc: isize, argv: *const *const u8, _envp: *const *const
         debug_write(b"[test_msgpass-rs] exiting due to --no-reply\n");
         match service.shutdown() {
             Ok(()) => debug_write(b"[test_msgpass-rs] shutdown ok\n"),
-            Err(e) => {
+            Err(_) => {
                 debug_write(b"[test_msgpass-rs] shutdown err\n");
             }
         }
