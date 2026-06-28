@@ -5,7 +5,7 @@ index 224056b..e4d2fbc 100644
 @@ -202,28 +202,31 @@ reap:
                           * waitpid here would park forever.  Leak it
                           * and let the FAIL line tell the story. */
- 
+
 -        unsigned long ping  = 0xfeedfacecafef00dUL;
 -        unsigned long pong  = 0;
 -        int sent = MsgSend(coid, &ping, sizeof ping, &pong, sizeof pong);

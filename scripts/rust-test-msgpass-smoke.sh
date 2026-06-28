@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# Boot QSOE/L with an opt-in Rust /usr/bin/test_msgpass helper and run the
-# existing suite [msgpass] path from a temporary sysinit fragment.
+# Boot QSOE/L with a selected /usr/bin/test_msgpass helper and run the
+# existing suite [msgpass] path from a temporary sysinit fragment. Rust is
+# selected by default; set QSOE_RUST_TEST_MSGPASS=0 for the C rollback path.
 
 set -eu
 
@@ -9,11 +10,14 @@ usage() {
     cat <<'EOF'
 usage: scripts/rust-test-msgpass-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
-Builds qsoe-test-msgpass-rs, stages it at /usr/bin/test_msgpass in a
-temporary virtio qrvfs image, injects a sysinit fragment that runs
-/usr/bin/suite, and verifies the existing [msgpass] suite markers.
+Builds and stages the selected helper at /usr/bin/test_msgpass in a temporary
+virtio qrvfs image, injects a sysinit fragment that runs /usr/bin/suite, and
+verifies the existing [msgpass] suite markers. Rust is selected by default; set
+QSOE_RUST_TEST_MSGPASS=0 for the C rollback path.
 
 Environment:
+  QSOE_RUST_TEST_MSGPASS    selected artifact mode, default 1 (Rust)
+                             set 0 to prepare the C rollback image
   RUST_TEST_MSGPASS_WORKDIR   output directory, default build/rust-test-msgpass
 EOF
 }
@@ -72,6 +76,22 @@ if [ "$timeout_s" -le 0 ]; then
     exit 2
 fi
 
+QSOE_RUST_TEST_MSGPASS=${QSOE_RUST_TEST_MSGPASS:-1}
+case "$QSOE_RUST_TEST_MSGPASS" in
+    0|false|FALSE|no|NO)
+        msgpass_mode=c
+        helper_string="[test_msgpass] MsgReply"
+        ;;
+    1|true|TRUE|yes|YES)
+        msgpass_mode=rust
+        helper_string="[test_msgpass-rs] /dev/msgpass registered"
+        ;;
+    *)
+        echo "rust-test-msgpass-smoke.sh: QSOE_RUST_TEST_MSGPASS must be 0 or 1" >&2
+        exit 2
+        ;;
+esac
+
 workdir=${RUST_TEST_MSGPASS_WORKDIR:-"$ROOT/build/rust-test-msgpass"}
 source_conf="$ROOT/quser/conf"
 source_sysinit="$source_conf/sysinit"
@@ -80,7 +100,11 @@ lq_libc="$ROOT/lq/build/libc/libc.so"
 selected_helper="$ROOT/build/rust/selected/usr/bin/test_msgpass.elf"
 
 if [ -z "$log" ]; then
-    log="$workdir/boot-smoke-lq-rust-test-msgpass.log"
+    if [ "$msgpass_mode" = rust ]; then
+        log="$workdir/boot-smoke-lq-rust-test-msgpass.log"
+    else
+        log="$workdir/boot-smoke-lq-c-test-msgpass.log"
+    fi
 elif [ "${log#/}" = "$log" ]; then
     log="$ROOT/$log"
 fi
@@ -119,8 +143,8 @@ chmod 0644 "$fragment"
 echo "rust-test-msgpass-smoke.sh: building LQ runtime prerequisites"
 "$MAKE" -C "$ROOT/lq" libc rtld libtaskman --no-print-directory
 
-echo "rust-test-msgpass-smoke.sh: building Rust test_msgpass helper"
-QSOE_RUST_TEST_MSGPASS=1 \
+echo "rust-test-msgpass-smoke.sh: selecting $msgpass_mode test_msgpass helper"
+QSOE_RUST_TEST_MSGPASS="$QSOE_RUST_TEST_MSGPASS" \
     LIBC_SO="$lq_libc" \
     SELECTED_TEST_MSGPASS_ELF="$selected_helper" \
     "$MAKE" -C "$ROOT" test-msgpass-artifact --no-print-directory
@@ -134,12 +158,12 @@ fsqrv_bins="$fsqrv_bins $ROOT/quser/build/test/syncspace/test_syncspace.elf:test
 fsqrv_bins="$fsqrv_bins $ROOT/quser/build/utils/time.elf:time"
 fsqrv_bins="$fsqrv_bins $ROOT/quser/build/utils/sysinfo.elf:sysinfo"
 
-echo "rust-test-msgpass-smoke.sh: rebuilding virtio qrvfs image with Rust helper"
+echo "rust-test-msgpass-smoke.sh: rebuilding virtio qrvfs image with $msgpass_mode helper"
 "$MAKE" -C "$ROOT" virtio FSQRV_BINS="$fsqrv_bins" --no-print-directory
 
 if ! strings -a "$ROOT/build/fsqrv-root/bin/test_msgpass" | \
-        grep -Fq "[test_msgpass-rs] /dev/msgpass registered"; then
-    echo "rust-test-msgpass-smoke.sh: staged test_msgpass is not the Rust helper" >&2
+        grep -Fq "$helper_string"; then
+    echo "rust-test-msgpass-smoke.sh: staged test_msgpass is not the $msgpass_mode helper" >&2
     exit 1
 fi
 
@@ -154,23 +178,28 @@ if [ "${#emu_args[@]}" -gt 0 ]; then
     boot_args+=(-- "${emu_args[@]}")
 fi
 
-echo "rust-test-msgpass-smoke.sh: booting Rust test_msgpass suite smoke"
+echo "rust-test-msgpass-smoke.sh: booting $msgpass_mode test_msgpass suite smoke"
 FSQRV_BINS="$fsqrv_bins" \
     QSOE_BOOT_SLOGGER_PATTERN="fs-qrv: mounted qrvfs at /usr" \
     "$ROOT/scripts/boot-smoke.sh" "${boot_args[@]}"
 
-for expected in \
-    "[test_msgpass-rs] alive" \
+expected_markers=(
     "PASS  msgpass: resolve /dev/msgpass" \
     "PASS  msgpass: 4MB-2 round-trip" \
     "PASS  msgpass: payload halfword-swapped" \
     "PASS  msgpass: server exited clean" \
     "SKIP  msgpass: no-reply exit -> ESRVRFAULT" \
-    "rust-test-msgpass-smoke: suite exited"; do
+    "rust-test-msgpass-smoke: suite exited"
+)
+if [ "$msgpass_mode" = rust ]; then
+    expected_markers=("[test_msgpass-rs] alive" "${expected_markers[@]}")
+fi
+
+for expected in "${expected_markers[@]}"; do
     if ! log_has_marker "$expected"; then
         echo "rust-test-msgpass-smoke.sh: missing marker in $log: $expected" >&2
         exit 1
     fi
 done
 
-echo "rust-test-msgpass-smoke.sh: Rust test_msgpass suite smoke passed"
+echo "rust-test-msgpass-smoke.sh: $msgpass_mode test_msgpass suite smoke passed"

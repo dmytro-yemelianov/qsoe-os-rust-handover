@@ -32,28 +32,32 @@ Read in this order:
 17. `SERVICE_RANKING.md`: remaining userland service scores for Phase 8
    selection.
 18. `PIPE.md`: selected second Rust service mini-spec and C registration smoke.
-19. `TEST_HELPER.md`: selected first Rust in-guest test helper and safety
+19. `PIPE_RC.md`: Rust-default `pipe` release-candidate note and C rollback
+   drill.
+20. `TEST_HELPER.md`: selected first Rust in-guest test helper and safety
    constraints.
-20. `RETIREMENT.md`: C removal gate, current retirement status, and future
+21. `TEST_MSGPASS_RC.md`: Rust-default `test_msgpass` test-image
+   release-candidate note and C rollback drill.
+22. `RETIREMENT.md`: C removal gate, current retirement status, and future
    removal checklist.
-21. `STATUS.md`: current C default, Rust opt-in, Rust default, and retired
+23. `STATUS.md`: current C default, Rust opt-in, Rust default, and retired
    status for tracked migration components.
-22. `RELEASE_NOTE_TEMPLATE.md`: release-note template for implementation
+24. `RELEASE_NOTE_TEMPLATE.md`: release-note template for implementation
    language changes, rollback flags, evidence, and known limitations.
-23. `TASK_MANAGER.md`: task-manager module inventory for Phase 9 candidate
+25. `TASK_MANAGER.md`: task-manager module inventory for Phase 9 candidate
    selection.
-24. `TASK_MANAGER_PROCFS.md`: selected non-critical task-manager pilot module
+26. `TASK_MANAGER_PROCFS.md`: selected non-critical task-manager pilot module
    and scope exclusions.
-25. `TASK_MANAGER_PROCFS_BOUNDARY.md`: C/Rust ABI, failure behavior, and
+27. `TASK_MANAGER_PROCFS_BOUNDARY.md`: C/Rust ABI, failure behavior, and
    rollback plan for the selected pilot.
-26. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+28. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
-27. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
-28. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+29. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
+30. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-29. `PLAN.md`: phased migration plan from baseline validation through possible
+31. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-30. `TASKS.md`: executable backlog with acceptance criteria.
+32. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust

@@ -6,10 +6,12 @@
 # the section named after that tag in component.list ("[<tag>]" header,
 # followed by one "<name> <version>" line per component; '#' comments and
 # blank lines ignored), and clones every component listed there, detached
-# at its v<version> tag.  Components whose directories already exist are
-# skipped.  Stops with an error when component.list has no section for
-# the tag: a release tag on os.git must always declare the component
-# versions guaranteed to work with it.
+# at its v<version> tag. Components whose directories already exist are
+# reused as-is by default; if one has local changes, the script stops rather
+# than overwrite them. Set QSOE_FORCE_COMPONENT_RESET=1 to fetch, hard-reset,
+# and clean existing components to their v<version> tags. Stops with an error
+# when component.list has no section for the tag: a release tag on os.git must
+# always declare the component versions guaranteed to work with it.
 #
 # Copyright (c) 2026 Yuri Zaporozhets <yuriz@qsoe.net>
 # SPDX-License-Identifier: Apache-2.0
@@ -18,6 +20,33 @@ set -e
 
 COMPONENT_LIST=component.list
 REMOTE_BASE=https://gitlab.com/qsoe
+QSOE_FORCE_COMPONENT_RESET=${QSOE_FORCE_COMPONENT_RESET:-0}
+
+case "$QSOE_FORCE_COMPONENT_RESET" in
+    0 | 1)
+        ;;
+    *)
+        echo "$0: error: QSOE_FORCE_COMPONENT_RESET must be 0 or 1" >&2
+        exit 1
+        ;;
+esac
+
+component_dirty()
+{
+    local dir=$1
+
+    if ! git -C "$dir" diff --quiet; then
+        return 0
+    fi
+    if ! git -C "$dir" diff --cached --quiet; then
+        return 0
+    fi
+    if [ -n "$(git -C "$dir" ls-files --others --exclude-standard)" ]; then
+        return 0
+    fi
+
+    return 1
+}
 
 # The script lives in the umbrella root; operate there regardless of
 # the directory it was invoked from.
@@ -55,9 +84,19 @@ while read -r comp ver _rest; do
         exit 1
     fi
     if [ -d "$comp" ]; then
-        echo "==> $comp: present, fetching latest changes and checking out v$ver"
-        git -C "$comp" fetch origin
-        git -C "$comp" checkout "v$ver"
+        if [ "$QSOE_FORCE_COMPONENT_RESET" -eq 1 ]; then
+            echo "==> $comp: present, force-resetting to v$ver"
+            git -C "$comp" fetch origin
+            git -C "$comp" checkout --force "v$ver"
+            git -C "$comp" reset --hard "v$ver"
+            git -C "$comp" clean -fd
+        else
+            if component_dirty "$comp"; then
+                echo "$0: error: $comp has local changes; commit/stash them or set QSOE_FORCE_COMPONENT_RESET=1 to reset it" >&2
+                exit 1
+            fi
+            echo "==> $comp: present, leaving existing checkout unchanged"
+        fi
     else
         echo "==> $comp: cloning + switching to v$ver"
         git clone "$REMOTE_BASE/$comp.git"

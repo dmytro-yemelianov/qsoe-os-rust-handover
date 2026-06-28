@@ -43,7 +43,8 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         rust-tm-procfs-provider tm-procfs-evidence \
         rust-slogger-boot-smoke \
         rust-virtio-boot-smoke rust-virtio-file-smoke \
-        rust-test-msgpass-smoke pipe-smoke rust-pipe-smoke \
+        rust-test-msgpass-smoke test-msgpass-rc-smoke \
+        test-msgpass-rc-rollback-smoke pipe-smoke rust-pipe-smoke \
         rust-pipe-data-smoke pipe-rc-data-smoke pipe-rc-rollback-smoke \
         procfs-smoke \
         container-toolchain-build container-shell container-check \
@@ -64,6 +65,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-slog-readback-smoke container-slogger-rc-boot-smoke \
         container-slogger-rc-readback-smoke container-slogger-rc-rollback-smoke \
         container-rust-test-msgpass-smoke \
+        container-test-msgpass-rc-smoke container-test-msgpass-rc-rollback-smoke \
         container-rust-virtio-file-smoke container-pipe-smoke \
         container-rust-pipe-smoke container-rust-pipe-data-smoke \
         container-pipe-rc-data-smoke container-pipe-rc-rollback-smoke \
@@ -314,6 +316,12 @@ rust-virtio-file-smoke:
 rust-test-msgpass-smoke:
 	@scripts/rust-test-msgpass-smoke.sh
 
+test-msgpass-rc-smoke:
+	@scripts/test-msgpass-rc-smoke.sh
+
+test-msgpass-rc-rollback-smoke:
+	@QSOE_TEST_MSGPASS_RC_ROLLBACK=1 scripts/test-msgpass-rc-smoke.sh
+
 pipe-smoke:
 	@scripts/pipe-smoke.sh
 
@@ -437,6 +445,12 @@ container-slogger-rc-rollback-smoke:
 
 container-rust-test-msgpass-smoke:
 	@scripts/container-toolchain.sh run make rust-test-msgpass-smoke
+
+container-test-msgpass-rc-smoke:
+	@scripts/container-toolchain.sh run make test-msgpass-rc-smoke
+
+container-test-msgpass-rc-rollback-smoke:
+	@scripts/container-toolchain.sh run make test-msgpass-rc-rollback-smoke
 
 container-rust-virtio-file-smoke:
 	@scripts/container-toolchain.sh run make rust-virtio-file-smoke
