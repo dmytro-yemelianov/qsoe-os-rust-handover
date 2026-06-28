@@ -371,8 +371,17 @@ diffed against the current C `treeqrvfs` output:
 make check-qrvfs-rust-fixture
 ```
 
-This crate is read-only. The C `mkfs-qrv` tool remains the writer and source of
-truth for image construction.
+The read-only inspector has a Rust-default release-candidate selector:
+
+```sh
+make treeqrvfs-rc-smoke
+make treeqrvfs-rc-rollback-smoke
+```
+
+`make tree` builds `build/treeqrvfs` from Rust `qrvfs-tree` by default. Set
+`QSOE_RUST_TREEQRVFS=0` to select the C `host_tools/treeqrvfs.c` rollback
+artifact instead. This crate is read-only; the C `mkfs-qrv` tool remains the
+writer and source of truth for image construction.
 
 ## Host CPIO Parser
 

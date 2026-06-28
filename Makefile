@@ -20,12 +20,14 @@ QSOE_RUST_VIRTIO ?= 0
 QSOE_RUST_TEST_MSGPASS ?= 0
 QSOE_RUST_PIPE ?= 0
 QSOE_RUST_TM_PROCFS ?= 0
+QSOE_RUST_TREEQRVFS ?= 1
 SELECTED_SLOGGER_ELF ?= build/rust/selected/sbin/slogger.elf
 SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
 SELECTED_TEST_MSGPASS_ELF ?= build/rust/selected/usr/bin/test_msgpass.elf
 SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
 
 .PHONY: all prepare component-overrides clean nvme nvme-populate virtio fsqrv-image tree \
+        treeqrvfs-artifact treeqrvfs-rc-smoke treeqrvfs-rc-rollback-smoke \
         check-host-tools check-qrvfs-fixture check-qrvfs-rust-fixture \
         check-elf-reloc-fixture check-gpt-fixture check-tm-procfs-model \
         slog-readback-smoke \
@@ -73,6 +75,8 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-pipe-rc-data-smoke container-pipe-rc-rollback-smoke \
         container-procfs-smoke container-tm-procfs-rc-smoke \
         container-tm-procfs-rc-rollback-smoke \
+        container-treeqrvfs-rc-smoke \
+        container-treeqrvfs-rc-rollback-smoke \
         container-source-build
 
 all: component-overrides
@@ -168,9 +172,16 @@ $(MKFS_QRV): host_tools/mkfs-qrv.c quser/fs/qrv/fs.h
 	@mkdir -p $(dir $@)
 	@cc -O2 -Wall -I quser/fs/qrv -o $@ $<
 
-$(TREEQRVFS): host_tools/treeqrvfs.c quser/fs/qrv/fs.h
-	@mkdir -p $(dir $@)
-	@cc -O2 -Wall -I quser/fs/qrv -o $@ $<
+treeqrvfs-artifact:
+	@scripts/treeqrvfs-artifact.sh "$(TREEQRVFS)"
+
+$(TREEQRVFS): treeqrvfs-artifact
+
+treeqrvfs-rc-smoke:
+	@scripts/treeqrvfs-rc-smoke.sh
+
+treeqrvfs-rc-rollback-smoke:
+	@TREEQRVFS_RC_ROLLBACK=1 scripts/treeqrvfs-rc-smoke.sh
 
 # Dump the staged qrvfs image's directory tree (build it first if needed).
 tree: $(TREEQRVFS) fsqrv-image
@@ -499,6 +510,12 @@ container-tm-procfs-rc-smoke:
 
 container-tm-procfs-rc-rollback-smoke:
 	@scripts/container-toolchain.sh run make tm-procfs-rc-rollback-smoke
+
+container-treeqrvfs-rc-smoke:
+	@scripts/container-toolchain.sh run make treeqrvfs-rc-smoke
+
+container-treeqrvfs-rc-rollback-smoke:
+	@scripts/container-toolchain.sh run make treeqrvfs-rc-rollback-smoke
 
 container-source-build:
 	@scripts/container-toolchain.sh source-build

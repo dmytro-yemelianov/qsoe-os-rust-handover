@@ -134,6 +134,8 @@ It provides:
 - A `qrvfs-tree` binary that emits the same tree format as `treeqrvfs`.
 - Unit tests for a minimal in-memory qrvfs image.
 - A fixture comparison against the current C inspector.
+- A selected `make tree` artifact that uses Rust by default while preserving a
+  C rollback selector.
 
 Run the Rust/C comparison:
 
@@ -143,6 +145,17 @@ make check-qrvfs-rust-fixture
 
 The comparison regenerates the qrvfs fixture with the current C tools, runs the
 Rust inspector, and fails if the output diverges from `treeqrvfs`.
+
+The host inspector release-candidate selector is:
+
+```sh
+make treeqrvfs-rc-smoke
+make treeqrvfs-rc-rollback-smoke
+```
+
+`make tree` now selects Rust `qrvfs-tree` by default. Set
+`QSOE_RUST_TREEQRVFS=0` to build the C `treeqrvfs` rollback artifact instead.
+The C `mkfs-qrv` image writer remains unchanged.
 
 ## Rust ELF Inspection Baseline
 
