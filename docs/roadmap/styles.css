@@ -151,6 +151,68 @@ main {
   font-size: 0.86rem;
 }
 
+.why-section {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(360px, 1.15fr);
+  gap: 18px;
+  margin-top: 26px;
+}
+
+.why-copy,
+.why-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.why-copy {
+  padding: 24px;
+}
+
+.why-copy h2 {
+  font-size: clamp(2.4rem, 6vw, 5.4rem);
+  line-height: 0.9;
+}
+
+.why-copy p {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+#why-rule {
+  margin-bottom: 0;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+  color: var(--text);
+}
+
+.why-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.why-card {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-height: 220px;
+  padding: 18px;
+}
+
+.why-index {
+  color: var(--green);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.why-card p {
+  margin-bottom: 0;
+  color: var(--text);
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
 .progress-section {
   margin-top: 26px;
 }
@@ -566,7 +628,8 @@ footer {
 
 @media (max-width: 1050px) {
   .summary-band,
-  .split-layout {
+  .split-layout,
+  .why-section {
     grid-template-columns: 1fr;
   }
 
@@ -577,6 +640,10 @@ footer {
   .gauge-grid,
   .chart-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .why-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
@@ -596,7 +663,8 @@ footer {
   .component-grid,
   .metric-grid,
   .gauge-grid,
-  .chart-grid {
+  .chart-grid,
+  .why-grid {
     grid-template-columns: 1fr;
   }
 

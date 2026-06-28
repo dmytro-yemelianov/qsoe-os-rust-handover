@@ -20,6 +20,9 @@ const PHASE_SCORE = {
 const els = {
   purpose: document.querySelector("#purpose"),
   metrics: document.querySelector("#metrics"),
+  whySummary: document.querySelector("#why-summary"),
+  whyRule: document.querySelector("#why-rule"),
+  whyPoints: document.querySelector("#why-points"),
   progressNote: document.querySelector("#progress-note"),
   progressGauges: document.querySelector("#progress-gauges"),
   stateChart: document.querySelector("#state-chart"),
@@ -81,6 +84,7 @@ function render() {
   els.purpose.textContent = data.purpose.summary;
   els.generated.textContent = `Data generated ${formatDate(data.generatedAt)}`;
   renderMetrics();
+  renderWhy();
   renderProgressVisuals();
   renderFilters();
   renderComponents();
@@ -105,6 +109,17 @@ function renderMetrics() {
       return node;
     })
   );
+}
+
+function renderWhy() {
+  const { purpose } = state.data;
+  els.whySummary.textContent = purpose.summary;
+  els.whyRule.textContent = purpose.operatingRule;
+  els.whyPoints.replaceChildren(...purpose.whyRust.map((point, index) => {
+    const card = el("article", "why-card");
+    card.append(el("span", "why-index", String(index + 1).padStart(2, "0")), el("p", "", point));
+    return card;
+  }));
 }
 
 function renderProgressVisuals() {
