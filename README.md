@@ -6,6 +6,30 @@ existing C components stay the default and rollback path until each Rust
 candidate has tests, ELF audit evidence, boot evidence, and a release-candidate
 window with C rollback still available.
 
+## Why This Exists
+
+This project exists to make QSOE's C-to-Rust migration measurable, reversible,
+and reviewable instead of a rewrite for its own sake. Rust is used where it can
+remove concrete C failure modes such as memory unsafety, unchecked parsing,
+state-machine drift, and fragile error-path handling. C remains in place for
+paths where Rust would add more risk than value today, especially early boot,
+loader, process-spawn, capability-management, and kernel-adjacent code.
+
+The repo also exists as an evidence log. Every Rust candidate should have a
+clear selector, C rollback path, host tests, boot or runtime smoke evidence,
+and documentation before it can become a default. No C implementation is
+removed just because a Rust version exists.
+
+## Current Status
+
+- Rust-default release-candidate paths exist for `qrvfs-tree`, `slogger-rs`,
+  `devb-virtio-rs`, `pipe-rs`, `test_msgpass-rs`, and `qsoe-tm-procfs`.
+- Rust `mkfs-qrv-rs` is still opt-in, but now has fixture, production-root,
+  target-initialization, and live virtio `/usr` smoke evidence.
+- No tracked C component is retired. C is still the rollback path everywhere.
+- The next host qrvfs writer gate is triple-indirect stress coverage, then a
+  default-writer release candidate with explicit C rollback.
+
 Detailed planning lives under `docs/rust-migration/`. Start with:
 
 - `docs/rust-migration/HANDOVER.md` for the current repository state and next
