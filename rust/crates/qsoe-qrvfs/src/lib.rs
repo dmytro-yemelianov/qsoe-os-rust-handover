@@ -11,9 +11,14 @@ pub const QRVFS_T_SLINK: u16 = 3;
 pub const QRVFS_T_DEV: u16 = 4;
 pub const QRVFS_NDIRECT: usize = 7;
 pub const QRVFS_NINDIRECT: usize = QRVFS_BSIZE / 8;
+pub const QRVFS_NINDIRECT2: usize = QRVFS_NINDIRECT * QRVFS_NINDIRECT;
+pub const QRVFS_NINDIRECT3: usize = QRVFS_NINDIRECT2 * QRVFS_NINDIRECT;
 pub const QRVFS_SINGLE_IDX: usize = QRVFS_NDIRECT;
 pub const QRVFS_DOUBLE_IDX: usize = QRVFS_NDIRECT + 1;
+pub const QRVFS_TRIPLE_IDX: usize = QRVFS_NDIRECT + 2;
 pub const QRVFS_NADDRS: usize = QRVFS_NDIRECT + 3;
+pub const QRVFS_MAXFILE: usize =
+    QRVFS_NDIRECT + QRVFS_NINDIRECT + QRVFS_NINDIRECT2 + QRVFS_NINDIRECT3;
 pub const QRVFS_NAMESIZ: usize = 252;
 pub const QRVFS_IPB: u64 = (QRVFS_BSIZE / 128) as u64;
 pub const QRVFS_DPB: usize = QRVFS_BSIZE / 256;

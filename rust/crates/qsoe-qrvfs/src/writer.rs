@@ -6,8 +6,9 @@ use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::{
-    QRVFS_BPB, QRVFS_BSIZE, QRVFS_IPB, QRVFS_MAGIC, QRVFS_NADDRS, QRVFS_NAMESIZ, QRVFS_NDIRECT,
-    QRVFS_NINDIRECT, QRVFS_ROOTINO, QRVFS_SINGLE_IDX, QRVFS_T_DIR, QRVFS_T_FILE, QRVFS_VERSION,
+    QRVFS_BPB, QRVFS_BSIZE, QRVFS_DOUBLE_IDX, QRVFS_IPB, QRVFS_MAGIC, QRVFS_NADDRS, QRVFS_NAMESIZ,
+    QRVFS_NDIRECT, QRVFS_NINDIRECT, QRVFS_NINDIRECT2, QRVFS_NINDIRECT3, QRVFS_ROOTINO,
+    QRVFS_SINGLE_IDX, QRVFS_TRIPLE_IDX, QRVFS_T_DIR, QRVFS_T_FILE, QRVFS_VERSION,
 };
 
 pub const DEFAULT_SIZE_MB: u64 = 8;
@@ -341,27 +342,46 @@ impl Writer {
 
     fn data_block_for(&mut self, inode: &mut Dinode, fbn: usize) -> WriteResult<u64> {
         if fbn < QRVFS_NDIRECT {
-            if inode.addrs[fbn] == 0 {
-                inode.addrs[fbn] = self.alloc_block()?;
-            }
-            return Ok(inode.addrs[fbn]);
+            return self.walk_indirect(&mut inode.addrs[fbn], 0, 0);
         }
 
-        let indirect_fbn = fbn - QRVFS_NDIRECT;
-        if indirect_fbn >= QRVFS_NINDIRECT {
+        let fbn = fbn - QRVFS_NDIRECT;
+        if fbn < QRVFS_NINDIRECT {
+            return self.walk_indirect(&mut inode.addrs[QRVFS_SINGLE_IDX], 1, fbn);
+        }
+
+        let fbn = fbn - QRVFS_NINDIRECT;
+        if fbn < QRVFS_NINDIRECT2 {
+            return self.walk_indirect(&mut inode.addrs[QRVFS_DOUBLE_IDX], 2, fbn);
+        }
+
+        let fbn = fbn - QRVFS_NINDIRECT2;
+        if fbn < QRVFS_NINDIRECT3 {
+            return self.walk_indirect(&mut inode.addrs[QRVFS_TRIPLE_IDX], 3, fbn);
+        }
+
+        Err(WriteError::FileTooLarge)
+    }
+
+    fn walk_indirect(&mut self, slot: &mut u64, level: usize, fbn: usize) -> WriteResult<u64> {
+        if *slot == 0 {
+            *slot = self.alloc_block()?;
+        }
+
+        if level == 0 {
+            return Ok(*slot);
+        }
+
+        let fanout = (0..(level - 1)).fold(1usize, |acc, _| acc * QRVFS_NINDIRECT);
+        let idx = fbn / fanout;
+        if idx >= QRVFS_NINDIRECT {
             return Err(WriteError::FileTooLarge);
         }
-        if inode.addrs[QRVFS_SINGLE_IDX] == 0 {
-            inode.addrs[QRVFS_SINGLE_IDX] = self.alloc_block()?;
-        }
-
-        let index_block = inode.addrs[QRVFS_SINGLE_IDX];
-        let slot = self.block_offset(index_block)? + indirect_fbn * 8;
-        let mut data_block = read_u64(&self.image[slot..slot + 8]);
-        if data_block == 0 {
-            data_block = self.alloc_block()?;
-            self.image[slot..slot + 8].copy_from_slice(&data_block.to_le_bytes());
-        }
+        let rem = fbn % fanout;
+        let child_offset = self.block_offset(*slot)? + idx * 8;
+        let mut child_slot = read_u64(&self.image[child_offset..child_offset + 8]);
+        let data_block = self.walk_indirect(&mut child_slot, level - 1, rem)?;
+        self.image[child_offset..child_offset + 8].copy_from_slice(&child_slot.to_le_bytes());
         Ok(data_block)
     }
 
@@ -559,6 +579,90 @@ mod tests {
 
         assert!(matches!(err, WriteError::NameTooLong { .. }));
         fs::remove_dir_all(root).expect("remove fixture");
+    }
+
+    #[test]
+    fn writes_files_past_single_indirect() {
+        let root = temp_fixture_dir();
+        fs::create_dir_all(&root).expect("root dir");
+        let large_len = (QRVFS_NDIRECT + QRVFS_NINDIRECT + 3) * QRVFS_BSIZE + 123;
+        let large = patterned_bytes(large_len);
+        fs::write(root.join("large.bin"), &large).expect("large file");
+
+        let built = build_image(
+            Some(&root),
+            WriterConfig {
+                size_mb: 4,
+                ninodes: 64,
+            },
+        )
+        .expect("build large image");
+        let image = Image::parse(&built.bytes).expect("parse generated image");
+        let inspection = image.inspect().expect("inspect generated image");
+        let entry = inspection
+            .entries
+            .iter()
+            .find(|entry| entry.path == "large.bin")
+            .expect("large entry");
+        let inode = image.read_inode(entry.inum).expect("large inode");
+
+        assert_eq!(entry.size, large_len as u64);
+        assert_ne!(inode.addrs[QRVFS_SINGLE_IDX], 0);
+        assert_ne!(inode.addrs[QRVFS_DOUBLE_IDX], 0);
+
+        for fbn in [
+            0,
+            QRVFS_NDIRECT,
+            QRVFS_NDIRECT + QRVFS_NINDIRECT,
+            QRVFS_NDIRECT + QRVFS_NINDIRECT + 2,
+            large_len / QRVFS_BSIZE,
+        ] {
+            let expected_start = fbn * QRVFS_BSIZE;
+            let expected_end = (expected_start + QRVFS_BSIZE).min(large.len());
+            let block = logical_block(&built.bytes, &inode, fbn);
+            assert_eq!(
+                &block[..expected_end - expected_start],
+                &large[expected_start..expected_end]
+            );
+        }
+
+        fs::remove_dir_all(root).expect("remove fixture");
+    }
+
+    fn patterned_bytes(len: usize) -> Vec<u8> {
+        (0..len)
+            .map(|idx| ((idx / QRVFS_BSIZE + idx % 251) & 0xff) as u8)
+            .collect()
+    }
+
+    fn logical_block<'a>(image: &'a [u8], inode: &crate::Inode, fbn: usize) -> &'a [u8] {
+        let bno = logical_block_number(image, inode, fbn);
+        block(image, bno)
+    }
+
+    fn logical_block_number(image: &[u8], inode: &crate::Inode, fbn: usize) -> u64 {
+        if fbn < QRVFS_NDIRECT {
+            return inode.addrs[fbn];
+        }
+
+        let fbn = fbn - QRVFS_NDIRECT;
+        if fbn < QRVFS_NINDIRECT {
+            return read_index_block(image, inode.addrs[QRVFS_SINGLE_IDX], fbn);
+        }
+
+        let fbn = fbn - QRVFS_NINDIRECT;
+        let level1 = read_index_block(image, inode.addrs[QRVFS_DOUBLE_IDX], fbn / QRVFS_NINDIRECT);
+        read_index_block(image, level1, fbn % QRVFS_NINDIRECT)
+    }
+
+    fn read_index_block(image: &[u8], bno: u64, idx: usize) -> u64 {
+        let bytes = block(image, bno);
+        read_u64(&bytes[idx * 8..idx * 8 + 8])
+    }
+
+    fn block(image: &[u8], bno: u64) -> &[u8] {
+        let offset = bno as usize * QRVFS_BSIZE;
+        &image[offset..offset + QRVFS_BSIZE]
     }
 
     fn temp_fixture_dir() -> std::path::PathBuf {

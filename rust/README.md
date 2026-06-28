@@ -391,8 +391,9 @@ make check-qrvfs-rust-writer-fixture
 ```
 
 It builds a small image with `mkfs-qrv-rs`, then inspects that image with the C
-`treeqrvfs` oracle. This is a fixture writer only; production image generation
-still uses C `mkfs-qrv`.
+`treeqrvfs` oracle. The fixture includes a large file that crosses into the
+double-indirect allocation path. This is a fixture writer only; production
+image generation still uses C `mkfs-qrv`.
 
 ## Host CPIO Parser
 

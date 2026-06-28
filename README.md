@@ -39,9 +39,10 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
   read-only `make tree` inspector with explicit C rollback. `mkfs-qrv` remains
   C, and C retirement stays blocked until #26's checklist and a separate
   removal PR.
-- `mkfs-qrv-rs` now has an opt-in fixture writer gate. Keep production
-  `fsqrv-image`, NVMe, and virtio image generation on C `mkfs-qrv` until the
-  Rust writer covers block-device initialization and larger file allocation.
+- `mkfs-qrv-rs` now has an opt-in fixture writer gate with double-indirect file
+  allocation coverage. Keep production `fsqrv-image`, NVMe, and virtio image
+  generation on C `mkfs-qrv` until block-device initialization and production
+  image comparison are covered.
 - `pipe-rs` now has a Rust-default release-candidate path with explicit C
   rollback. Keep C retirement blocked until #26's checklist and a separate
   removal PR.
