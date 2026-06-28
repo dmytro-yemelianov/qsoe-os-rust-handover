@@ -52,14 +52,16 @@ Read in this order:
    and scope exclusions.
 28. `TASK_MANAGER_PROCFS_BOUNDARY.md`: C/Rust ABI, failure behavior, and
    rollback plan for the selected pilot.
-29. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+29. `TASK_MANAGER_PROCFS_RC.md`: Rust-default `tm_procfs` release-candidate
+   note and C rollback drill.
+30. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
-30. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
-31. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+31. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
+32. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-32. `PLAN.md`: phased migration plan from baseline validation through possible
+33. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-33. `TASKS.md`: executable backlog with acceptance criteria.
+34. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust
