@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>QSOE Rust Migration Roadmap</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">QSOE OS</p>
+        <h1>Rust Migration Roadmap</h1>
+      </div>
+      <nav class="doc-links" aria-label="Source documents">
+        <a href="https://github.com/dmytro-yemelianov/qsoe-os-rust-handover/blob/main/docs/rust-migration/STATUS.md">Status</a>
+        <a href="https://github.com/dmytro-yemelianov/qsoe-os-rust-handover/blob/main/docs/rust-migration/PLAN.md">Plan</a>
+        <a href="https://github.com/dmytro-yemelianov/qsoe-os-rust-handover/blob/main/docs/rust-migration/TASK_MANAGER.md">Task Manager</a>
+        <a href="https://github.com/dmytro-yemelianov/qsoe-os-rust-handover/blob/main/docs/rust-migration/RETIREMENT.md">Retirement</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="summary-band" aria-labelledby="summary-title">
+        <div class="summary-copy">
+          <h2 id="summary-title">Current Migration State</h2>
+          <p id="purpose">Loading roadmap data...</p>
+        </div>
+        <div class="metric-grid" id="metrics" aria-label="Roadmap metrics"></div>
+      </section>
+
+      <section class="controls" aria-label="Roadmap filters">
+        <label>
+          <span>Search</span>
+          <input id="search" type="search" placeholder="component, command, file">
+        </label>
+        <label>
+          <span>State</span>
+          <select id="state-filter"></select>
+        </label>
+        <label>
+          <span>Area</span>
+          <select id="area-filter"></select>
+        </label>
+        <label>
+          <span>Risk</span>
+          <select id="risk-filter"></select>
+        </label>
+      </section>
+
+      <section aria-labelledby="components-title">
+        <div class="section-heading">
+          <h2 id="components-title">Tracked Components</h2>
+          <p id="component-count"></p>
+        </div>
+        <div class="component-grid" id="components"></div>
+      </section>
+
+      <section class="split-layout">
+        <div>
+          <div class="section-heading">
+            <h2>Phase Roadmap</h2>
+          </div>
+          <div class="phase-list" id="phases"></div>
+        </div>
+        <div>
+          <div class="section-heading">
+            <h2>Policy Gates</h2>
+          </div>
+          <div class="policy-list" id="policies"></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="backlog-title">
+        <div class="section-heading">
+          <h2 id="backlog-title">Remaining Candidate Inventory</h2>
+          <p id="backlog-count"></p>
+        </div>
+        <div class="backlog-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Area</th>
+                <th>Risk</th>
+                <th>Posture</th>
+                <th>Files</th>
+              </tr>
+            </thead>
+            <tbody id="backlog"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <span id="generated"></span>
+      <a href="roadmap.json">roadmap.json</a>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>

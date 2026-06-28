@@ -1,0 +1,503 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-06-28T22:50:00+02:00",
+  "title": "QSOE C-to-Rust Migration Roadmap",
+  "purpose": {
+    "summary": "Make the QSOE Rust migration measurable, reversible, and reviewable instead of a rewrite for its own sake.",
+    "whyRust": [
+      "Reduce concrete C failure modes in parsers, state machines, resource servers, and image tooling.",
+      "Use Rust type, ownership, and Result-based error handling where they improve maintenance and review quality.",
+      "Keep high-risk boot, loader, spawn, capability, and kernel-adjacent code in C until boundaries are proven."
+    ],
+    "operatingRule": "Every Rust candidate needs a selector, C rollback path, host tests, runtime or boot evidence, and documentation before it can become a default. C is not removed just because a Rust version exists."
+  },
+  "sourceDocs": [
+    "README.md",
+    "docs/rust-migration/STATUS.md",
+    "docs/rust-migration/PLAN.md",
+    "docs/rust-migration/TASK_MANAGER.md",
+    "docs/rust-migration/RETIREMENT.md",
+    "docs/rust-migration/DEVLOG.md"
+  ],
+  "statusSummary": {
+    "trackedComponentAreas": 6,
+    "rustDefaultRcAreas": 6,
+    "rustOptInOnlyAreas": 1,
+    "retiredAreas": 0,
+    "currentFocus": "Host qrvfs writer evidence before a Rust-default writer release candidate.",
+    "nextConcreteGate": "Add triple-indirect stress coverage for mkfs-qrv-rs, then create a default-writer RC with explicit C rollback.",
+    "fullRewriteInventory": "Incomplete. The current roadmap tracks active migration candidates and task-manager risk classes; a full OS-wide C inventory is still a future documentation task."
+  },
+  "components": [
+    {
+      "id": "host-qrvfs-tools",
+      "name": "Host qrvfs tools",
+      "area": "host-tools",
+      "currentState": "mixed",
+      "cDefault": true,
+      "rustOptIn": true,
+      "rustDefault": true,
+      "retired": false,
+      "risk": "medium",
+      "rustArtifacts": [
+        "qrvfs-tree",
+        "mkfs-qrv-rs"
+      ],
+      "cRollback": [
+        "host_tools/treeqrvfs.c",
+        "host_tools/mkfs-qrv.c"
+      ],
+      "selectors": [
+        "make tree",
+        "QSOE_RUST_TREEQRVFS=0 make tree",
+        "QSOE_RUST_MKFS_QRV=1 make fsqrv-image"
+      ],
+      "evidence": [
+        "make check-qrvfs-rust-fixture",
+        "make treeqrvfs-rc-smoke",
+        "make treeqrvfs-rc-rollback-smoke",
+        "make check-qrvfs-rust-writer-fixture",
+        "make check-qrvfs-rust-writer-production-root",
+        "make rust-mkfs-qrv-live-smoke"
+      ],
+      "nextGate": "Keep C mkfs-qrv as default until mkfs-qrv-rs has triple-indirect stress coverage and a default-writer RC with rollback.",
+      "notes": "The read-only inspector is Rust-default RC. The writer is opt-in and has fixture, production-root, target-initialization, and live virtio /usr evidence."
+    },
+    {
+      "id": "slogger",
+      "name": "slogger service",
+      "area": "resource-server",
+      "currentState": "rust-default-rc",
+      "cDefault": true,
+      "rustOptIn": true,
+      "rustDefault": true,
+      "retired": false,
+      "risk": "low-medium",
+      "rustArtifacts": [
+        "slogger-rs"
+      ],
+      "cRollback": [
+        "quser/sbin/slogger"
+      ],
+      "selectors": [
+        "QSOE_RUST_SLOGGER=1 make slogger-artifact",
+        "make slogger-rc-readback-smoke",
+        "make slogger-rc-rollback-smoke"
+      ],
+      "evidence": [
+        "make rust-slogger-boot-smoke",
+        "make rust-slog-readback-smoke",
+        "make slogger-rc-readback-smoke",
+        "make slogger-rc-rollback-smoke"
+      ],
+      "nextGate": "Keep C rollback until the retirement checklist and a separate removal PR are satisfied.",
+      "notes": "Rust-default RC path is accepted; no C retirement is approved."
+    },
+    {
+      "id": "devb-virtio",
+      "name": "devb-virtio block driver",
+      "area": "driver",
+      "currentState": "rust-default-rc",
+      "cDefault": true,
+      "rustOptIn": true,
+      "rustDefault": true,
+      "retired": false,
+      "risk": "medium-high",
+      "rustArtifacts": [
+        "devb-virtio-rs"
+      ],
+      "cRollback": [
+        "quser/dev/virtio"
+      ],
+      "selectors": [
+        "QSOE_RUST_VIRTIO=1 make virtio-artifact",
+        "make virtio-rc-file-smoke",
+        "make virtio-rc-rollback-smoke"
+      ],
+      "evidence": [
+        "make rust-virtio-link-smoke",
+        "make rust-virtio-boot-smoke",
+        "make rust-virtio-file-smoke",
+        "make virtio-rc-file-smoke",
+        "make virtio-rc-rollback-smoke"
+      ],
+      "nextGate": "Keep C rollback until the retirement checklist and a separate removal PR are satisfied.",
+      "notes": "Rust driver exposes /dev/vblk0 and supports the /usr file-read smoke."
+    },
+    {
+      "id": "pipe",
+      "name": "pipe service",
+      "area": "resource-server",
+      "currentState": "rust-default-rc",
+      "cDefault": true,
+      "rustOptIn": true,
+      "rustDefault": true,
+      "retired": false,
+      "risk": "medium",
+      "rustArtifacts": [
+        "pipe-rs"
+      ],
+      "cRollback": [
+        "quser/sbin/pipe"
+      ],
+      "selectors": [
+        "QSOE_RUST_PIPE=1 make pipe-artifact",
+        "make pipe-rc-data-smoke",
+        "make pipe-rc-rollback-smoke"
+      ],
+      "evidence": [
+        "make rust-pipe-link-smoke",
+        "make rust-pipe-smoke",
+        "make rust-pipe-data-smoke",
+        "make pipe-rc-data-smoke",
+        "make pipe-rc-rollback-smoke"
+      ],
+      "nextGate": "Keep C rollback until the retirement checklist and a separate removal PR are satisfied.",
+      "notes": "The Rust data-path smoke proves pipe(2) write/read and EOF behavior."
+    },
+    {
+      "id": "test-msgpass",
+      "name": "test_msgpass helper",
+      "area": "test-helper",
+      "currentState": "rust-default-rc",
+      "cDefault": true,
+      "rustOptIn": true,
+      "rustDefault": true,
+      "retired": false,
+      "risk": "medium",
+      "rustArtifacts": [
+        "test_msgpass-rs"
+      ],
+      "cRollback": [
+        "quser/test/msgpass/test_msgpass"
+      ],
+      "selectors": [
+        "QSOE_RUST_TEST_MSGPASS=1 make test-msgpass-artifact",
+        "make test-msgpass-rc-smoke",
+        "make test-msgpass-rc-rollback-smoke"
+      ],
+      "evidence": [
+        "make rust-test-msgpass-link-smoke",
+        "make rust-test-msgpass-smoke",
+        "make test-msgpass-rc-smoke",
+        "make test-msgpass-rc-rollback-smoke"
+      ],
+      "nextGate": "Keep C rollback until the retirement checklist and a separate removal PR are satisfied.",
+      "notes": "The Rust helper passes the existing suite [msgpass] section with QSOE/L-specific skip handling."
+    },
+    {
+      "id": "tm-procfs",
+      "name": "tm_procfs task-manager pilot",
+      "area": "task-manager",
+      "currentState": "rust-default-rc",
+      "cDefault": true,
+      "rustOptIn": true,
+      "rustDefault": true,
+      "retired": false,
+      "risk": "low-medium",
+      "rustArtifacts": [
+        "qsoe-tm-procfs"
+      ],
+      "cRollback": [
+        "libtaskman/src/tm_procfs.c"
+      ],
+      "selectors": [
+        "QSOE_RUST_TM_PROCFS=1 make procfs-smoke",
+        "make tm-procfs-rc-smoke",
+        "make tm-procfs-rc-rollback-smoke"
+      ],
+      "evidence": [
+        "make check-tm-procfs-model",
+        "make rust-tm-procfs-provider",
+        "make tm-procfs-evidence",
+        "make tm-procfs-rc-smoke",
+        "make tm-procfs-rc-rollback-smoke"
+      ],
+      "nextGate": "Keep C rollback until the retirement checklist and a separate removal PR are satisfied.",
+      "notes": "This is the selected Phase 9 task-manager pilot because it is diagnostic and avoids direct seL4 invocation code."
+    }
+  ],
+  "roadmapPhases": [
+    {
+      "id": "phase-0",
+      "name": "Baseline and safety net",
+      "status": "complete",
+      "objective": "Make the current C system reproducible and measurable before Rust enters the image."
+    },
+    {
+      "id": "phase-1",
+      "name": "Host tool hardening",
+      "status": "in-progress",
+      "objective": "Use fixtures and Rust host tools to reduce image-building risk while keeping C tools as oracles."
+    },
+    {
+      "id": "phase-2",
+      "name": "Rust toolchain spike",
+      "status": "complete",
+      "objective": "Prove Rust can build QSOE-compatible userland artifacts."
+    },
+    {
+      "id": "phase-3",
+      "name": "ABI and resource-server bindings",
+      "status": "complete-for-current-scope",
+      "objective": "Define reusable Rust/C boundaries for services."
+    },
+    {
+      "id": "phase-4",
+      "name": "First in-guest service",
+      "status": "rust-default-rc",
+      "objective": "Replace slogger behind a rollback selector."
+    },
+    {
+      "id": "phase-5",
+      "name": "Promote resource-server patterns",
+      "status": "in-progress",
+      "objective": "Turn service lessons into reusable scaffolding."
+    },
+    {
+      "id": "phase-6",
+      "name": "Driver pilot",
+      "status": "rust-default-rc",
+      "objective": "Validate Rust against real virtio device state."
+    },
+    {
+      "id": "phase-7",
+      "name": "Shared parsers and format libraries",
+      "status": "complete-for-current-scope",
+      "objective": "Move parser-heavy logic into safe, reusable crates."
+    },
+    {
+      "id": "phase-8",
+      "name": "Additional services and drivers",
+      "status": "in-progress",
+      "objective": "Migrate bounded services, drivers, utilities, and test helpers."
+    },
+    {
+      "id": "phase-9",
+      "name": "Task-manager pilots",
+      "status": "started",
+      "objective": "Migrate pure or diagnostic task-manager modules without touching spawn, capability, relocation, or loader paths."
+    },
+    {
+      "id": "phase-10",
+      "name": "High-risk runtime and kernel paths",
+      "status": "deferred",
+      "objective": "Reassess loader, capability, spawn, libc, and kernel work only after smaller Rust boundaries are proven."
+    }
+  ],
+  "candidateBacklog": [
+    {
+      "id": "tm-cpio-model",
+      "name": "Task-manager CPIO archive model",
+      "area": "task-manager",
+      "risk": "medium",
+      "posture": "candidate",
+      "files": [
+        "libtaskman/src/cpio.c",
+        "libtaskman/include/tm_cpio.h"
+      ],
+      "notes": "Pure newc walking, symlink resolution, directory iteration, and existence checks over caller-owned bytes."
+    },
+    {
+      "id": "tm-script-parser",
+      "name": "Task-manager shebang parser",
+      "area": "task-manager",
+      "risk": "medium",
+      "posture": "candidate",
+      "files": [
+        "libtaskman/src/script.c",
+        "libtaskman/include/tm_script.h"
+      ],
+      "notes": "Pure parser used by tm_spawn when scripts are executed."
+    },
+    {
+      "id": "tm-elf-view",
+      "name": "Task-manager ELF view parser",
+      "area": "task-manager",
+      "risk": "high",
+      "posture": "candidate-with-loader-caution",
+      "files": [
+        "libtaskman/src/elf.c",
+        "libtaskman/include/tm_elf.h"
+      ],
+      "notes": "Read-only parser, but consumed by relocation and loader flow."
+    },
+    {
+      "id": "tm-syscfg",
+      "name": "Task-manager syscfg TLV helpers",
+      "area": "task-manager",
+      "risk": "medium",
+      "posture": "candidate",
+      "files": [
+        "libtaskman/src/syscfg.c",
+        "libtaskman/include/tm_syscfg.h"
+      ],
+      "notes": "Caller-owned TLV builder and walker."
+    },
+    {
+      "id": "tm-fdt",
+      "name": "LQ task-manager FDT parser",
+      "area": "task-manager",
+      "risk": "medium",
+      "posture": "candidate",
+      "files": [
+        "lq/taskman/sys/fdt.c",
+        "lq/taskman/sys/fdt.h"
+      ],
+      "notes": "Minimal big-endian device-tree scanner for /chosen, compatible strings, and properties."
+    },
+    {
+      "id": "tm-sysmap",
+      "name": "LQ task-manager sysmap builder",
+      "area": "task-manager",
+      "risk": "medium",
+      "posture": "candidate",
+      "files": [
+        "lq/taskman/sys/sysmap.c",
+        "lq/taskman/sys/sysmap.h"
+      ],
+      "notes": "Builds the read-only PSYS page mapped into children."
+    },
+    {
+      "id": "tm-sysfs",
+      "name": "Task-manager /sys model",
+      "area": "task-manager",
+      "risk": "medium",
+      "posture": "candidate",
+      "files": [
+        "libtaskman/src/tm_sysfs.c",
+        "libtaskman/include/tm_sysfs.h"
+      ],
+      "notes": "Read-only model for board, cmdline, osname, version, and builddate."
+    },
+    {
+      "id": "tm-pathmgr",
+      "name": "Task-manager path registry",
+      "area": "task-manager",
+      "risk": "medium-high",
+      "posture": "candidate-after-more-evidence",
+      "files": [
+        "libtaskman/src/pathmgr.c",
+        "libtaskman/include/tm_pathmgr.h"
+      ],
+      "notes": "Every open and device registration depends on this namespace tree."
+    },
+    {
+      "id": "tm-cred",
+      "name": "Task-manager credentials policy",
+      "area": "task-manager",
+      "risk": "low-medium",
+      "posture": "candidate",
+      "files": [
+        "libtaskman/src/cred.c",
+        "libtaskman/include/tm_cred.h"
+      ],
+      "notes": "Pure cwd, umask, uid/gid mutation, and permission checks."
+    },
+    {
+      "id": "tm-rsrcdb",
+      "name": "LQ resource DB accounting",
+      "area": "task-manager",
+      "risk": "low-medium",
+      "posture": "candidate",
+      "files": [
+        "lq/taskman/sys/rsrcdb.c",
+        "lq/taskman/sys/rsrcdb.h"
+      ],
+      "notes": "Fixed-pool resource-range allocation, split/merge, and rollback on partial attach."
+    },
+    {
+      "id": "tm-pseudodev",
+      "name": "Simple pseudo-devices",
+      "area": "task-manager",
+      "risk": "low-medium",
+      "posture": "candidate",
+      "files": [
+        "lq/taskman/sys/devnull.c",
+        "lq/taskman/sys/devzero.c"
+      ],
+      "notes": "Small read/write/stat handlers served through taskman IO."
+    },
+    {
+      "id": "tm-log",
+      "name": "Task-manager logging formatter",
+      "area": "task-manager",
+      "risk": "low",
+      "posture": "candidate",
+      "files": [
+        "libtaskman/src/log.c",
+        "lq/taskman/tm_log.c"
+      ],
+      "notes": "Freestanding format subset and seL4 debug-console sink."
+    },
+    {
+      "id": "spawn-cap-loader",
+      "name": "Spawn, capability, relocation, and loader paths",
+      "area": "task-manager",
+      "risk": "critical",
+      "posture": "deferred",
+      "files": [
+        "lq/taskman/main.c",
+        "lq/taskman/proc/spawn.c",
+        "lq/taskman/proc/process.c",
+        "lq/taskman/mem/mmap.c",
+        "lq/taskman/sys/irq.c",
+        "libtaskman/src/reloc.c"
+      ],
+      "notes": "Not early Rust candidates. Require dedicated boundary review and broader loader/capability evidence."
+    },
+    {
+      "id": "kernel-rust",
+      "name": "Kernel Rust",
+      "area": "kernel",
+      "risk": "critical",
+      "posture": "deferred",
+      "files": [
+        "nq/**"
+      ],
+      "notes": "Near-term Rust in kernel code is rejected by current decision; only fixture and audit candidates are documented."
+    },
+    {
+      "id": "full-os-inventory",
+      "name": "Full OS-wide C inventory",
+      "area": "planning",
+      "risk": "planning",
+      "posture": "needed",
+      "files": [
+        "quser/**",
+        "libtaskman/**",
+        "lq/taskman/**",
+        "host_tools/**",
+        "nq/**"
+      ],
+      "notes": "Needed to give an honest count of all remaining C components outside the active migration candidates."
+    }
+  ],
+  "policyGates": [
+    {
+      "id": "selector",
+      "name": "Selector",
+      "description": "Rust implementation must be selectable without removing the C implementation."
+    },
+    {
+      "id": "rollback",
+      "name": "C rollback",
+      "description": "A one-command C rollback path must exist and be tested."
+    },
+    {
+      "id": "host-tests",
+      "name": "Host tests",
+      "description": "Pure logic, parser, and model code should have host tests before guest wiring."
+    },
+    {
+      "id": "runtime-evidence",
+      "name": "Runtime evidence",
+      "description": "Image-level or service-level smoke tests must prove the behavior in QSOE."
+    },
+    {
+      "id": "retirement",
+      "name": "Retirement review",
+      "description": "Removing C requires the retirement checklist and a separate removal PR."
+    }
+  ]
+}
