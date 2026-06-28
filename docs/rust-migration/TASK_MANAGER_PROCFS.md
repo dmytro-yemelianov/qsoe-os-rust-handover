@@ -108,6 +108,21 @@ Trusted CI runs `make container-tm-procfs-evidence` on the configured
 dispatches. Trusted `main` CI run `28102250069` accepted the #103 evidence
 before any separate Rust-default selection decision.
 
+## Rust-Default RC Smoke
+
+`scripts/tm-procfs-rc-smoke.sh` makes Rust the default for the targeted RC
+image while preserving a C rollback drill:
+
+```sh
+make tm-procfs-rc-smoke
+make tm-procfs-rc-rollback-smoke
+```
+
+The RC path sets `QSOE_RUST_TM_PROCFS=1` and uses the existing `/proc` smoke.
+The rollback target sets `TM_PROCFS_RC_ROLLBACK=1`, which selects
+`QSOE_RUST_TM_PROCFS=0` and verifies the same markers with C `tm_procfs.o`
+restored. See `TASK_MANAGER_PROCFS_RC.md` for the release-candidate record.
+
 ## Selection Result
 
 `tm_procfs` is selected for the first task-manager Rust pilot because it is

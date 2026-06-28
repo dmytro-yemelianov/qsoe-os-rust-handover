@@ -26,7 +26,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | Shared parsers | Complete for current scope | CPIO, syscfg/sysmap, and ELF inspection crates exist with host tests and host/guest reuse coverage. |
 | `pipe` service | Rust default RC | `qsoe-pipe` host tests pass, `pipe-rs` links and audits, `make rust-pipe-smoke` boots LQ with Rust `/sbin/pipe` registered, `make rust-pipe-data-smoke` proves a libc/taskman `pipe(2)` write/read round trip, and `make pipe-rc-data-smoke` selects Rust by default with `make pipe-rc-rollback-smoke` preserving C rollback. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
 | `test_msgpass` helper | Rust default RC | `test_msgpass-rs` links, can be selected into the qrvfs test image, passes the existing suite `[msgpass]` section through `make rust-test-msgpass-smoke`, and has `make test-msgpass-rc-smoke` plus `make test-msgpass-rc-rollback-smoke` for the Rust-default test-image RC path. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
-| `tm_procfs` task-manager pilot | Rust opt-in | `qsoe-tm-procfs` exports the existing C ABI behind `QSOE_RUST_TM_PROCFS=1`; C remains default/rollback. Host model tests, Rust host tests, selected NQ/LQ taskman links, `make tm-procfs-evidence`, and `QSOE_RUST_TM_PROCFS=1 make procfs-smoke` cover the gate. Trusted `main` CI run `28102250069` accepted the opt-in evidence for #103. Next gate: separate default-selection decision. |
+| `tm_procfs` task-manager pilot | Rust default RC | `qsoe-tm-procfs` exports the existing C ABI behind `QSOE_RUST_TM_PROCFS=1`; `make tm-procfs-rc-smoke` selects Rust by default for the RC image and `make tm-procfs-rc-rollback-smoke` restores C. Host model tests, Rust host tests, selected NQ/LQ taskman links, `make tm-procfs-evidence`, and `/proc` smokes cover the gate. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
 | Kernel Rust | Deferred | Current decision rejects near-term Rust in `nq` kernel code; only fixture/audit candidates are documented. |
 | C retirement | Blocked by policy | No C implementation is currently approved for removal; #26's checklist and a separate removal PR are still required for every component. |
 
@@ -47,10 +47,9 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 - `devb-virtio-rs` now has a Rust-default release-candidate path with explicit
   C rollback through the `/usr` file-read smoke. Keep C retirement blocked
   until #26's checklist and a separate removal PR.
-- `tm_procfs` now has a Rust opt-in provider behind `QSOE_RUST_TM_PROCFS=1`.
-  Trusted `main` CI run `28102250069` accepted the #103 opt-in evidence from
-  `container-tm-procfs-evidence`. Keep C as the default until a separate
-  default-selection decision.
+- `tm_procfs` now has a Rust-default release-candidate path with explicit C
+  rollback through the `/proc` smoke. Keep C retirement blocked until #26's
+  checklist and a separate removal PR.
 
 ## Useful Commands
 
@@ -74,6 +73,8 @@ make pipe-rc-rollback-smoke
 make check-tm-procfs-model
 make rust-tm-procfs-provider
 make tm-procfs-evidence
+make tm-procfs-rc-smoke
+make tm-procfs-rc-rollback-smoke
 QSOE_RUST_TM_PROCFS=1 make procfs-smoke
 make procfs-smoke
 ```

@@ -47,7 +47,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         rust-test-msgpass-smoke test-msgpass-rc-smoke \
         test-msgpass-rc-rollback-smoke pipe-smoke rust-pipe-smoke \
         rust-pipe-data-smoke pipe-rc-data-smoke pipe-rc-rollback-smoke \
-        procfs-smoke \
+        procfs-smoke tm-procfs-rc-smoke tm-procfs-rc-rollback-smoke \
         container-toolchain-build container-shell container-check \
         container-index-c container-index-c-static container-index-c-compile-db \
         container-tidy-c \
@@ -71,7 +71,8 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-virtio-file-smoke container-pipe-smoke \
         container-rust-pipe-smoke container-rust-pipe-data-smoke \
         container-pipe-rc-data-smoke container-pipe-rc-rollback-smoke \
-        container-procfs-smoke \
+        container-procfs-smoke container-tm-procfs-rc-smoke \
+        container-tm-procfs-rc-rollback-smoke \
         container-source-build
 
 all: component-overrides
@@ -348,6 +349,12 @@ pipe-rc-rollback-smoke:
 procfs-smoke:
 	@scripts/procfs-smoke.sh
 
+tm-procfs-rc-smoke:
+	@scripts/tm-procfs-rc-smoke.sh
+
+tm-procfs-rc-rollback-smoke:
+	@TM_PROCFS_RC_ROLLBACK=1 scripts/tm-procfs-rc-smoke.sh
+
 container-toolchain-build:
 	@scripts/container-toolchain.sh build
 
@@ -486,6 +493,12 @@ container-pipe-rc-rollback-smoke:
 
 container-procfs-smoke:
 	@scripts/container-toolchain.sh run make procfs-smoke
+
+container-tm-procfs-rc-smoke:
+	@scripts/container-toolchain.sh run make tm-procfs-rc-smoke
+
+container-tm-procfs-rc-rollback-smoke:
+	@scripts/container-toolchain.sh run make tm-procfs-rc-rollback-smoke
 
 container-source-build:
 	@scripts/container-toolchain.sh source-build

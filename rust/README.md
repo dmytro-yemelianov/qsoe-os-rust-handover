@@ -294,6 +294,37 @@ temporary boot CPIO, starts the Rust pipe service from sysinit, calls normal
 libc `pipe(2)`, and verifies one write/read round trip plus EOF after closing
 the writer.
 
+## Task Manager `/proc` Selection
+
+The Rust `tm_procfs` provider can be built as a soft-float taskman staticlib
+without changing the normal taskman default:
+
+```sh
+make rust-tm-procfs-provider
+make tm-procfs-evidence
+QSOE_RUST_TM_PROCFS=1 make procfs-smoke
+```
+
+With the default `QSOE_RUST_TM_PROCFS=0`, NQ and LQ taskman link the existing
+C `tm_procfs.o`. With `QSOE_RUST_TM_PROCFS=1`, the component Makefile selector
+omits C `tm_procfs.o`, builds `qsoe-tm-procfs` for
+`riscv64imac-unknown-none-elf`, and links `libqsoe_tm_procfs.a` into taskman.
+Process lifecycle, spawn, loader, seL4 invocation code, and LQ `/proc` glue
+remain C.
+
+The release-candidate path makes Rust the default for the targeted `/proc`
+smoke image while keeping an explicit C rollback drill:
+
+```sh
+make tm-procfs-rc-smoke
+make tm-procfs-rc-rollback-smoke
+```
+
+`make tm-procfs-rc-smoke` selects `qsoe-tm-procfs` by default and verifies
+`/bin/ls /proc` plus `/proc/1/info` through taskman's existing LQ procfs glue.
+`make tm-procfs-rc-rollback-smoke` sets `TM_PROCFS_RC_ROLLBACK=1` and verifies
+the same markers with the C provider restored.
+
 ## Parser Fuzzing
 
 Parser fuzz targets live under `rust/fuzz` and are intentionally outside the
