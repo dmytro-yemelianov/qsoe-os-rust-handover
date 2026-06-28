@@ -8,9 +8,24 @@ const state = {
   }
 };
 
+const PHASE_SCORE = {
+  complete: 100,
+  "complete-for-current-scope": 85,
+  "rust-default-rc": 75,
+  "in-progress": 50,
+  started: 30,
+  deferred: 0
+};
+
 const els = {
   purpose: document.querySelector("#purpose"),
   metrics: document.querySelector("#metrics"),
+  progressNote: document.querySelector("#progress-note"),
+  progressGauges: document.querySelector("#progress-gauges"),
+  stateChart: document.querySelector("#state-chart"),
+  riskChart: document.querySelector("#risk-chart"),
+  phaseChart: document.querySelector("#phase-chart"),
+  backlogChart: document.querySelector("#backlog-chart"),
   components: document.querySelector("#components"),
   componentCount: document.querySelector("#component-count"),
   phases: document.querySelector("#phases"),
@@ -66,6 +81,7 @@ function render() {
   els.purpose.textContent = data.purpose.summary;
   els.generated.textContent = `Data generated ${formatDate(data.generatedAt)}`;
   renderMetrics();
+  renderProgressVisuals();
   renderFilters();
   renderComponents();
   renderPhases();
@@ -89,6 +105,31 @@ function renderMetrics() {
       return node;
     })
   );
+}
+
+function renderProgressVisuals() {
+  const { components, roadmapPhases, candidateBacklog } = state.data;
+  const componentReadiness = Math.round(avg(components.map(componentScore)));
+  const phaseReadiness = Math.round(avg(roadmapPhases.map((phase) => PHASE_SCORE[phase.status] ?? 0)));
+  const rustDefaultCount = components.filter((component) => component.rustDefault).length;
+  const rollbackCount = components.filter((component) => component.cRollback.length > 0).length;
+  const retiredCount = components.filter((component) => component.retired).length;
+  const overallReadiness = Math.round(avg([componentReadiness, phaseReadiness]));
+
+  els.progressNote.textContent =
+    "Computed from tracked components, rollback coverage, phase status, and remaining backlog posture.";
+
+  els.progressGauges.replaceChildren(
+    gauge("Overall readiness", overallReadiness, "Component posture + phase completion", "accent"),
+    gauge("Rust-default RC coverage", pct(rustDefaultCount, components.length), `${rustDefaultCount}/${components.length} tracked components`, "good"),
+    gauge("Rollback coverage", pct(rollbackCount, components.length), `${rollbackCount}/${components.length} components keep C rollback`, "info"),
+    gauge("C retirement progress", pct(retiredCount, components.length), `${retiredCount}/${components.length} C implementations retired`, "warn")
+  );
+
+  renderBarChart(els.stateChart, countBy(components, "currentState"));
+  renderBarChart(els.riskChart, countBy([...components, ...candidateBacklog], "risk"));
+  renderBarChart(els.phaseChart, countBy(roadmapPhases, "status"));
+  renderBarChart(els.backlogChart, countBy(candidateBacklog, "posture"));
 }
 
 function renderFilters() {
@@ -129,6 +170,7 @@ function renderComponentCard(component) {
 
   card.append(top, tags);
   card.append(el("p", "", component.notes));
+  card.append(meter(componentScore(component), "Readiness"));
   card.append(el("h3", "", "Selectors"), list(component.selectors, "selector-list"));
   card.append(el("h3", "", "Evidence"), list(component.evidence, "evidence-list"));
   card.append(el("p", "next-gate", component.nextGate));
@@ -140,7 +182,11 @@ function renderPhases() {
     const node = el("article", "phase");
     node.append(
       el("span", "phase-status", readable(phase.status)),
-      wrap([el("h3", "", phase.name), el("p", "", phase.objective)])
+      wrap([
+        el("h3", "", phase.name),
+        el("p", "", phase.objective),
+        meter(PHASE_SCORE[phase.status] ?? 0, "Phase completion")
+      ])
     );
     return node;
   }));
@@ -184,6 +230,47 @@ function renderBacklog() {
     tr.title = item.notes;
     return tr;
   }));
+}
+
+function gauge(label, value, detail, tone) {
+  const bounded = clamp(value, 0, 100);
+  const card = el("article", `gauge-card tone-${tone}`);
+  const dial = el("div", "gauge-dial");
+  dial.style.setProperty("--value", `${bounded}%`);
+  dial.setAttribute("aria-label", `${label}: ${bounded}%`);
+  dial.append(el("span", "gauge-value", `${bounded}%`));
+  card.append(dial, el("h3", "", label), el("p", "", detail));
+  return card;
+}
+
+function renderBarChart(container, rows) {
+  const total = rows.reduce((sum, row) => sum + row.count, 0);
+  container.replaceChildren(...rows.map((row) => {
+    const node = el("div", "bar-row");
+    const label = el("div", "bar-label");
+    label.append(el("span", "", readable(row.label)), el("strong", "", String(row.count)));
+
+    const track = el("div", "bar-track");
+    const fill = el("div", `bar-fill risk-${slug(row.label)}`);
+    fill.style.setProperty("--bar-value", `${pct(row.count, total)}%`);
+    track.append(fill);
+
+    node.append(label, track);
+    return node;
+  }));
+}
+
+function meter(value, label) {
+  const bounded = clamp(value, 0, 100);
+  const node = el("div", "meter");
+  const copy = el("div", "meter-copy");
+  copy.append(el("span", "", label), el("strong", "", `${bounded}%`));
+  const track = el("div", "meter-track");
+  const fill = el("div", "meter-fill");
+  fill.style.setProperty("--meter-value", `${bounded}%`);
+  track.append(fill);
+  node.append(copy, track);
+  return node;
 }
 
 function matchesComponentFilters(component) {
@@ -246,6 +333,54 @@ function cell(text, className = "") {
   td.className = className;
   td.textContent = text;
   return td;
+}
+
+function countBy(items, key) {
+  const counts = new Map();
+  for (const item of items) {
+    const value = item[key] ?? "unknown";
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([label, count]) => ({ label, count }))
+    .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+}
+
+function componentScore(component) {
+  if (component.retired) {
+    return 100;
+  }
+  if (component.rustDefault && component.cRollback.length > 0) {
+    return 75;
+  }
+  if (component.rustDefault) {
+    return 65;
+  }
+  if (component.rustOptIn) {
+    return 45;
+  }
+  if (component.cDefault) {
+    return 20;
+  }
+  return 0;
+}
+
+function avg(values) {
+  if (values.length === 0) {
+    return 0;
+  }
+  return values.reduce((sum, value) => sum + value, 0) / values.length;
+}
+
+function pct(value, total) {
+  if (total === 0) {
+    return 0;
+  }
+  return Math.round((value / total) * 100);
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function wrap(children) {

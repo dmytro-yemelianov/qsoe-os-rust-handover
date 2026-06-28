@@ -1,17 +1,19 @@
 :root {
-  color-scheme: light;
-  --bg: #f7f8fb;
-  --surface: #ffffff;
-  --surface-strong: #eef4f1;
-  --text: #1e2528;
-  --muted: #5b666d;
-  --line: #d8e0e4;
-  --green: #28705d;
-  --teal: #0f7282;
-  --amber: #a46b08;
-  --red: #a13b3b;
-  --blue: #3267a8;
-  --shadow: 0 14px 36px rgba(20, 36, 44, 0.08);
+  color-scheme: dark;
+  --bg: #080d12;
+  --surface: #111923;
+  --surface-soft: #15212d;
+  --surface-strong: #1c2d3a;
+  --text: #eef7f3;
+  --muted: #9caeb6;
+  --line: #283945;
+  --green: #55d69d;
+  --teal: #4cc9d9;
+  --amber: #f1b84f;
+  --red: #ff7777;
+  --blue: #7eb4ff;
+  --purple: #b59cff;
+  --shadow: 0 18px 44px rgba(0, 0, 0, 0.32);
 }
 
 * {
@@ -43,7 +45,7 @@ a:hover {
   gap: 24px;
   padding: 28px clamp(20px, 5vw, 64px) 22px;
   border-bottom: 1px solid var(--line);
-  background: #ffffff;
+  background: #0b1219;
 }
 
 .eyebrow {
@@ -89,7 +91,7 @@ h3 {
 .pill {
   border: 1px solid var(--line);
   border-radius: 999px;
-  background: #fff;
+  background: rgba(255, 255, 255, 0.05);
   padding: 7px 11px;
   color: var(--text);
   font-size: 0.84rem;
@@ -110,8 +112,8 @@ main {
   padding: 26px;
   border: 1px solid var(--line);
   background:
-    linear-gradient(135deg, rgba(40, 112, 93, 0.12), transparent 45%),
-    linear-gradient(315deg, rgba(164, 107, 8, 0.12), transparent 52%),
+    linear-gradient(135deg, rgba(85, 214, 157, 0.13), transparent 45%),
+    linear-gradient(315deg, rgba(126, 180, 255, 0.12), transparent 52%),
     var(--surface);
   box-shadow: var(--shadow);
 }
@@ -132,8 +134,8 @@ main {
 .metric {
   min-height: 104px;
   padding: 16px;
-  border: 1px solid rgba(40, 112, 93, 0.22);
-  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(85, 214, 157, 0.25);
+  background: rgba(255, 255, 255, 0.045);
 }
 
 .metric strong {
@@ -147,6 +149,186 @@ main {
   margin-top: 8px;
   color: var(--muted);
   font-size: 0.86rem;
+}
+
+.progress-section {
+  margin-top: 26px;
+}
+
+.gauge-grid,
+.chart-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.gauge-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.chart-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 14px;
+}
+
+.gauge-card,
+.chart-card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.gauge-card {
+  --gauge-color: var(--teal);
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  min-height: 246px;
+  padding: 20px;
+  text-align: center;
+}
+
+.tone-good {
+  --gauge-color: var(--green);
+}
+
+.tone-info {
+  --gauge-color: var(--blue);
+}
+
+.tone-warn {
+  --gauge-color: var(--amber);
+}
+
+.tone-accent {
+  --gauge-color: var(--purple);
+}
+
+.gauge-dial {
+  display: grid;
+  position: relative;
+  width: 132px;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at center, var(--surface) 0 56%, transparent 57%),
+    conic-gradient(var(--gauge-color) var(--value), rgba(255, 255, 255, 0.08) 0);
+}
+
+.gauge-value {
+  position: relative;
+  color: var(--text);
+  font-size: 1.65rem;
+  font-weight: 800;
+}
+
+.gauge-card h3,
+.chart-card h3 {
+  margin-bottom: 0;
+}
+
+.gauge-card p,
+.chart-heading p {
+  margin-bottom: 0;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+.chart-card {
+  padding: 18px;
+}
+
+.chart-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.bar-chart {
+  display: grid;
+  gap: 12px;
+}
+
+.bar-row {
+  display: grid;
+  gap: 7px;
+}
+
+.bar-label,
+.meter-copy {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.bar-label strong,
+.meter-copy strong {
+  color: var(--text);
+}
+
+.bar-track,
+.meter-track {
+  overflow: hidden;
+  height: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.075);
+}
+
+.bar-fill,
+.meter-fill {
+  width: var(--bar-value, var(--meter-value, 0%));
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--teal), var(--green));
+}
+
+.bar-fill {
+  min-width: 4px;
+}
+
+.bar-fill.risk-low,
+.bar-fill.risk-low-medium,
+.bar-fill.risk-rust-default-rc,
+.bar-fill.risk-complete,
+.bar-fill.risk-complete-for-current-scope {
+  background: linear-gradient(90deg, var(--green), var(--teal));
+}
+
+.bar-fill.risk-medium,
+.bar-fill.risk-in-progress,
+.bar-fill.risk-started,
+.bar-fill.risk-planning,
+.bar-fill.risk-candidate {
+  background: linear-gradient(90deg, var(--amber), var(--blue));
+}
+
+.bar-fill.risk-medium-high,
+.bar-fill.risk-high,
+.bar-fill.risk-critical,
+.bar-fill.risk-deferred,
+.bar-fill.risk-candidate-with-loader-caution,
+.bar-fill.risk-candidate-after-more-evidence {
+  background: linear-gradient(90deg, var(--red), var(--amber));
+}
+
+.bar-fill.risk-mixed,
+.bar-fill.risk-needed {
+  background: linear-gradient(90deg, var(--purple), var(--blue));
+}
+
+.meter {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 14px;
+}
+
+.meter-fill {
+  background: linear-gradient(90deg, var(--blue), var(--teal));
 }
 
 .controls {
@@ -174,7 +356,7 @@ select {
   min-height: 42px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  background: #fff;
+  background: #0d151d;
   color: var(--text);
   font: inherit;
   padding: 8px 10px;
@@ -182,7 +364,7 @@ select {
 
 input:focus,
 select:focus {
-  outline: 3px solid rgba(15, 114, 130, 0.18);
+  outline: 3px solid rgba(76, 201, 217, 0.18);
   border-color: var(--teal);
 }
 
@@ -212,7 +394,7 @@ select:focus {
   padding: 18px;
   border: 1px solid var(--line);
   background: var(--surface);
-  box-shadow: 0 8px 20px rgba(22, 33, 39, 0.04);
+  box-shadow: var(--shadow);
 }
 
 .card-top {
@@ -238,7 +420,7 @@ select:focus {
 
 .state {
   border-color: transparent;
-  color: #fff;
+  color: #071017;
 }
 
 .state.rust-default-rc {
@@ -346,7 +528,7 @@ td {
 }
 
 th {
-  background: #f0f5f4;
+  background: var(--surface-strong);
   color: var(--muted);
   font-size: 0.78rem;
   text-transform: uppercase;
@@ -378,7 +560,7 @@ footer {
   gap: 16px;
   padding: 18px clamp(20px, 5vw, 64px);
   border-top: 1px solid var(--line);
-  background: #fff;
+  background: #0b1219;
   color: var(--muted);
 }
 
@@ -389,6 +571,11 @@ footer {
   }
 
   .component-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gauge-grid,
+  .chart-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -407,7 +594,9 @@ footer {
 
   .controls,
   .component-grid,
-  .metric-grid {
+  .metric-grid,
+  .gauge-grid,
+  .chart-grid {
     grid-template-columns: 1fr;
   }
 
