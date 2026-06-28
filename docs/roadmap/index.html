@@ -29,6 +29,46 @@
         <div class="metric-grid" id="metrics" aria-label="Roadmap metrics"></div>
       </section>
 
+      <section class="progress-section" aria-labelledby="progress-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="progress-title">Progress Dashboard</h2>
+            <p id="progress-note"></p>
+          </div>
+        </div>
+        <div class="gauge-grid" id="progress-gauges" aria-label="Progress gauges"></div>
+        <div class="chart-grid" aria-label="Roadmap charts">
+          <article class="chart-card">
+            <div class="chart-heading">
+              <h3>Component State</h3>
+              <p>Tracked migration targets</p>
+            </div>
+            <div class="bar-chart" id="state-chart"></div>
+          </article>
+          <article class="chart-card">
+            <div class="chart-heading">
+              <h3>Risk Mix</h3>
+              <p>Components and remaining candidates</p>
+            </div>
+            <div class="bar-chart" id="risk-chart"></div>
+          </article>
+          <article class="chart-card">
+            <div class="chart-heading">
+              <h3>Phase Progress</h3>
+              <p>Roadmap status distribution</p>
+            </div>
+            <div class="bar-chart" id="phase-chart"></div>
+          </article>
+          <article class="chart-card">
+            <div class="chart-heading">
+              <h3>Backlog Posture</h3>
+              <p>Remaining migration candidates</p>
+            </div>
+            <div class="bar-chart" id="backlog-chart"></div>
+          </article>
+        </div>
+      </section>
+
       <section class="controls" aria-label="Roadmap filters">
         <div class="control-field">
           <label for="search">Search</label>
