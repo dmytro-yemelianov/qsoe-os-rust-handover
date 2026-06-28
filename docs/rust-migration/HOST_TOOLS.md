@@ -131,10 +131,13 @@ rust/crates/qsoe-qrvfs
 It provides:
 
 - A `mkfs-qrv-rs` host binary.
-- A regular-file image builder for small qrvfs fixtures.
+- A target writer that uses sparse regular-file initialization and block-device
+  metadata initialization matching the C writer's `BLKZEROOUT`/manual-zero
+  fallback.
 - Directory and regular-file population from a host root.
 - Direct, single-indirect, and double-indirect file data allocation.
-- Parser-backed Rust unit tests.
+- Parser-backed Rust unit tests, including stale regular-file target
+  replacement.
 - A fixture gate that inspects the Rust-written image with the C `treeqrvfs`
   oracle.
 - A production-root comparison that rebuilds the normal staged qrvfs root,
@@ -150,9 +153,9 @@ make check-qrvfs-rust-writer-production-root
 
 This is not a production writer replacement. The C `mkfs-qrv` remains the
 default image writer for `fsqrv-image`, NVMe population, virtio image
-generation, and rollback. The Rust writer fixture deliberately starts with
-regular files only; block-device initialization and triple-indirect stress
-coverage remain future work.
+generation, and rollback. The Rust writer still needs direct block-device/live
+image evidence and triple-indirect stress coverage before a default-writer
+release-candidate path.
 
 ## Rust qrvfs Inspection Baseline
 

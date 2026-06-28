@@ -1,7 +1,9 @@
 use std::fmt;
-use std::fs;
-use std::io;
-use std::os::unix::fs::PermissionsExt;
+use std::fs::{self, File, OpenOptions};
+use std::io::{self, Seek, SeekFrom, Write};
+use std::os::raw::{c_int, c_ulong};
+use std::os::unix::fs::{FileTypeExt, PermissionsExt};
+use std::os::unix::io::AsRawFd;
 use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -55,6 +57,19 @@ pub struct BuiltImage {
     pub data_blocks_used: u64,
 }
 
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct TargetWriteReport {
+    pub initialization: TargetInitialization,
+    pub initialized_bytes: u64,
+}
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub enum TargetInitialization {
+    SparseFile { total_bytes: u64 },
+    BlockZeroOut { metadata_bytes: u64 },
+    BlockZeroOutFallback { error: String, metadata_blocks: u64 },
+}
+
 #[derive(Debug)]
 pub enum WriteError {
     Io(io::Error),
@@ -100,6 +115,48 @@ pub type WriteResult<T> = Result<T, WriteError>;
 
 pub fn build_image(populate_dir: Option<&Path>, config: WriterConfig) -> WriteResult<BuiltImage> {
     Writer::new(config)?.finish(populate_dir)
+}
+
+pub fn write_image_to_path(path: &Path, built: &BuiltImage) -> WriteResult<TargetWriteReport> {
+    let total_bytes = block_count_bytes(built.layout.total_blocks)?;
+    let metadata_bytes = block_count_bytes(built.layout.datastart)?;
+    let initialized_blocks = built
+        .layout
+        .datastart
+        .checked_add(built.data_blocks_used)
+        .ok_or(WriteError::ArithmeticOverflow)?;
+    let initialized_bytes = block_count_bytes(initialized_blocks)?;
+    let initialized_len =
+        usize::try_from(initialized_bytes).map_err(|_| WriteError::ImageTooLarge)?;
+
+    if initialized_len > built.bytes.len() {
+        return Err(WriteError::InvalidConfig(
+            "initialized byte range exceeds image",
+        ));
+    }
+
+    let mut file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(path)?;
+    let file_type = file.metadata()?.file_type();
+    let initialization = if file_type.is_block_device() {
+        initialize_block_device_target(&mut file, metadata_bytes, built.layout.datastart)?
+    } else {
+        file.set_len(0)?;
+        file.set_len(total_bytes)?;
+        TargetInitialization::SparseFile { total_bytes }
+    };
+
+    file.seek(SeekFrom::Start(0))?;
+    file.write_all(&built.bytes[..initialized_len])?;
+
+    Ok(TargetWriteReport {
+        initialization,
+        initialized_bytes,
+    })
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -487,6 +544,66 @@ impl Writer {
     }
 }
 
+fn initialize_block_device_target(
+    file: &mut File,
+    metadata_bytes: u64,
+    metadata_blocks: u64,
+) -> WriteResult<TargetInitialization> {
+    match blkzeroout_metadata(file, metadata_bytes) {
+        Ok(()) => Ok(TargetInitialization::BlockZeroOut { metadata_bytes }),
+        Err(err) => {
+            let error = err.to_string();
+            write_zero_blocks(file, metadata_blocks)?;
+            Ok(TargetInitialization::BlockZeroOutFallback {
+                error,
+                metadata_blocks,
+            })
+        }
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn blkzeroout_metadata(file: &File, metadata_bytes: u64) -> io::Result<()> {
+    const BLKZEROOUT: c_ulong = 0x127f;
+
+    extern "C" {
+        fn ioctl(fd: c_int, request: c_ulong, ...) -> c_int;
+    }
+
+    let mut range = [0_u64, metadata_bytes];
+    // SAFETY: BLKZEROOUT expects a valid file descriptor and a pointer to two
+    // u64 values: byte offset and byte length. Both live for the ioctl call.
+    let rc = unsafe { ioctl(file.as_raw_fd(), BLKZEROOUT, range.as_mut_ptr()) };
+    if rc == 0 {
+        Ok(())
+    } else {
+        Err(io::Error::last_os_error())
+    }
+}
+
+#[cfg(not(target_os = "linux"))]
+fn blkzeroout_metadata(_file: &File, _metadata_bytes: u64) -> io::Result<()> {
+    Err(io::Error::new(
+        io::ErrorKind::Unsupported,
+        "BLKZEROOUT is only available on Linux",
+    ))
+}
+
+fn write_zero_blocks(file: &mut File, blocks: u64) -> io::Result<()> {
+    let zeroes = [0_u8; QRVFS_BSIZE];
+    file.seek(SeekFrom::Start(0))?;
+    for _ in 0..blocks {
+        file.write_all(&zeroes)?;
+    }
+    Ok(())
+}
+
+fn block_count_bytes(blocks: u64) -> WriteResult<u64> {
+    blocks
+        .checked_mul(QRVFS_BSIZE as u64)
+        .ok_or(WriteError::ArithmeticOverflow)
+}
+
 fn put_u16(image: &mut [u8], offset: usize, value: u16) {
     image[offset..offset + 2].copy_from_slice(&value.to_le_bytes());
 }
@@ -625,6 +742,41 @@ mod tests {
                 &large[expected_start..expected_end]
             );
         }
+
+        fs::remove_dir_all(root).expect("remove fixture");
+    }
+
+    #[test]
+    fn writes_sparse_regular_target_over_stale_file() {
+        let root = temp_fixture_dir();
+        fs::create_dir_all(&root).expect("root dir");
+        fs::write(root.join("hello"), b"hello\n").expect("hello");
+
+        let built = build_image(
+            Some(&root),
+            WriterConfig {
+                size_mb: 2,
+                ninodes: 64,
+            },
+        )
+        .expect("build image");
+
+        let image_path = root.join("stale.img");
+        fs::write(&image_path, vec![0xa5; 3 * 1024 * 1024]).expect("stale image");
+        let report = write_image_to_path(&image_path, &built).expect("write target");
+        assert_eq!(
+            report.initialization,
+            TargetInitialization::SparseFile {
+                total_bytes: built.layout.total_blocks * QRVFS_BSIZE as u64,
+            }
+        );
+
+        let written = fs::read(&image_path).expect("read image");
+        assert_eq!(written.len(), QRVFS_BSIZE * 512);
+        let initialized_len = usize::try_from(report.initialized_bytes).expect("initialized len");
+        assert_eq!(&written[..initialized_len], &built.bytes[..initialized_len]);
+        assert!(written[initialized_len..].iter().all(|byte| *byte == 0));
+        Image::parse(&written).expect("parse written image");
 
         fs::remove_dir_all(root).expect("remove fixture");
     }

@@ -395,8 +395,9 @@ The fixture smoke builds a small image with `mkfs-qrv-rs`, then inspects that
 image with the C `treeqrvfs` oracle. The fixture includes a large file that
 crosses into the double-indirect allocation path. The production-root smoke
 rebuilds the normal staged qrvfs root, writes a Rust image from that root, and
-checks the C and Rust-written images with the C oracle. Production image
-generation still uses C `mkfs-qrv`.
+checks the C and Rust-written images with the C oracle. `mkfs-qrv-rs` also uses
+sparse regular-file target initialization and the C writer's block-device
+metadata zeroing strategy. Production image generation still uses C `mkfs-qrv`.
 
 ## Host CPIO Parser
 

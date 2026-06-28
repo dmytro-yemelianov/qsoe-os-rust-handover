@@ -1,9 +1,11 @@
 use std::env;
-use std::fs;
 use std::path::PathBuf;
 use std::process;
 
-use qsoe_qrvfs::writer::{build_image, WriterConfig, DEFAULT_NINODES, DEFAULT_SIZE_MB};
+use qsoe_qrvfs::writer::{
+    build_image, write_image_to_path, TargetInitialization, WriterConfig, DEFAULT_NINODES,
+    DEFAULT_SIZE_MB,
+};
 
 fn main() {
     if let Err(err) = run() {
@@ -55,8 +57,7 @@ fn run() -> Result<(), String> {
     let populate_dir = positional.get(1).map(PathBuf::as_path);
     let config = WriterConfig { size_mb, ninodes };
     let built = build_image(populate_dir, config).map_err(|err| err.to_string())?;
-
-    fs::write(image_path, &built.bytes)
+    let report = write_image_to_path(image_path, &built)
         .map_err(|err| format!("{}: {err}", image_path.display()))?;
 
     println!(
@@ -74,7 +75,22 @@ fn run() -> Result<(), String> {
         built.layout.datastart,
         built.layout.data_blocks
     );
-    println!("  init: regular file, {} bytes", built.bytes.len());
+    match report.initialization {
+        TargetInitialization::SparseFile { total_bytes } => {
+            println!("  init: sparse file, {total_bytes} bytes (holes read as zeros)");
+        }
+        TargetInitialization::BlockZeroOut { metadata_bytes } => {
+            println!("  init: BLKZEROOUT {metadata_bytes} metadata bytes (data area left as-is)");
+        }
+        TargetInitialization::BlockZeroOutFallback {
+            error,
+            metadata_blocks,
+        } => {
+            println!(
+                "  init: BLKZEROOUT unavailable ({error}); writing {metadata_blocks} metadata blocks"
+            );
+        }
+    }
     println!(
         "mkfs-qrvfs-rs: done. Root inode={}, {} data blocks used.",
         built.root_inode, built.data_blocks_used
