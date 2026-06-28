@@ -143,19 +143,23 @@ It provides:
 - A production-root comparison that rebuilds the normal staged qrvfs root,
   writes a Rust image from that root, and inspects both images with the C
   `treeqrvfs` oracle.
+- An opt-in live-image smoke that selects Rust `mkfs-qrv-rs` for the qrvfs
+  image, boots QSOE/L from the resulting virtio disk, mounts `/usr`, and reads
+  `/usr/conf/passwd`.
 
 Run:
 
 ```sh
 make check-qrvfs-rust-writer-fixture
 make check-qrvfs-rust-writer-production-root
+make rust-mkfs-qrv-live-smoke
 ```
 
 This is not a production writer replacement. The C `mkfs-qrv` remains the
 default image writer for `fsqrv-image`, NVMe population, virtio image
-generation, and rollback. The Rust writer still needs direct block-device/live
-image evidence and triple-indirect stress coverage before a default-writer
-release-candidate path.
+generation, and rollback. Set `QSOE_RUST_MKFS_QRV=1` to select Rust
+`mkfs-qrv-rs` for qrvfs image construction. The Rust writer still needs
+triple-indirect stress coverage before a default-writer release-candidate path.
 
 ## Rust qrvfs Inspection Baseline
 

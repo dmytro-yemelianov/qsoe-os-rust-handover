@@ -389,6 +389,7 @@ The first opt-in Rust writer fixture is:
 ```sh
 make check-qrvfs-rust-writer-fixture
 make check-qrvfs-rust-writer-production-root
+make rust-mkfs-qrv-live-smoke
 ```
 
 The fixture smoke builds a small image with `mkfs-qrv-rs`, then inspects that
@@ -397,7 +398,9 @@ crosses into the double-indirect allocation path. The production-root smoke
 rebuilds the normal staged qrvfs root, writes a Rust image from that root, and
 checks the C and Rust-written images with the C oracle. `mkfs-qrv-rs` also uses
 sparse regular-file target initialization and the C writer's block-device
-metadata zeroing strategy. Production image generation still uses C `mkfs-qrv`.
+metadata zeroing strategy. The live smoke selects Rust `mkfs-qrv-rs`, boots
+QSOE/L from the resulting virtio disk, and reads `/usr/conf/passwd`.
+Production image generation still uses C `mkfs-qrv`.
 
 ## Host CPIO Parser
 
