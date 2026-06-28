@@ -22,13 +22,13 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | Rust ABI/FFI foundation | Complete | `qsoe-abi`, `qsoe-ffi`, and `qsoe-ressrv` compile for the QSOE target with layout tests and reviewed unsafe boundaries. |
 | Host qrvfs parser | Rust opt-in | Rust fixture checks compare against the existing C host tool; C remains the fixture oracle. |
 | `slogger` service | Rust default RC | `slogger-rs` links, boots, registers `/dev/slog`, has C-selected plus Rust-selected `/dev/slog` readback smokes, and has accepted #95 local-equivalent RC evidence for `slogger-rc-*` targets with C rollback. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
-| `devb-virtio` block driver | Rust opt-in | Rust MMIO/virtqueue model, host queue tests, opt-in boot smoke, and file-read smoke exist. Next gate: Rust-default release candidate with C rollback. |
+| `devb-virtio` block driver | Rust default RC | Rust MMIO/virtqueue model, host queue tests, opt-in boot/file-read smokes, and `make virtio-rc-file-smoke` plus `make virtio-rc-rollback-smoke` cover the Rust-default file-read RC path with C rollback. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
 | Shared parsers | Complete for current scope | CPIO, syscfg/sysmap, and ELF inspection crates exist with host tests and host/guest reuse coverage. |
 | `pipe` service | Rust default RC | `qsoe-pipe` host tests pass, `pipe-rs` links and audits, `make rust-pipe-smoke` boots LQ with Rust `/sbin/pipe` registered, `make rust-pipe-data-smoke` proves a libc/taskman `pipe(2)` write/read round trip, and `make pipe-rc-data-smoke` selects Rust by default with `make pipe-rc-rollback-smoke` preserving C rollback. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
 | `test_msgpass` helper | Rust default RC | `test_msgpass-rs` links, can be selected into the qrvfs test image, passes the existing suite `[msgpass]` section through `make rust-test-msgpass-smoke`, and has `make test-msgpass-rc-smoke` plus `make test-msgpass-rc-rollback-smoke` for the Rust-default test-image RC path. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
 | `tm_procfs` task-manager pilot | Rust opt-in | `qsoe-tm-procfs` exports the existing C ABI behind `QSOE_RUST_TM_PROCFS=1`; C remains default/rollback. Host model tests, Rust host tests, selected NQ/LQ taskman links, `make tm-procfs-evidence`, and `QSOE_RUST_TM_PROCFS=1 make procfs-smoke` cover the gate. Trusted `main` CI run `28102250069` accepted the opt-in evidence for #103. Next gate: separate default-selection decision. |
 | Kernel Rust | Deferred | Current decision rejects near-term Rust in `nq` kernel code; only fixture/audit candidates are documented. |
-| C retirement | Blocked by policy | No C implementation is approved for removal until at least one component ships through a Rust-default release candidate with C rollback. |
+| C retirement | Blocked by policy | No C implementation is currently approved for removal; #26's checklist and a separate removal PR are still required for every component. |
 
 ## Current Follow-ups
 
@@ -41,8 +41,12 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 - `slogger-rs` now has a Rust-default release-candidate path with explicit C
   rollback. #95's local-equivalent RC evidence window is accepted; keep C
   retirement blocked until #26's checklist and a separate removal PR.
-- Use trusted `main` CI run `28102250069` as the accepted #97 Rust
-  `test_msgpass` smoke evidence before any default test-image decision.
+- `test_msgpass-rs` now has a Rust-default test-image release-candidate path
+  with explicit C rollback. Keep C retirement blocked until #26's checklist and
+  a separate removal PR.
+- `devb-virtio-rs` now has a Rust-default release-candidate path with explicit
+  C rollback through the `/usr` file-read smoke. Keep C retirement blocked
+  until #26's checklist and a separate removal PR.
 - `tm_procfs` now has a Rust opt-in provider behind `QSOE_RUST_TM_PROCFS=1`.
   Trusted `main` CI run `28102250069` accepted the #103 opt-in evidence from
   `container-tm-procfs-evidence`. Keep C as the default until a separate
@@ -59,6 +63,8 @@ make rust-slog-readback-smoke
 make slogger-rc-readback-smoke
 make slogger-rc-rollback-smoke
 make rust-virtio-file-smoke
+make virtio-rc-file-smoke
+make virtio-rc-rollback-smoke
 make rust-test-msgpass-smoke
 make pipe-smoke
 make rust-pipe-smoke

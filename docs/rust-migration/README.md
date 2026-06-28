@@ -29,35 +29,37 @@ Read in this order:
    rollback drill.
 16. `VIRTIO_BLOCK.md`: current C `devb-virtio` behavior and Rust pilot
    acceptance contract.
-17. `SERVICE_RANKING.md`: remaining userland service scores for Phase 8
+17. `VIRTIO_RC.md`: Rust-default `devb-virtio` release-candidate note and C
+   rollback drill.
+18. `SERVICE_RANKING.md`: remaining userland service scores for Phase 8
    selection.
-18. `PIPE.md`: selected second Rust service mini-spec and C registration smoke.
-19. `PIPE_RC.md`: Rust-default `pipe` release-candidate note and C rollback
+19. `PIPE.md`: selected second Rust service mini-spec and C registration smoke.
+20. `PIPE_RC.md`: Rust-default `pipe` release-candidate note and C rollback
    drill.
-20. `TEST_HELPER.md`: selected first Rust in-guest test helper and safety
+21. `TEST_HELPER.md`: selected first Rust in-guest test helper and safety
    constraints.
-21. `TEST_MSGPASS_RC.md`: Rust-default `test_msgpass` test-image
+22. `TEST_MSGPASS_RC.md`: Rust-default `test_msgpass` test-image
    release-candidate note and C rollback drill.
-22. `RETIREMENT.md`: C removal gate, current retirement status, and future
+23. `RETIREMENT.md`: C removal gate, current retirement status, and future
    removal checklist.
-23. `STATUS.md`: current C default, Rust opt-in, Rust default, and retired
+24. `STATUS.md`: current C default, Rust opt-in, Rust default, and retired
    status for tracked migration components.
-24. `RELEASE_NOTE_TEMPLATE.md`: release-note template for implementation
+25. `RELEASE_NOTE_TEMPLATE.md`: release-note template for implementation
    language changes, rollback flags, evidence, and known limitations.
-25. `TASK_MANAGER.md`: task-manager module inventory for Phase 9 candidate
+26. `TASK_MANAGER.md`: task-manager module inventory for Phase 9 candidate
    selection.
-26. `TASK_MANAGER_PROCFS.md`: selected non-critical task-manager pilot module
+27. `TASK_MANAGER_PROCFS.md`: selected non-critical task-manager pilot module
    and scope exclusions.
-27. `TASK_MANAGER_PROCFS_BOUNDARY.md`: C/Rust ABI, failure behavior, and
+28. `TASK_MANAGER_PROCFS_BOUNDARY.md`: C/Rust ABI, failure behavior, and
    rollback plan for the selected pilot.
-28. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+29. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
-29. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
-30. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+30. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
+31. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-31. `PLAN.md`: phased migration plan from baseline validation through possible
+32. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-32. `TASKS.md`: executable backlog with acceptance criteria.
+33. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust

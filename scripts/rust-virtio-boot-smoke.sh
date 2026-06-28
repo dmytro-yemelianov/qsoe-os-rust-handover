@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# Build an opt-in QSOE/L image whose boot CPIO carries devb-virtio-rs at
-# /sbin/devb-virtio, then boot it under QEMU and wait for login.
+# Build an opt-in QSOE/L image whose boot CPIO carries the selected
+# /sbin/devb-virtio artifact, then boot it under QEMU and wait for login. Rust
+# is selected by default; set QSOE_RUST_VIRTIO=0 for the C rollback path.
 
 set -eu
 
@@ -9,13 +10,15 @@ usage() {
     cat <<'EOF'
 usage: scripts/rust-virtio-boot-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
-Builds a temporary Rust-virtio LQ modpkg.cpio under build/rust-virtio/,
+Builds a temporary selected-virtio LQ modpkg.cpio under build/rust-virtio/,
 rebuilds the LQ QEMU image with MODPKG_CPIO pointing at it, and delegates to
-scripts/boot-smoke.sh while matching "[devb-virtio-rs] /dev/vblk0 ready".
+scripts/boot-smoke.sh while matching the selected devb-virtio readiness marker.
 
 Environment:
-  RUST_VIRTIO_MODPKG_CPIO   output archive, default build/rust-virtio/modpkg-lq-rust-virtio.cpio
-  RUST_VIRTIO_BASE_CPIO     intermediate C archive, default build/rust-virtio/modpkg-lq-c.cpio
+  QSOE_RUST_VIRTIO          set 0 to prepare the C rollback image
+  RUST_VIRTIO_WORKDIR       output directory, default build/rust-virtio
+  RUST_VIRTIO_MODPKG_CPIO   output archive, default under RUST_VIRTIO_WORKDIR
+  RUST_VIRTIO_BASE_CPIO     intermediate C archive, default under RUST_VIRTIO_WORKDIR
 EOF
 }
 
@@ -73,9 +76,26 @@ if [ "$timeout_s" -le 0 ]; then
     exit 2
 fi
 
-workdir="$ROOT/build/rust-virtio"
+QSOE_RUST_VIRTIO=${QSOE_RUST_VIRTIO:-1}
+case "$QSOE_RUST_VIRTIO" in
+    0|false|FALSE|no|NO)
+        virtio_mode=c
+        virtio_pattern="devb-virtio: /dev/vblk0 ready"
+        ;;
+    1|true|TRUE|yes|YES)
+        virtio_mode=rust
+        virtio_pattern="[devb-virtio-rs] /dev/vblk0 ready"
+        ;;
+    *)
+        echo "rust-virtio-boot-smoke.sh: QSOE_RUST_VIRTIO must be 0 or 1" >&2
+        exit 2
+        ;;
+esac
+export QSOE_RUST_VIRTIO
+
+workdir=${RUST_VIRTIO_WORKDIR:-"$ROOT/build/rust-virtio"}
 base_cpio=${RUST_VIRTIO_BASE_CPIO:-"$workdir/modpkg-lq-c.cpio"}
-rust_cpio=${RUST_VIRTIO_MODPKG_CPIO:-"$workdir/modpkg-lq-rust-virtio.cpio"}
+selected_cpio=${RUST_VIRTIO_MODPKG_CPIO:-"$workdir/modpkg-lq-$virtio_mode-virtio.cpio"}
 selected_virtio="$ROOT/build/rust/selected/sbin/devb-virtio.elf"
 lq_libc="$ROOT/lq/build/libc/libc.so"
 lq_rtld="$ROOT/lq/build/rtld/ld-qsoe.so.1"
@@ -85,8 +105,8 @@ mkdir -p "$workdir"
 echo "rust-virtio-boot-smoke.sh: building LQ runtime prerequisites"
 "$MAKE" -C "$ROOT/lq" libc rtld libtaskman --no-print-directory
 
-echo "rust-virtio-boot-smoke.sh: selecting Rust virtio artifact"
-QSOE_RUST_VIRTIO=1 \
+echo "rust-virtio-boot-smoke.sh: selecting $virtio_mode virtio artifact"
+QSOE_RUST_VIRTIO="$QSOE_RUST_VIRTIO" \
     LIBC_SO="$lq_libc" \
     "$MAKE" -C "$ROOT" virtio-artifact --no-print-directory
 
@@ -124,13 +144,13 @@ install -m 0755 "$selected_virtio" "$rootdir/sbin/devb-virtio"
     cd "$rootdir"
     cpio --quiet --create -H newc \
         --owner=+0:+0 --reproducible \
-        --file="$rust_cpio" < "$list"
+        --file="$selected_cpio" < "$list"
 )
-touch "$rust_cpio"
-echo "rust-virtio-boot-smoke.sh: wrote $rust_cpio"
+touch "$selected_cpio"
+echo "rust-virtio-boot-smoke.sh: wrote $selected_cpio"
 
-echo "rust-virtio-boot-smoke.sh: rebuilding LQ QEMU image with Rust virtio cpio"
-"$MAKE" -C "$ROOT/lq" MODPKG_CPIO="$rust_cpio" --no-print-directory
+echo "rust-virtio-boot-smoke.sh: rebuilding LQ QEMU image with $virtio_mode virtio cpio"
+"$MAKE" -C "$ROOT/lq" MODPKG_CPIO="$selected_cpio" --no-print-directory
 
 boot_args=(-k lq -t "$timeout_s")
 if [ -n "$log" ]; then
@@ -143,5 +163,5 @@ if [ "${#emu_args[@]}" -gt 0 ]; then
     boot_args+=(-- "${emu_args[@]}")
 fi
 
-QSOE_BOOT_VIRTIO_PATTERN="[devb-virtio-rs] /dev/vblk0 ready" \
+QSOE_BOOT_VIRTIO_PATTERN="$virtio_pattern" \
     "$ROOT/scripts/boot-smoke.sh" "${boot_args[@]}"

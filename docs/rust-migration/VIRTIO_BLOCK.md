@@ -290,31 +290,36 @@ QSOE_RUST_VIRTIO=1 make virtio-artifact
 
 The default `QSOE_RUST_VIRTIO=0` stages the C `devb-virtio` artifact. The Rust
 mode stages the audited Rust ELF at
-`build/rust/selected/sbin/devb-virtio.elf`, ready for the next boot-smoke task
-to place into an opt-in QSOE/L image.
+`build/rust/selected/sbin/devb-virtio.elf`, ready for a boot-smoke task to
+place into an opt-in or release-candidate QSOE/L image.
 
 ## Rust Opt-In Boot Smoke
 
 `scripts/rust-virtio-boot-smoke.sh` builds an opt-in QSOE/L image by replacing
-only `sbin/devb-virtio` in a temporary boot CPIO:
+only `sbin/devb-virtio` in a temporary boot CPIO. The script selects Rust by
+default and accepts `QSOE_RUST_VIRTIO=0` for the same selected-artifact path
+with the C driver:
 
 ```sh
 make rust-virtio-boot-smoke
 ```
 
 The smoke delegates to `scripts/boot-smoke.sh` with
-`QSOE_BOOT_VIRTIO_PATTERN="[devb-virtio-rs] /dev/vblk0 ready"` and still
-requires the common milestones:
+the selected driver's readiness marker and still requires the common
+milestones:
 
 - `[slogger] alive`.
 - `[devb-virtio-rs] /dev/vblk0 ready`.
 - `fs-qrv: mounted qrvfs at /usr`.
 - `login:`.
 
-Validated log:
+When `QSOE_RUST_VIRTIO=0`, the same script expects the C readiness marker:
+`devb-virtio: /dev/vblk0 ready`.
+
+Typical boot-smoke log:
 
 ```text
-build/boot-smoke-lq-rust-virtio.log
+build/boot-smoke-lq-<timestamp>.log
 ```
 
 ## Rust File Access Smoke
@@ -344,5 +349,21 @@ rust-virtio-file-smoke: read /usr/conf/passwd ok
 Validated log:
 
 ```text
-build/boot-smoke-lq-rust-virtio-file.log
+build/rust-virtio-file/boot-smoke-lq-rust-virtio-file.log
 ```
+
+## Rust-Default RC File Access Smoke
+
+`scripts/virtio-rc-file-smoke.sh` makes Rust the default for the targeted RC
+image while preserving a C rollback drill:
+
+```sh
+make virtio-rc-file-smoke
+make virtio-rc-rollback-smoke
+```
+
+The RC path sets `QSOE_RUST_VIRTIO=1` and uses the same `/usr/conf/passwd`
+file-read marker. The rollback target sets `QSOE_VIRTIO_RC_ROLLBACK=1`, which
+selects `QSOE_RUST_VIRTIO=0` and verifies the same marker with the C
+`/sbin/devb-virtio` restored. See `VIRTIO_RC.md` for the release-candidate
+record.
