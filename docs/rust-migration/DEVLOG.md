@@ -24,6 +24,50 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-29 23:51 CEST - tm_pathmgr Runtime Smoke
+
+Scope:
+
+- Added `make tm-pathmgr-runtime-smoke` and container CI wiring.
+- Added `/usr/bin/pathmgr_probe`, a small qrvfs-staged test helper that spawns
+  a child, registers `/dev/pathmgr_probe`, resolves the child binding,
+  rejects duplicate registration, sends through the resolved channel, reaps the
+  child, and verifies the registration disappears after process teardown.
+- The smoke rebuilds QSOE/L with `QSOE_RUST_TM_PATHMGR=1` and mandatory
+  `QSOE_RUST_TM_PROCFS=1`.
+- It verifies the Rust-selected `libtaskman.a` omits C `pathmgr.o`, verifies
+  all nine `tm_pathmgr_*` ABI symbols in the shared Rust provider archive, and
+  exercises `/dev` PMDIR readdir, `/etc/passwd` through the cpio-root symlink,
+  `/dev/console` repath to `/dev/ser1`, and the helper lifecycle.
+- Added a tracked LQ component override that raises taskman's bootstrap stack
+  from 8 KiB to 32 KiB. Rust `tm_pathmgr` exposed that the on-disk sysinit
+  shebang spawn path could drive the dispatcher stack within roughly one frame
+  of `_stack_bottom`, causing the next seL4 extra-cap lookup to use a bogus
+  stack-adjacent CPtr before sysinit ran.
+
+Commands:
+
+- `bash -n scripts/tm-pathmgr-runtime-smoke.sh scripts/tm-pathmgr-evidence.sh scripts/boot-smoke.sh`
+- `make -n tm-pathmgr-runtime-smoke container-tm-pathmgr-runtime-smoke`
+- `./scripts/apply-component-overrides.sh`
+- `make tm-pathmgr-runtime-smoke`
+- `make tm-pathmgr-evidence`
+
+Result:
+
+- The initial Rust-pathmgr boot faulted after loading
+  `/usr/sbin/sysinit/level1.sh`; the 32 KiB taskman stack override fixed it.
+- `make tm-pathmgr-runtime-smoke` passes locally with all runtime markers.
+- `make tm-pathmgr-evidence` passes locally, including C/Rust host tests,
+  provider archive audit, and NQ/LQ C-default/Rust-selected link checks.
+- The runtime smoke closes the open/device-registration coverage gap that kept
+  `tm_pathmgr` behind the previous next gate, but the provider remains Rust
+  opt-in pending a separate Rust-default RC decision.
+
+Follow-up:
+
+- Publish, open the PR, wait for trusted CI, merge, and update #149.
+
 ## 2026-06-29 23:26 CEST - tm_sysfs Runtime Smoke
 
 Scope:

@@ -89,9 +89,23 @@ RVC soft-float, and links both NQ and LQ taskman in C rollback and
 Rust-selected modes. The gate also verifies `pathmgr.o` is present for
 `QSOE_RUST_TM_PATHMGR=0` and absent for `QSOE_RUST_TM_PATHMGR=1`.
 
+The focused runtime smoke is:
+
+```sh
+make tm-pathmgr-runtime-smoke
+```
+
+It boots QSOE/L with `QSOE_RUST_TM_PATHMGR=1`, verifies C `pathmgr.o` is
+absent from the selected `libtaskman.a`, checks the shared Rust provider
+exports all nine `tm_pathmgr_*` ABI symbols, and exercises runtime consumers:
+`/dev` PMDIR readdir, `/etc/passwd` via the cpio-root symlink, `/dev/console`
+repath to `/dev/ser1`, helper registration under `/dev/pathmgr_probe`,
+duplicate registration rejection, MsgSend through the resolved external
+binding, and unregister-on-exit cleanup after the helper exits.
+
 ## Current State
 
 `tm_pathmgr` is Rust opt-in only. It is not a Rust-default release candidate
 and has no C retirement approval. Keep `libtaskman/src/pathmgr.c` as the
-rollback implementation until open/device-registration runtime coverage, the
-global retirement checklist, and a separate removal PR are satisfied.
+rollback implementation until a separate Rust-default RC decision, the global
+retirement checklist, and a separate removal PR are satisfied.
