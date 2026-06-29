@@ -414,6 +414,24 @@ LQ's private FDT-backed `lq/taskman/sys/syscfg.c`, sysmap construction, boot
 platform-data policy, `/sys` serving, process tables, and seL4 invocation code
 remain C.
 
+## Task Manager Path Registry Selection
+
+The Rust `tm_pathmgr` provider can be built as a soft-float taskman staticlib
+without changing the normal taskman default:
+
+```sh
+make check-tm-pathmgr-model
+make rust-tm-pathmgr-provider
+make tm-pathmgr-evidence
+```
+
+With the default `QSOE_RUST_TM_PATHMGR=0`, NQ and LQ taskman link the existing
+C `pathmgr.o` in `libtaskman.a`. With `QSOE_RUST_TM_PATHMGR=1`, the component
+Makefile selector omits C `pathmgr.o`, builds `qsoe-tm-pathmgr` for
+`riscv64imac-unknown-none-elf`, and links `libqsoe_tm_pathmgr.a` into taskman.
+Path IO dispatch, FD ownership, CPIOFS/PROCFS/SYSFS serving, device-server
+registration policy, process tables, and seL4 invocation code remain C.
+
 ## Task Manager Sysmap Selection
 
 The Rust LQ `tm_sysmap` provider can be built as a soft-float taskman staticlib
@@ -504,10 +522,12 @@ decoding, process tables, and seL4 invocation code remain C.
 
 Do not set more than one of `QSOE_RUST_TM_CPIO=1`,
 `QSOE_RUST_TM_CRED=1`, `QSOE_RUST_TM_ELF=1`,
-`QSOE_RUST_TM_FDT=1`, `QSOE_RUST_TM_PROCFS=1`,
+`QSOE_RUST_TM_FDT=1`, `QSOE_RUST_TM_PATHMGR=1`,
+`QSOE_RUST_TM_PROCFS=1`,
 `QSOE_RUST_TM_PSEUDODEV=1`,
 `QSOE_RUST_TM_RSRCDB=1`, `QSOE_RUST_TM_SCRIPT=1`,
-`QSOE_RUST_TM_SYSCFG=1`, and `QSOE_RUST_TM_SYSFS=1` together yet.
+`QSOE_RUST_TM_SYSCFG=1`, `QSOE_RUST_TM_SYSMAP=1`, and
+`QSOE_RUST_TM_SYSFS=1` together yet.
 Current taskman providers are separate no-std Rust staticlibs; selecting more
 than one requires a later shared taskman Rust archive.
 

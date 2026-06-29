@@ -24,6 +24,55 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-29 CEST - tm_pathmgr Rust Opt-In Provider
+
+Scope:
+
+- Added `qsoe-tm-pathmgr`, a no-std Rust staticlib exporting the existing
+  portable taskman `tm_pathmgr_*` ABI.
+- Added `QSOE_RUST_TM_PATHMGR=1` selection for NQ/LQ taskman. The selector
+  omits C `pathmgr.o` from `libtaskman.a`, then links
+  `build/rust/tm-pathmgr/libqsoe_tm_pathmgr.a`.
+- Added a C host-model fixture, Rust host tests, provider build script,
+  evidence script, tracked NQ/LQ component patches, CI evidence step, and docs.
+- Preserved the C provider's fixed node pool, longest-prefix lookup, PMDIR
+  remainder rejection, one-hop symlink behavior, external-only unregister, and
+  newest-first child enumeration.
+- Kept C as the normal default and rollback implementation.
+
+Commands:
+
+- `make check-tm-pathmgr-model`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-pathmgr --features host-tests --lib`
+- `cargo clippy --manifest-path rust/Cargo.toml -p qsoe-tm-pathmgr --features host-tests -- -D warnings`
+- `bash -n scripts/check-tm-pathmgr-model.sh scripts/build-rust-tm-pathmgr-provider.sh scripts/tm-pathmgr-evidence.sh scripts/apply-component-overrides.sh`
+- `./scripts/apply-component-overrides.sh`
+- `make rust-tm-pathmgr-provider`
+- `make tm-pathmgr-evidence`
+- `make container-tm-pathmgr-evidence`
+
+Result:
+
+- The focused C fixture and Rust host tests pass for registration, longest
+  prefix resolution, PMDIR misses, repath, external-only unregister, symlink
+  resolution and expansion, CPIO symlink expansion, and child enumeration.
+- The soft-float Rust provider archive builds for
+  `riscv64imac-unknown-none-elf`.
+- The provider archive exports all nine `tm_pathmgr_*` ABI symbols and all
+  archive members report RVC soft-float ABI.
+- NQ and LQ C-default taskman archives include one `pathmgr.o` member.
+  Rust-selected archives include zero `pathmgr.o` members and link
+  `libqsoe_tm_pathmgr.a`.
+- The final NQ and LQ taskman ELFs link in both modes and pass the evidence
+  script's ELF flag and section audit.
+- The container-equivalent `tm_pathmgr` evidence target passes with the same
+  C-default/Rust-selected archive membership and link evidence.
+
+Follow-up:
+
+- Keep `tm_pathmgr` Rust opt-in only until open/device-registration runtime
+  coverage exists before any Rust-default RC decision.
+
 ## 2026-06-29 CEST - tm_sysmap Rust Opt-In Provider
 
 Scope:

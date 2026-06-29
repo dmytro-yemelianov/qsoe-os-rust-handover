@@ -24,7 +24,7 @@ excluded unless `QSOE_INDEX_SEL4=1` is set.
 | `common` | 2 | 359 | Shared CPIO helper code. Rust CPIO parsing exists, but C remains for existing callers. |
 | `host_tools` | 2 | 781 | `qrvfs-tree` and `mkfs-qrv-rs` have Rust-default RC paths with C rollback. Tracked by #136. |
 | `libc` | 447 | 43,080 | Broad runtime, syscall, stdio, allocator, string, rtld, and QSOE wrapper surface. Not a wholesale Rust target. |
-| `libtaskman` | 23 | 3,013 | Best source of host-testable task-manager modules. `tm_procfs` is Rust-default RC; `tm_cpio`, `tm_cred`, `tm_elf`, `tm_script`, `tm_syscfg`, and `tm_sysfs` are Rust opt-in; more candidates are tracked in #149 and #153. |
+| `libtaskman` | 23 | 3,013 | Best source of host-testable task-manager modules. `tm_procfs` is Rust-default RC; `tm_cpio`, `tm_cred`, `tm_elf`, `tm_pathmgr`, `tm_script`, `tm_syscfg`, and `tm_sysfs` are Rust opt-in; remaining candidates are tracked in #153. |
 | `lq` | 90 | 17,853 | seL4 task manager, LQ libc wrappers, process, capability, path, memory, syscall, and boot glue. Pure/diagnostic slices only are candidates; LQ FDT, sysmap, pseudo-devices, and resource DB accounting are Rust opt-in. |
 | `nq` | 125 | 25,053 | Kernel, NQ libc, and NQ taskman surface. Near-term linked Rust is deferred by policy; fixture-only candidates are tracked in #155. |
 | `quser` | 127 | 41,355 | Userland services, drivers, resource-server support, shell, tests, and utilities. Several services have Rust pilots; many remain C. |
@@ -41,8 +41,8 @@ capture, the tracker contains 33 roadmap issues:
 | Kind | Count | Meaning |
 | --- | ---: | --- |
 | Phase issues | 11 | Migration phases and policy gates from baseline through possible kernel reassessment. |
-| Component issues | 16 | Components with concrete Rust artifacts or RC evidence. |
-| Backlog, retirement, and inventory issues | 6 | Remaining candidates, deferred areas, retirement gate, and this inventory. |
+| Component issues | 17 | Components with concrete Rust artifacts or RC evidence. |
+| Backlog, retirement, and inventory issues | 5 | Remaining candidates, deferred areas, retirement gate, and this inventory. |
 
 All roadmap issues carry parseable `qsoe-roadmap:v1` metadata for the dashboard.
 Issue state, labels, and metadata are the source of truth for current progress.
@@ -63,6 +63,7 @@ Issue state, labels, and metadata are the source of truth for current progress.
 | `tm_fdt` | #146 | Rust opt-in LQ FDT parser provider with C rollback; not a Rust-default RC. |
 | `tm_syscfg` | #145 | Rust opt-in provider with C rollback; not a Rust-default RC. |
 | `tm_sysmap` | #147 | Rust opt-in LQ sysmap page builder provider with C rollback; not a Rust-default RC. |
+| `tm_pathmgr` | #149 | Rust opt-in path registry provider with C rollback; not a Rust-default RC. |
 | `tm_rsrcdb` | #151 | Rust opt-in LQ resource DB provider with C rollback; not a Rust-default RC. |
 | `tm_cred` | #150 | Rust opt-in provider with C rollback; not a Rust-default RC. |
 | `tm_pseudodev` | #152 | Rust opt-in LQ pseudo-device provider with C rollback; not a Rust-default RC. |
@@ -76,7 +77,7 @@ be a separate removal PR after an RC window and rollback drill.
 | Bucket | Issues | Posture |
 | --- | --- | --- |
 | Host qrvfs tools | #136 | Complete for current scope: `qrvfs-tree` and `mkfs-qrv-rs` have Rust-default RC paths. Keep C rollback until #26. |
-| Task-manager pure or diagnostic modules | #149, #153 | Candidate backlog. Prefer host-tested modules that avoid direct seL4 invocations, spawn, capability ownership, relocation writes, and loader admission. |
+| Task-manager pure or diagnostic modules | #153 | Candidate backlog. Prefer host-tested modules that avoid direct seL4 invocations, spawn, capability ownership, relocation writes, and loader admission. |
 | Spawn, capability, relocation, and loader paths | #154 | Deferred. These paths are load-bearing for process creation and teardown. |
 | Kernel Rust | #155 | Deferred. Current policy allows documentation and fixtures only. |
 | First C retirement | #26 | Needed, but blocked until a chosen component satisfies the retirement checklist and a separate removal PR is prepared. |
@@ -99,7 +100,7 @@ a scoped candidate and acceptance criteria.
 
 ## Next Recommended Issue Work
 
-1. Use #149 and #153 for remaining small task-manager pilots.
+1. Use #153 for the remaining small task-manager pilot.
    Prefer low-risk pure modules before touching path manager or loader-critical
    inputs.
 2. Keep #154, #155, and #26 policy-blocked until their stated gates change.

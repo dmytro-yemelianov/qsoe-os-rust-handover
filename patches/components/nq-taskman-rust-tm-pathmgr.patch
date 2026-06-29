@@ -1,0 +1,54 @@
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -23,12 +23,13 @@
+ QSOE_RUST_TM_PROCFS ?= 0
+ QSOE_RUST_TM_CRED ?= 0
+ QSOE_RUST_TM_ELF ?= 0
++QSOE_RUST_TM_PATHMGR ?= 0
+ QSOE_RUST_TM_SCRIPT ?= 0
+ QSOE_RUST_TM_SYSCFG ?= 0
+ QSOE_RUST_TM_SYSFS ?= 0
+ 
+-TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_ELF) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSFS)))
+-ifneq ($(filter 2 3 4 5 6 7,$(TM_RUST_PROVIDER_COUNT)),)
++TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_ELF) $(QSOE_RUST_TM_PATHMGR) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSFS)))
++ifneq ($(filter 2 3 4 5 6 7 8,$(TM_RUST_PROVIDER_COUNT)),)
+ $(error select at most one taskman Rust provider until they share one staticlib)
+ endif
+ 
+@@ -68,6 +69,7 @@
+ RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a
+ RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a
+ RUST_TM_ELF_A := $(REPO_ROOT)/build/rust/tm-elf/libqsoe_tm_elf.a
++RUST_TM_PATHMGR_A := $(REPO_ROOT)/build/rust/tm-pathmgr/libqsoe_tm_pathmgr.a
+ RUST_TM_SCRIPT_A := $(REPO_ROOT)/build/rust/tm-script/libqsoe_tm_script.a
+ RUST_TM_SYSCFG_A := $(REPO_ROOT)/build/rust/tm-syscfg/libqsoe_tm_syscfg.a
+ RUST_TM_SYSFS_A := $(REPO_ROOT)/build/rust/tm-sysfs/libqsoe_tm_sysfs.a
+@@ -82,6 +84,9 @@
+ ifeq ($(QSOE_RUST_TM_ELF),1)
+ TASKMAN_RUST_LIBS += $(RUST_TM_ELF_A)
+ endif
++ifeq ($(QSOE_RUST_TM_PATHMGR),1)
++TASKMAN_RUST_LIBS += $(RUST_TM_PATHMGR_A)
++endif
+ ifeq ($(QSOE_RUST_TM_PROCFS),1)
+ TASKMAN_RUST_LIBS += $(RUST_TM_PROCFS_A)
+ endif
+@@ -109,6 +114,7 @@
+ 	    QSOE_RUST_TM_CPIO=$(QSOE_RUST_TM_CPIO) \
+ 	    QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED) \
+ 	    QSOE_RUST_TM_ELF=$(QSOE_RUST_TM_ELF) \
++	    QSOE_RUST_TM_PATHMGR=$(QSOE_RUST_TM_PATHMGR) \
+ 	    QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS) \
+ 	    QSOE_RUST_TM_SCRIPT=$(QSOE_RUST_TM_SCRIPT) \
+ 	    QSOE_RUST_TM_SYSCFG=$(QSOE_RUST_TM_SYSCFG) \
+@@ -123,6 +129,9 @@
+ $(RUST_TM_ELF_A): FORCE
+ 	@$(REPO_ROOT)/scripts/build-rust-tm-elf-provider.sh $@
+ 
++$(RUST_TM_PATHMGR_A): FORCE
++	@$(REPO_ROOT)/scripts/build-rust-tm-pathmgr-provider.sh $@
++
+ $(RUST_TM_PROCFS_A): FORCE
+ 	@$(REPO_ROOT)/scripts/build-rust-tm-procfs-provider.sh $@
+ 

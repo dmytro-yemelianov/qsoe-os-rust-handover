@@ -100,6 +100,10 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-fdt-evidence
 
+      - name: Run tm_pathmgr Rust opt-in evidence
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-tm-pathmgr-evidence
+
       - name: Run tm_rsrcdb Rust opt-in evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-rsrcdb-evidence
@@ -145,6 +149,8 @@ jobs:
             build/tm-elf-evidence/**/*.txt
             build/tm-fdt-evidence/**/*.log
             build/tm-fdt-evidence/**/*.txt
+            build/tm-pathmgr-evidence/**/*.log
+            build/tm-pathmgr-evidence/**/*.txt
             build/tm-rsrcdb-evidence/**/*.log
             build/tm-rsrcdb-evidence/**/*.txt
             build/tm-syscfg-evidence/**/*.log

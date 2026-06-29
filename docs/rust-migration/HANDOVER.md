@@ -95,8 +95,9 @@ The #98 host-test gate for the portable `tm_procfs` model is satisfied by
 `make check-tm-procfs-model`. The #102 Rust provider gate is satisfied by
 `QSOE_RUST_TM_PROCFS=1`; C remains default and rollback.
 
-The current branch adds a Rust opt-in `tm_elf` provider behind
-`QSOE_RUST_TM_ELF=1`. Local evidence passed through `make tm-elf-evidence`;
+The current branch adds a Rust opt-in `tm_pathmgr` provider behind
+`QSOE_RUST_TM_PATHMGR=1`. Focused local evidence has passed through the C host
+model, Rust host tests, clippy, override assertions, and Rust staticlib build;
 C remains default and rollback.
 
 ## Linux Machine Setup
@@ -337,6 +338,11 @@ The strict ELF audit showed:
   selector removes LQ C `sys/sysmap.o` and links the soft-float
   `qsoe-tm-sysmap` archive into LQ taskman. C remains default and rollback
   until mapped `PSYS` page runtime coverage and a separate RC decision exist.
+- `tm_pathmgr` has a Rust opt-in provider behind `QSOE_RUST_TM_PATHMGR=1`. The
+  selector removes C `pathmgr.o` from `libtaskman.a` and links the soft-float
+  `qsoe-tm-pathmgr` archive into NQ/LQ taskman. C remains default and rollback
+  until open/device-registration runtime coverage and a separate RC decision
+  exist.
 - `tm_sysfs` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSFS=1`. The
   selector removes C `tm_sysfs.o` from `libtaskman.a` and links the soft-float
   `qsoe-tm-sysfs` archive into NQ/LQ taskman. C remains default and rollback
@@ -350,10 +356,10 @@ The strict ELF audit showed:
   removes C `elf.o` from `libtaskman.a` and links the soft-float
   `qsoe-tm-elf` archive into NQ/LQ taskman. C remains default and rollback
   until ELF-backed spawn runtime coverage and a separate RC decision exist.
-- The current branch adds `tm_fdt` behind `QSOE_RUST_TM_FDT=1`. The selector
-  removes LQ C `sys/fdt.o` and links the soft-float `qsoe-tm-fdt` archive into
-  LQ taskman. C remains default and rollback until boot/syscfg runtime coverage
-  and a separate RC decision exist.
+- `tm_fdt` has a Rust opt-in provider behind `QSOE_RUST_TM_FDT=1`. The
+  selector removes LQ C `sys/fdt.o` and links the soft-float `qsoe-tm-fdt`
+  archive into LQ taskman. C remains default and rollback until boot/syscfg
+  runtime coverage and a separate RC decision exist.
 
 ## Current Decisions
 
