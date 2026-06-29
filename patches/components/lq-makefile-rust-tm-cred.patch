@@ -1,0 +1,28 @@
+diff --git a/Makefile b/Makefile
+index fb4d47a..fb4d47b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -40,6 +40,7 @@
+ CROSS   := riscv64-linux-gnu-
+ CC      := $(CROSS)gcc
+ QSOE_RUST_TM_PROCFS ?= 0
++QSOE_RUST_TM_CRED ?= 0
+ 
+ QEMU    := qemu-system-riscv64
+ 
+@@ -523,6 +524,7 @@ $(LIBTASKMAN_A): FORCE
+ 	    LIBC_INC=$(LIBC_INCLUDE) \
+ 	    PICFLAG=-fno-pic \
+ 	    ARCHFLAGS="$(ARCH_CFLAGS)" \
++	    QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED) \
+ 	    QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS) \
+ 	    all
+ 
+@@ -539,6 +541,7 @@ taskman: $(MODPKG_CPIO) $(LIBTASKMAN_A) $(GEN)/qsoe/sys_version.h \
+ 	+$(MAKE) -C $(TOP)/taskman all \
+ 	    LIBTASKMAN_A=$(LIBTASKMAN_A) \
+ 	    LIBTASKMAN_INC=$(LIBTASKMAN_DIR)/include \
++	    QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED) \
+ 	    QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)
+ $(TASKMAN_ELF): | taskman
+ 	@true

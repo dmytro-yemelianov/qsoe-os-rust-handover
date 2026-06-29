@@ -1,0 +1,9 @@
+diff --git a/Makefile b/Makefile
+index fb4d47b..fb4d47c 100644
+--- a/Makefile
++++ b/Makefile
+@@ -43,0 +44,4 @@ QSOE_RUST_TM_CRED ?= 0
++
++ifeq ($(QSOE_RUST_TM_CRED)$(QSOE_RUST_TM_PROCFS),11)
++$(error QSOE_RUST_TM_CRED and QSOE_RUST_TM_PROCFS cannot both be 1 until taskman Rust providers share one staticlib)
++endif

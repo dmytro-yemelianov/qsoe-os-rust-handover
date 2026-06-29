@@ -1,0 +1,7 @@
+diff --git a/Makefile b/Makefile
+index fb4d47c..fb4d47d 100644
+--- a/Makefile
++++ b/Makefile
+@@ -545,0 +546,2 @@ $(TASKMAN_ELF): | taskman
++
++FORCE:

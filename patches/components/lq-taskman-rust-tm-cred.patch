@@ -1,0 +1,39 @@
+diff --git a/taskman/Makefile b/taskman/Makefile
+index bab21b9..bab21ba 100644
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -41,6 +41,7 @@ BUILD      := $(TOP)/build
+ CROSS      ?= riscv64-linux-gnu-
+ CC         := $(CROSS)gcc
+ QSOE_RUST_TM_PROCFS ?= 0
++QSOE_RUST_TM_CRED ?= 0
+ 
+ TASKMAN_DIR := $(TOP)/taskman
+ # Public QSOE/libc headers (sys/qsoe.h, qsoe/tm_msgs.h, ...) live in
+@@ -82,10 +83,13 @@ LIBTASKMAN_A   ?= $(BUILD)/libtaskman/libtaskman.a
+ REPO_ROOT := $(abspath $(TOP)/..)
+ RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a
++RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a
+ 
++TASKMAN_RUST_LIBS :=
++ifeq ($(QSOE_RUST_TM_CRED),1)
++TASKMAN_RUST_LIBS += $(RUST_TM_CRED_A)
++endif
+ ifeq ($(QSOE_RUST_TM_PROCFS),1)
+-TASKMAN_RUST_LIBS := $(RUST_TM_PROCFS_A)
+-else
+-TASKMAN_RUST_LIBS :=
++TASKMAN_RUST_LIBS += $(RUST_TM_PROCFS_A)
+ endif
+ 
+ TM_CFLAGS := $(ARCH_CFLAGS) \
+@@ -242,6 +246,9 @@ $(RUST_TM_PROCFS_A): FORCE
+ $(RUST_TM_PROCFS_A): FORCE
+ 	@$(REPO_ROOT)/scripts/build-rust-tm-procfs-provider.sh $@
+ 
++$(RUST_TM_CRED_A): FORCE
++	@$(REPO_ROOT)/scripts/build-rust-tm-cred-provider.sh $@
++
+ $(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)
+ 	@mkdir -p $(@D)
+ 	$(CC) $(TM_CFLAGS) -static -nostdlib \

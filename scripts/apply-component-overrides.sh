@@ -40,6 +40,27 @@ apply_patch_if_possible() {
     fi
 }
 
+apply_patch_if_possible_or_present() {
+    local component=$1
+    local patch_file=$2
+    local marker_file=$3
+    local marker=$4
+    local patch_path="$PATCH_DIR/$patch_file"
+
+    [ -f "$patch_path" ] || fail "missing patch $patch_path"
+    if grep -Fq "$marker" "$marker_file"; then
+        echo "apply-component-overrides.sh: $patch_file already represented"
+    elif patch -d "$ROOT/$component" --forward --silent --dry-run -p1 < "$patch_path" >/dev/null 2>&1; then
+        echo "apply-component-overrides.sh: applying $patch_file"
+        patch -d "$ROOT/$component" --forward --silent -p1 < "$patch_path"
+    elif patch -d "$ROOT/$component" --reverse --silent --dry-run -p1 < "$patch_path" >/dev/null 2>&1; then
+        echo "apply-component-overrides.sh: $patch_file already applied"
+    else
+        patch -d "$ROOT/$component" --forward --dry-run -p1 < "$patch_path" >&2 || true
+        fail "$patch_file does not apply cleanly to $component"
+    fi
+}
+
 apply_optional_patch() {
     local component=$1
     local patch_file=$2
@@ -62,6 +83,32 @@ require_line() {
         fail "$file is missing expected override: $needle"
 }
 
+require_adjacent_contains() {
+    local file=$1
+    local first=$2
+    local second=$3
+
+    awk -v first="$first" -v second="$second" '
+        index(prev, first) && index($0, second) { found = 1 }
+        { prev = $0 }
+        END { exit found ? 0 : 1 }
+    ' "$file" ||
+        fail "$file is missing expected adjacent override: $first -> $second"
+}
+
+require_before_contains() {
+    local file=$1
+    local first=$2
+    local second=$3
+
+    awk -v first="$first" -v second="$second" '
+        index($0, first) { seen = 1 }
+        index($0, second) { found_second = 1; ok = seen; exit }
+        END { exit (found_second && ok) ? 0 : 1 }
+    ' "$file" ||
+        fail "$file is missing expected override order: $first before $second"
+}
+
 # Older self-hosted workspaces may already have the selector patch but with
 # earlier link paths or timestamp-only Rust archive rules. Normalize those
 # first so required full patches can be recognized as already applied.
@@ -74,26 +121,77 @@ apply_optional_patch lq lq-taskman-rust-tm-procfs-root-path.patch
 apply_optional_patch nq nq-taskman-rust-tm-procfs-force-rule.patch
 apply_optional_patch lq lq-taskman-rust-tm-procfs-force-rule.patch
 
-apply_patch_if_possible nq nq-taskman-rust-tm-procfs.patch
-apply_patch_if_possible lq lq-makefile-rust-tm-procfs.patch
-apply_patch_if_possible lq lq-taskman-rust-tm-procfs.patch
+apply_patch_if_possible_or_present nq nq-taskman-rust-tm-procfs.patch \
+    "$ROOT/nq/taskman/Makefile" \
+    'RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a'
+apply_patch_if_possible_or_present nq nq-taskman-rust-tm-cred.patch \
+    "$ROOT/nq/taskman/Makefile" \
+    'RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a'
+apply_patch_if_possible_or_present nq nq-taskman-rust-tm-provider-exclusive.patch \
+    "$ROOT/nq/taskman/Makefile" \
+    'cannot both be 1 until taskman Rust providers share one staticlib'
+apply_patch_if_possible_or_present lq lq-makefile-rust-tm-procfs.patch \
+    "$ROOT/lq/Makefile" \
+    'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)'
+apply_patch_if_possible_or_present lq lq-makefile-rust-tm-cred.patch \
+    "$ROOT/lq/Makefile" \
+    'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)'
+apply_patch_if_possible_or_present lq lq-makefile-rust-tm-provider-exclusive.patch \
+    "$ROOT/lq/Makefile" \
+    'cannot both be 1 until taskman Rust providers share one staticlib'
+apply_patch_if_possible_or_present lq lq-makefile-force-target.patch \
+    "$ROOT/lq/Makefile" \
+    'FORCE:'
+apply_patch_if_possible_or_present lq lq-taskman-rust-tm-procfs.patch \
+    "$ROOT/lq/taskman/Makefile" \
+    'RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a'
+apply_patch_if_possible_or_present lq lq-taskman-rust-tm-cred.patch \
+    "$ROOT/lq/taskman/Makefile" \
+    'RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a'
+apply_patch_if_possible_or_present lq lq-taskman-rust-tm-provider-exclusive.patch \
+    "$ROOT/lq/taskman/Makefile" \
+    'cannot both be 1 until taskman Rust providers share one staticlib'
 apply_patch_if_possible lq lq-msgpass-mcs-teardown-and-bulk-copy.patch
 apply_patch_if_possible quser quser-msgpass-lq-no-reply-skip.patch
 
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS ?= 0'
+require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
 require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a'
+require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a'
 require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_PROCFS_A): FORCE'
+require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_CRED_A): FORCE'
+require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)'
+require_adjacent_contains "$ROOT/nq/taskman/Makefile" \
+    'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)' \
+    'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)'
+require_before_contains "$ROOT/nq/taskman/Makefile" \
+    '$(RUST_TM_CRED_A): FORCE' \
+    'FORCE:'
+require_line "$ROOT/nq/taskman/Makefile" 'cannot both be 1 until taskman Rust providers share one staticlib'
 require_line "$ROOT/nq/taskman/Makefile" '$(BUILD)/taskman.elf: $(OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS) taskman.ld'
 
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PROCFS ?= 0'
+require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
+require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)'
+require_adjacent_contains "$ROOT/lq/Makefile" \
+    'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)' \
+    'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)'
+require_line "$ROOT/lq/Makefile" 'cannot both be 1 until taskman Rust providers share one staticlib'
 require_line "$ROOT/lq/Makefile" '$(LIBTASKMAN_A): FORCE'
 require_line "$ROOT/lq/Makefile" 'FORCE:'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS ?= 0'
+require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a'
+require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a'
 require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_PROCFS_A): FORCE'
+require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_CRED_A): FORCE'
+require_line "$ROOT/lq/taskman/Makefile" 'cannot both be 1 until taskman Rust providers share one staticlib'
 require_line "$ROOT/lq/taskman/Makefile" 'FORCE:'
+require_before_contains "$ROOT/lq/taskman/Makefile" \
+    '$(RUST_TM_CRED_A): FORCE' \
+    '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
 require_line "$ROOT/lq/taskman/Makefile" '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
 require_line "$ROOT/lq/libc/qsoe/msg.c" 'if (label == QSOE_MSG_BULK_LABEL) {'
 require_line "$ROOT/lq/taskman/proc/process.c" 'tm_pathmgr_unregister_pid(target);'
