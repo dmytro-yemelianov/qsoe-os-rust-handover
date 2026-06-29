@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-29 13:25 CEST.
+Last updated: 2026-06-29 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,50 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-29 CEST - tm_rsrcdb Rust Opt-In Provider
+
+Scope:
+
+- Added `qsoe-tm-rsrcdb`, a no-std Rust staticlib exporting the existing LQ
+  taskman `tm_rsrc_*` ABI.
+- Added `QSOE_RUST_TM_RSRCDB=1` selection for LQ taskman. The selector omits C
+  `sys/rsrcdb.o`, then links
+  `build/rust/tm-rsrcdb/libqsoe_tm_rsrcdb.a`.
+- Added a C host-model fixture, Rust host tests, provider build script,
+  evidence script, tracked LQ component patches, CI evidence step, and docs.
+- Preserved fixed-pool accounting, sorted per-class ranges, create/destroy,
+  attach splitting and rollback, detach merging, query count/list modes,
+  process-exit release, and syscfg memory seeding.
+- Kept C as the normal default and rollback implementation.
+
+Commands:
+
+- `make check-tm-rsrcdb-model`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-rsrcdb --features host-tests --lib`
+- `cargo clippy --manifest-path rust/Cargo.toml -p qsoe-tm-rsrcdb --features host-tests -- -D warnings`
+- `bash -n scripts/check-tm-rsrcdb-model.sh scripts/build-rust-tm-rsrcdb-provider.sh scripts/tm-rsrcdb-evidence.sh scripts/apply-component-overrides.sh`
+- `./scripts/apply-component-overrides.sh`
+- `make -n check-tm-rsrcdb-model rust-tm-rsrcdb-provider tm-rsrcdb-evidence container-rust-tm-rsrcdb-provider container-tm-rsrcdb-evidence`
+- `make check-tm-rsrcdb-model`
+- `make rust-tm-rsrcdb-provider`
+- `make tm-rsrcdb-evidence`
+
+Result:
+
+- The C host fixture and Rust host tests pass for layout, create, attach,
+  rollback, detach, merge, query count/list, release-by-pid, syscfg seeding,
+  and error paths.
+- The provider archive exports all `tm_rsrc_*` symbols and all archive members
+  report RVC soft-float ABI.
+- LQ C-default taskman links with C `sys/rsrcdb.o`; LQ Rust-selected taskman
+  omits that object and links `libqsoe_tm_rsrcdb.a`.
+
+Follow-up:
+
+- Keep `tm_rsrcdb` Rust opt-in only until runtime coverage proves
+  `rsrcdbmgr_*` create/attach/query/detach behavior before any Rust-default RC
+  decision.
 
 ## 2026-06-29 13:25 CEST - tm_syscfg Rust Opt-In Provider
 

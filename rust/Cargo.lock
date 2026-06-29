@@ -113,6 +113,10 @@ name = "qsoe-tm-pseudodev"
 version = "0.0.0"
 
 [[package]]
+name = "qsoe-tm-rsrcdb"
+version = "0.0.0"
+
+[[package]]
 name = "qsoe-tm-script"
 version = "0.0.0"
 
