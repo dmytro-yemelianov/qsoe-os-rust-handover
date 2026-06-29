@@ -414,6 +414,24 @@ Makefile selector omits those two objects, builds `qsoe-tm-pseudodev` for
 taskman. Path dispatch, fd ownership, request decoding, process tables, and
 seL4 invocation code remain C.
 
+## Task Manager Resource DB Selection
+
+The Rust LQ taskman resource DB provider can be built as a soft-float taskman
+staticlib without changing the normal taskman default:
+
+```sh
+make check-tm-rsrcdb-model
+make rust-tm-rsrcdb-provider
+make tm-rsrcdb-evidence
+```
+
+With the default `QSOE_RUST_TM_RSRCDB=0`, LQ taskman links the existing C
+`sys/rsrcdb.o`. With `QSOE_RUST_TM_RSRCDB=1`, the component Makefile selector
+omits C `sys/rsrcdb.o`, builds `qsoe-tm-rsrcdb` for
+`riscv64imac-unknown-none-elf`, and links `libqsoe_tm_rsrcdb.a` into taskman.
+The libc `rsrcdbmgr_*` wrappers, taskman IPC dispatcher, IRQ handling, FDT and
+syscfg construction, process tables, and seL4 invocation code remain C.
+
 ## Task Manager `/sys` Selection
 
 The Rust `tm_sysfs` provider can be built as a soft-float taskman staticlib

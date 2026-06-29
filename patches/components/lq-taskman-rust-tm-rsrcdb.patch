@@ -1,0 +1,66 @@
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -45,11 +45,12 @@
+ QSOE_RUST_TM_CRED ?= 0
+ QSOE_RUST_TM_PSEUDODEV ?= 0
++QSOE_RUST_TM_RSRCDB ?= 0
+ QSOE_RUST_TM_SCRIPT ?= 0
+ QSOE_RUST_TM_SYSCFG ?= 0
+ QSOE_RUST_TM_SYSFS ?= 0
+ 
+-TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSFS)))
+-ifneq ($(filter 2 3 4 5 6 7,$(TM_RUST_PROVIDER_COUNT)),)
++TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_RSRCDB) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSFS)))
++ifneq ($(filter 2 3 4 5 6 7 8,$(TM_RUST_PROVIDER_COUNT)),)
+ $(error select at most one taskman Rust provider until they share one staticlib)
+ endif
+ 
+@@ -96,6 +97,7 @@
+ RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a
+ RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a
+ RUST_TM_PSEUDODEV_A := $(REPO_ROOT)/build/rust/tm-pseudodev/libqsoe_tm_pseudodev.a
++RUST_TM_RSRCDB_A := $(REPO_ROOT)/build/rust/tm-rsrcdb/libqsoe_tm_rsrcdb.a
+ RUST_TM_SCRIPT_A := $(REPO_ROOT)/build/rust/tm-script/libqsoe_tm_script.a
+ RUST_TM_SYSCFG_A := $(REPO_ROOT)/build/rust/tm-syscfg/libqsoe_tm_syscfg.a
+ RUST_TM_SYSFS_A := $(REPO_ROOT)/build/rust/tm-sysfs/libqsoe_tm_sysfs.a
+@@ -111,6 +113,9 @@
+ ifeq ($(QSOE_RUST_TM_PSEUDODEV),1)
+ TASKMAN_RUST_LIBS += $(RUST_TM_PSEUDODEV_A)
+ endif
++ifeq ($(QSOE_RUST_TM_RSRCDB),1)
++TASKMAN_RUST_LIBS += $(RUST_TM_RSRCDB_A)
++endif
+ ifeq ($(QSOE_RUST_TM_SCRIPT),1)
+ TASKMAN_RUST_LIBS += $(RUST_TM_SCRIPT_A)
+ endif
+@@ -127,6 +132,11 @@
+ TASKMAN_PSEUDODEV_OBJS += $(OBJDIR)/sys/devzero.o
+ endif
+ 
++TASKMAN_RSRCDB_OBJS :=
++ifeq ($(QSOE_RUST_TM_RSRCDB),0)
++TASKMAN_RSRCDB_OBJS += $(OBJDIR)/sys/rsrcdb.o
++endif
++
+ TM_CFLAGS := $(ARCH_CFLAGS) \
+     -std=c11 -ffreestanding -nostdlib -nostdinc \
+     -fno-pic -fno-pie -fno-common -fno-stack-protector \
+@@ -260,7 +270,7 @@
+     $(TASKMAN_PSEUDODEV_OBJS) \
+     $(OBJDIR)/sys/fdt.o \
+     $(OBJDIR)/sys/irq.o \
+-    $(OBJDIR)/sys/rsrcdb.o \
++    $(TASKMAN_RSRCDB_OBJS) \
+     $(OBJDIR)/sys/syscfg.o \
+     $(OBJDIR)/sys/sysmap.o \
+     $(OBJDIR)/cpio.o \
+@@ -292,6 +302,9 @@
+ $(RUST_TM_PSEUDODEV_A): FORCE
+ 	@$(REPO_ROOT)/scripts/build-rust-tm-pseudodev-provider.sh $@
+ 
++$(RUST_TM_RSRCDB_A): FORCE
++	@$(REPO_ROOT)/scripts/build-rust-tm-rsrcdb-provider.sh $@
++
+ $(RUST_TM_SCRIPT_A): FORCE
+ 	@$(REPO_ROOT)/scripts/build-rust-tm-script-provider.sh $@
+ 

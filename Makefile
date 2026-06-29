@@ -23,14 +23,15 @@ QSOE_RUST_TM_CPIO ?= 0
 QSOE_RUST_TM_CRED ?= 0
 QSOE_RUST_TM_PROCFS ?= 0
 QSOE_RUST_TM_PSEUDODEV ?= 0
+QSOE_RUST_TM_RSRCDB ?= 0
 QSOE_RUST_TM_SCRIPT ?= 0
 QSOE_RUST_TM_SYSCFG ?= 0
 QSOE_RUST_TM_SYSFS ?= 0
 QSOE_RUST_TREEQRVFS ?= 1
 QSOE_RUST_MKFS_QRV ?= 0
 
-TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSFS)))
-ifneq ($(filter 2 3 4 5 6 7,$(TM_RUST_PROVIDER_COUNT)),)
+TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_RSRCDB) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSFS)))
+ifneq ($(filter 2 3 4 5 6 7 8,$(TM_RUST_PROVIDER_COUNT)),)
 $(error select at most one taskman Rust provider until they share one staticlib)
 endif
 
@@ -47,7 +48,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         check-qrvfs-rust-writer-fixture \
         check-qrvfs-rust-writer-production-root \
         check-elf-reloc-fixture check-gpt-fixture \
-        check-tm-cpio-model check-tm-cred-model check-tm-procfs-model \
+        check-tm-cpio-model check-tm-cred-model check-tm-procfs-model check-tm-rsrcdb-model \
         check-tm-script-model check-tm-syscfg-model check-tm-sysfs-model \
         slog-readback-smoke \
         rust-slog-readback-smoke slogger-rc-boot-smoke \
@@ -62,9 +63,9 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         rust-test-msgpass-link-smoke rust-pipe-link-smoke \
         slogger-artifact virtio-artifact test-msgpass-artifact pipe-artifact \
         rust-tm-cpio-provider rust-tm-cred-provider rust-tm-procfs-provider \
-        rust-tm-script-provider rust-tm-syscfg-provider rust-tm-sysfs-provider \
+        rust-tm-rsrcdb-provider rust-tm-script-provider rust-tm-syscfg-provider rust-tm-sysfs-provider \
         rust-tm-pseudodev-provider \
-        tm-cpio-evidence tm-cred-evidence tm-procfs-evidence tm-script-evidence \
+        tm-cpio-evidence tm-cred-evidence tm-procfs-evidence tm-rsrcdb-evidence tm-script-evidence \
         tm-syscfg-evidence tm-sysfs-evidence tm-pseudodev-evidence \
         rust-slogger-boot-smoke \
         rust-virtio-boot-smoke rust-virtio-file-smoke \
@@ -87,11 +88,11 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-slogger-artifact container-virtio-artifact \
         container-test-msgpass-artifact container-pipe-artifact \
         container-rust-tm-cpio-provider container-rust-tm-cred-provider \
-        container-rust-tm-procfs-provider container-rust-tm-script-provider \
+        container-rust-tm-procfs-provider container-rust-tm-rsrcdb-provider container-rust-tm-script-provider \
         container-rust-tm-syscfg-provider container-rust-tm-sysfs-provider \
         container-rust-tm-pseudodev-provider \
         container-tm-cpio-evidence container-tm-cred-evidence container-tm-procfs-evidence \
-        container-tm-script-evidence container-tm-syscfg-evidence \
+        container-tm-rsrcdb-evidence container-tm-script-evidence container-tm-syscfg-evidence \
         container-tm-sysfs-evidence container-tm-pseudodev-evidence \
         container-rust-virtio-boot-smoke \
         container-virtio-rc-file-smoke container-virtio-rc-rollback-smoke \
@@ -123,6 +124,7 @@ all: component-overrides
 	    QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED) \
 	    QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS) \
 	    QSOE_RUST_TM_PSEUDODEV=$(QSOE_RUST_TM_PSEUDODEV) \
+	    QSOE_RUST_TM_RSRCDB=$(QSOE_RUST_TM_RSRCDB) \
 	    QSOE_RUST_TM_SCRIPT=$(QSOE_RUST_TM_SCRIPT) \
 	    QSOE_RUST_TM_SYSCFG=$(QSOE_RUST_TM_SYSCFG) \
 	    QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)
@@ -245,7 +247,8 @@ tree: $(TREEQRVFS) fsqrv-image
 
 check-host-tools: check-qrvfs-fixture check-gpt-fixture \
     check-tm-cpio-model check-tm-cred-model check-tm-procfs-model \
-    check-tm-script-model check-tm-syscfg-model check-tm-sysfs-model
+    check-tm-rsrcdb-model check-tm-script-model check-tm-syscfg-model \
+    check-tm-sysfs-model
 
 check-qrvfs-fixture:
 	@scripts/check-qrvfs-fixture.sh
@@ -273,6 +276,9 @@ check-tm-procfs-model:
 
 check-tm-cred-model:
 	@scripts/check-tm-cred-model.sh
+
+check-tm-rsrcdb-model:
+	@scripts/check-tm-rsrcdb-model.sh
 
 check-tm-script-model:
 	@scripts/check-tm-script-model.sh
@@ -399,6 +405,9 @@ rust-tm-cred-provider:
 rust-tm-procfs-provider:
 	@scripts/build-rust-tm-procfs-provider.sh
 
+rust-tm-rsrcdb-provider:
+	@scripts/build-rust-tm-rsrcdb-provider.sh
+
 rust-tm-script-provider:
 	@scripts/build-rust-tm-script-provider.sh
 
@@ -419,6 +428,9 @@ tm-cred-evidence:
 
 tm-procfs-evidence:
 	@scripts/tm-procfs-evidence.sh
+
+tm-rsrcdb-evidence:
+	@scripts/tm-rsrcdb-evidence.sh
 
 tm-script-evidence:
 	@scripts/tm-script-evidence.sh
@@ -580,6 +592,9 @@ container-rust-tm-cred-provider:
 container-rust-tm-procfs-provider:
 	@scripts/container-toolchain.sh run make rust-tm-procfs-provider
 
+container-rust-tm-rsrcdb-provider:
+	@scripts/container-toolchain.sh run make rust-tm-rsrcdb-provider
+
 container-rust-tm-script-provider:
 	@scripts/container-toolchain.sh run make rust-tm-script-provider
 
@@ -600,6 +615,9 @@ container-tm-cred-evidence:
 
 container-tm-procfs-evidence:
 	@scripts/container-toolchain.sh run make tm-procfs-evidence
+
+container-tm-rsrcdb-evidence:
+	@scripts/container-toolchain.sh run make tm-rsrcdb-evidence
 
 container-tm-script-evidence:
 	@scripts/container-toolchain.sh run make tm-script-evidence

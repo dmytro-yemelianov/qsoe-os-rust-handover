@@ -70,14 +70,16 @@ Read in this order:
    provider and evidence gate.
 37. `TASK_MANAGER_PSEUDODEV.md`: Rust opt-in LQ task-manager `/dev/null` and
    `/dev/zero` provider and evidence gate.
-38. `TASK_MANAGER_SYSFS.md`: Rust opt-in task-manager `/sys` provider and
+38. `TASK_MANAGER_RSRCDB.md`: Rust opt-in LQ task-manager resource DB
+   provider and evidence gate.
+39. `TASK_MANAGER_SYSFS.md`: Rust opt-in task-manager `/sys` provider and
    evidence gate.
-39. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+40. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
-40. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
-41. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+41. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
+42. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-42. `PLAN.md`: phased migration plan from baseline validation through possible
+43. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
 43. `TASKS.md`: executable backlog with acceptance criteria.
 

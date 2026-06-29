@@ -34,7 +34,7 @@ no direct seL4 object manipulation, not automatically low risk.
 | `/sys` model | `libtaskman/src/tm_sysfs.c`, `libtaskman/include/tm_sysfs.h` | Read-only file model for board, cmdline, osname, version, and builddate. Rust opt-in provider exists behind `QSOE_RUST_TM_SYSFS=1`; see `TASK_MANAGER_SYSFS.md`. | Medium: `/sys/cmdline` can influence init's mainfs path. |
 | Path registry | `libtaskman/src/pathmgr.c`, `libtaskman/include/tm_pathmgr.h` | Fixed-pool namespace tree, path resolve, repath, symlink expansion, and child iteration. | Medium-high: every open and device registration depends on it. |
 | Credentials policy | `libtaskman/src/cred.c`, `libtaskman/include/tm_cred.h` | Pure cwd, umask, uid/gid mutation, and permission checks. Rust opt-in provider exists behind `QSOE_RUST_TM_CRED=1`; see `TASK_MANAGER_CRED.md`. | Low-medium: process semantics, not boot spawn. |
-| Resource DB accounting | `lq/taskman/sys/rsrcdb.c`, `lq/taskman/sys/rsrcdb.h` | Fixed-pool resource-range allocation, split/merge, rollback on partial attach. | Low-medium: accounting table, but service-facing. |
+| Resource DB accounting | `lq/taskman/sys/rsrcdb.c`, `lq/taskman/sys/rsrcdb.h` | Fixed-pool resource-range allocation, split/merge, rollback on partial attach. Rust opt-in provider exists behind `QSOE_RUST_TM_RSRCDB=1`; see `TASK_MANAGER_RSRCDB.md`. | Low-medium: accounting table, but service-facing. |
 | Simple pseudo-devices | `lq/taskman/sys/devnull.c`, `lq/taskman/sys/devzero.c` | Small read/write/stat handlers. Rust opt-in provider exists behind `QSOE_RUST_TM_PSEUDODEV=1`; see `TASK_MANAGER_PSEUDODEV.md`. | Low-medium: simple, but served through taskman's IO path. |
 | Logging formatter | `libtaskman/src/log.c`, `lq/taskman/tm_log.c` | Freestanding format subset and seL4 debug-console sink. | Low: diagnostic path, but useful during failures. |
 
@@ -43,9 +43,9 @@ The selected Phase 9 pilot candidate is the portable `/proc` model
 evidence required before implementation.
 
 Subsequent bounded providers now exist for `tm_cpio`, `tm_cred`, LQ
-pseudo-devices, `tm_script`, `tm_syscfg`, and `tm_sysfs`. They remain Rust
-opt-in only and do not change the rule that task-manager Rust work must avoid
-spawn, capability, relocation, and loader paths.
+pseudo-devices, `tm_rsrcdb`, `tm_script`, `tm_syscfg`, and `tm_sysfs`. They
+remain Rust opt-in only and do not change the rule that task-manager Rust work
+must avoid spawn, capability, relocation, and loader paths.
 
 ## Spawn-Critical Paths
 
