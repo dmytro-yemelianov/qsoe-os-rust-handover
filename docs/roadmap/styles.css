@@ -98,6 +98,25 @@ h3 {
   font-weight: 650;
 }
 
+.issue-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 9px;
+  color: var(--teal);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.inline-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 main {
   width: min(1380px, 100%);
   margin: 0 auto;
@@ -577,7 +596,7 @@ select:focus {
 
 table {
   width: 100%;
-  min-width: 880px;
+  min-width: 960px;
   border-collapse: collapse;
 }
 

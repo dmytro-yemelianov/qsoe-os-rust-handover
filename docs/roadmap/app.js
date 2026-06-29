@@ -1,12 +1,47 @@
-const state = {
-  data: null,
-  filters: {
-    search: "",
-    state: "all",
-    area: "all",
-    risk: "all"
-  }
+const REPO_OWNER = "dmytro-yemelianov";
+const REPO_NAME = "qsoe-os-rust-handover";
+const ROADMAP_LABEL = "roadmap";
+const ISSUES_API_URL = `https://api.github.com/repos/${REPO_OWNER}/${REPO_NAME}/issues?state=all&labels=${ROADMAP_LABEL}&per_page=100`;
+const ROADMAP_ISSUES_URL = `https://github.com/${REPO_OWNER}/${REPO_NAME}/issues?q=label%3A${ROADMAP_LABEL}`;
+const ROADMAP_META_RE = /<!--\s*qsoe-roadmap:v1\s*([\s\S]*?)\s*-->/;
+
+const PURPOSE = {
+  summary: "Make the QSOE Rust migration measurable, reversible, and reviewable instead of a rewrite for its own sake.",
+  whyRust: [
+    "Reduce concrete C failure modes in parsers, state machines, resource servers, and image tooling.",
+    "Use Rust type, ownership, and Result-based error handling where they improve maintenance and review quality.",
+    "Keep high-risk boot, loader, spawn, capability, and kernel-adjacent code in C until boundaries are proven."
+  ],
+  operatingRule: "Every Rust candidate needs a selector, C rollback path, host tests, runtime or boot evidence, and documentation before it can become a default. C is not removed just because a Rust version exists."
 };
+
+const POLICY_GATES = [
+  {
+    id: "selector",
+    name: "Selector",
+    description: "Rust implementation must be selectable without removing the C implementation."
+  },
+  {
+    id: "rollback",
+    name: "C rollback",
+    description: "A one-command C rollback path must exist and be tested."
+  },
+  {
+    id: "host-tests",
+    name: "Host tests",
+    description: "Pure logic, parser, and model code should have host tests before guest wiring."
+  },
+  {
+    id: "runtime-evidence",
+    name: "Runtime evidence",
+    description: "Image-level or service-level smoke tests must prove the behavior in QSOE."
+  },
+  {
+    id: "retirement",
+    name: "Retirement review",
+    description: "Removing C requires the retirement checklist and a separate removal PR."
+  }
+];
 
 const PHASE_SCORE = {
   complete: 100,
@@ -15,6 +50,16 @@ const PHASE_SCORE = {
   "in-progress": 50,
   started: 30,
   deferred: 0
+};
+
+const state = {
+  data: null,
+  filters: {
+    search: "",
+    state: "all",
+    area: "all",
+    risk: "all"
+  }
 };
 
 const els = {
@@ -42,21 +87,160 @@ const els = {
   riskFilter: document.querySelector("#risk-filter")
 };
 
-fetch("roadmap.json")
-  .then((response) => {
-    if (!response.ok) {
-      throw new Error(`roadmap.json returned ${response.status}`);
+loadRoadmap();
+
+function loadRoadmap() {
+  fetchRoadmapIssues(ISSUES_API_URL)
+    .then((issues) => {
+      state.data = normalizeIssueRoadmap(issues);
+      render();
+      bindControls();
+    })
+    .catch((error) => {
+      els.purpose.textContent = `Unable to load roadmap issues: ${error.message}`;
+    });
+}
+
+function fetchRoadmapIssues(url, collected = []) {
+  return fetch(url, {
+    headers: {
+      Accept: "application/vnd.github+json"
     }
-    return response.json();
   })
-  .then((data) => {
-    state.data = data;
-    render();
-    bindControls();
-  })
-  .catch((error) => {
-    els.purpose.textContent = `Unable to load roadmap data: ${error.message}`;
-  });
+    .then((response) => {
+      if (!response.ok) {
+        throw new Error(`GitHub Issues API returned ${response.status}`);
+      }
+      return response.json().then((issues) => ({
+        issues,
+        nextUrl: nextLink(response.headers.get("Link"))
+      }));
+    })
+    .then(({ issues, nextUrl }) => {
+      const nextCollected = [...collected, ...issues];
+      if (nextUrl) {
+        return fetchRoadmapIssues(nextUrl, nextCollected);
+      }
+      return nextCollected;
+    });
+}
+
+function nextLink(header) {
+  if (!header) {
+    return "";
+  }
+  const part = header.split(",").find((item) => item.includes('rel="next"'));
+  const match = part && /<([^>]+)>/.exec(part);
+  return match ? match[1] : "";
+}
+
+function normalizeIssueRoadmap(issues) {
+  const items = issues
+    .filter((issue) => !issue.pull_request)
+    .map(parseRoadmapIssue)
+    .filter(Boolean);
+
+  if (items.length === 0) {
+    throw new Error("no issues with qsoe-roadmap metadata were found");
+  }
+
+  const components = items
+    .filter((item) => item.kind === "component")
+    .map(normalizeComponent)
+    .sort(byOrderThenName);
+  const roadmapPhases = items
+    .filter((item) => item.kind === "phase")
+    .map(normalizePhase)
+    .sort(byOrderThenName);
+  const candidateBacklog = items
+    .filter((item) => item.kind === "backlog")
+    .map(normalizeBacklog)
+    .sort(byOrderThenName);
+  const generatedAt = latestIssueUpdate(items);
+
+  return {
+    schemaVersion: 1,
+    generatedAt,
+    title: "QSOE C-to-Rust Migration Roadmap",
+    purpose: PURPOSE,
+    statusSummary: {
+      trackedComponents: components.length,
+      rustDefaultRcComponents: components.filter((component) => component.rustDefault).length,
+      rustOptInOnlyImplementations: components.filter((component) => component.currentState === "mixed").length,
+      retiredCComponents: components.filter((component) => component.retired).length
+    },
+    sourceIssueCount: items.length,
+    sourceIssuesUrl: ROADMAP_ISSUES_URL,
+    components,
+    roadmapPhases,
+    candidateBacklog,
+    policyGates: POLICY_GATES
+  };
+}
+
+function parseRoadmapIssue(issue) {
+  const match = ROADMAP_META_RE.exec(issue.body || "");
+  if (!match) {
+    return null;
+  }
+
+  try {
+    return {
+      ...JSON.parse(match[1]),
+      issue: {
+        number: issue.number,
+        title: issue.title,
+        state: issue.state.toLowerCase(),
+        url: issue.html_url,
+        updatedAt: issue.updated_at
+      }
+    };
+  } catch (error) {
+    console.warn(`Skipping malformed roadmap issue #${issue.number}`, error);
+    return null;
+  }
+}
+
+function normalizeComponent(item) {
+  return {
+    ...item,
+    name: item.name,
+    area: item.area || "unknown",
+    currentState: item.currentState || item.status || "unknown",
+    risk: item.risk || "unknown",
+    cDefault: Boolean(item.cDefault),
+    rustOptIn: Boolean(item.rustOptIn),
+    rustDefault: Boolean(item.rustDefault),
+    retired: Boolean(item.retired),
+    rustArtifacts: item.rustArtifacts || [],
+    cRollback: item.cRollback || [],
+    selectors: item.selectors || [],
+    evidence: item.evidence || [],
+    notes: item.notes || "",
+    nextGate: item.nextGate || ""
+  };
+}
+
+function normalizePhase(item) {
+  return {
+    ...item,
+    name: item.name,
+    status: item.status || "unknown",
+    objective: item.summary || item.objective || ""
+  };
+}
+
+function normalizeBacklog(item) {
+  return {
+    ...item,
+    name: item.name,
+    area: item.area || "unknown",
+    risk: item.risk || "unknown",
+    posture: item.posture || item.status || "unknown",
+    files: item.files || [],
+    notes: item.notes || ""
+  };
+}
 
 function bindControls() {
   els.search.addEventListener("input", (event) => {
@@ -82,7 +266,8 @@ function render() {
   const { data } = state;
   document.title = data.title;
   els.purpose.textContent = data.purpose.summary;
-  els.generated.textContent = `Data generated ${formatDate(data.generatedAt)}`;
+  els.generated.textContent =
+    `Issue tracker refreshed ${formatDate(data.generatedAt)} from ${data.sourceIssueCount} roadmap issues`;
   renderMetrics();
   renderWhy();
   renderProgressVisuals();
@@ -132,7 +317,7 @@ function renderProgressVisuals() {
   const overallReadiness = Math.round(avg([componentReadiness, phaseReadiness]));
 
   els.progressNote.textContent =
-    "Computed from tracked components, rollback coverage, phase status, and remaining backlog posture.";
+    "Computed from roadmap issues: tracked components, rollback coverage, phase status, and remaining backlog posture.";
 
   els.progressGauges.replaceChildren(
     gauge("Overall readiness", overallReadiness, "Component posture + phase completion", "accent"),
@@ -150,7 +335,10 @@ function renderProgressVisuals() {
 function renderFilters() {
   const components = state.data.components;
   fillOptions(els.stateFilter, ["all", ...unique(components.map((item) => item.currentState))]);
-  fillOptions(els.areaFilter, ["all", ...unique(components.map((item) => item.area))]);
+  fillOptions(els.areaFilter, ["all", ...unique([
+    ...components.map((item) => item.area),
+    ...state.data.candidateBacklog.map((item) => item.area)
+  ])]);
   fillOptions(els.riskFilter, ["all", ...unique([
     ...components.map((item) => item.risk),
     ...state.data.candidateBacklog.map((item) => item.risk)
@@ -180,7 +368,8 @@ function renderComponentCard(component) {
   tags.append(
     el("span", "tag", component.cDefault ? "C default" : "C not default"),
     el("span", "tag", component.rustDefault ? "Rust default RC" : "Rust opt-in"),
-    el("span", `tag risk-${slug(component.risk)}`, `Risk: ${component.risk}`)
+    el("span", `tag risk-${slug(component.risk)}`, `Risk: ${component.risk}`),
+    issueLink(component.issue)
   );
 
   card.append(top, tags);
@@ -198,7 +387,7 @@ function renderPhases() {
     node.append(
       el("span", "phase-status", readable(phase.status)),
       wrap([
-        el("h3", "", phase.name),
+        withInlineLink(el("h3", "", phase.name), phase.issue),
         el("p", "", phase.objective),
         meter(PHASE_SCORE[phase.status] ?? 0, "Phase completion")
       ])
@@ -225,7 +414,7 @@ function renderBacklog() {
   if (rows.length === 0) {
     const tr = document.createElement("tr");
     const td = document.createElement("td");
-    td.colSpan = 5;
+    td.colSpan = 6;
     td.className = "empty";
     td.textContent = "No candidates match the current filters.";
     tr.append(td);
@@ -240,7 +429,8 @@ function renderBacklog() {
       cell(item.area),
       cell(item.risk, `risk-${slug(item.risk)}`),
       cell(readable(item.posture)),
-      cell(item.files.join("\n"), "file-list")
+      cell(item.files.join("\n"), "file-list"),
+      issueCell(item.issue)
     );
     tr.title = item.notes;
     return tr;
@@ -297,7 +487,9 @@ function matchesComponentFilters(component) {
     component.notes,
     component.nextGate,
     component.selectors.join(" "),
-    component.evidence.join(" ")
+    component.evidence.join(" "),
+    `#${component.issue.number}`,
+    component.issue.title
   ]);
 }
 
@@ -310,7 +502,9 @@ function matchesBacklogFilters(item) {
     item.risk,
     item.posture,
     item.notes,
-    item.files.join(" ")
+    item.files.join(" "),
+    `#${item.issue.number}`,
+    item.issue.title
   ]);
 }
 
@@ -350,6 +544,27 @@ function cell(text, className = "") {
   return td;
 }
 
+function issueCell(issue) {
+  const td = document.createElement("td");
+  td.append(issueLink(issue));
+  return td;
+}
+
+function issueLink(issue) {
+  const link = el("a", "issue-link", `#${issue.number}`);
+  link.href = issue.url;
+  link.target = "_blank";
+  link.rel = "noreferrer";
+  link.title = issue.title;
+  return link;
+}
+
+function withInlineLink(node, issue) {
+  const wrapNode = el("div", "inline-heading");
+  wrapNode.append(node, issueLink(issue));
+  return wrapNode;
+}
+
 function countBy(items, key) {
   const counts = new Map();
   for (const item of items) {
@@ -378,6 +593,16 @@ function componentScore(component) {
     return 20;
   }
   return 0;
+}
+
+function latestIssueUpdate(items) {
+  return items
+    .map((item) => item.issue.updatedAt)
+    .sort((a, b) => new Date(b) - new Date(a))[0];
+}
+
+function byOrderThenName(a, b) {
+  return (a.order ?? 0) - (b.order ?? 0) || a.name.localeCompare(b.name);
 }
 
 function avg(values) {
@@ -420,14 +645,14 @@ function unique(values) {
 }
 
 function readable(value) {
-  return value
+  return String(value)
     .split("-")
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
 }
 
 function slug(value) {
-  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  return String(value).toLowerCase().replace(/[^a-z0-9]+/g, "-");
 }
 
 function formatDate(value) {
