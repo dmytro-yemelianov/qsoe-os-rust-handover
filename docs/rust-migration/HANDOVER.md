@@ -358,8 +358,10 @@ The strict ELF audit showed:
   open/device-registration runtime coverage and a separate RC decision exist.
 - `tm_sysfs` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSFS=1`. The
   selector removes C `tm_sysfs.o` from `libtaskman.a` and links through the
-  shared taskman Rust provider archive. C remains default and rollback until a
-  focused `/sys` runtime smoke and separate RC decision exist.
+  shared taskman Rust provider archive. `make tm-sysfs-runtime-smoke` boots LQ
+  with Rust `tm_sysfs` selected and checks `/sys` readdir plus all five portable
+  `/sys` files from sysinit. C remains default and rollback until a separate RC
+  decision exists.
 - `tm_rsrcdb` has a Rust opt-in provider behind `QSOE_RUST_TM_RSRCDB=1`. The
   selector removes LQ C `sys/rsrcdb.o` and links through the shared taskman
   Rust provider archive. C remains default and rollback until resource

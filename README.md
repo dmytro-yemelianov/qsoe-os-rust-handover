@@ -86,7 +86,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | `tm_script` task-manager provider | Rust opt-in | `qsoe-tm-script` exports the existing `tm_script.h` ABI behind `QSOE_RUST_TM_SCRIPT=1`; `make tm-script-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. `make tm-script-runtime-smoke` boots LQ with Rust `tm_script` selected and runs a staged `/usr/bin` shebang script directly. Next gate: separate Rust-default RC decision. |
 | `tm_syscfg` task-manager provider | Rust opt-in | `qsoe-tm-syscfg` exports the existing `tm_syscfg.h` ABI behind `QSOE_RUST_TM_SYSCFG=1`; `make tm-syscfg-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. `make tm-syscfg-runtime-smoke` boots LQ with Rust `tm_syscfg` selected and verifies syscfg-backed `/sys` and `sysinfo` consumers still work while LQ's private runtime syscfg builder remains C. Next gate: separate Rust-default RC decision that accepts this boundary. |
 | `tm_sysmap` task-manager provider | Rust opt-in | `qsoe-tm-sysmap` exports the existing LQ `tm_sysmap_*` ABI behind `QSOE_RUST_TM_SYSMAP=1`; `make tm-sysmap-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies LQ taskman links with C rollback and Rust-selected archives. `make tm-sysmap-runtime-smoke` boots LQ with Rust `tm_sysmap` selected and verifies a spawned `sysinfo` child consumes the mapped `PSYS` page for timebase, PLIC, and PCI data. Next gate: separate Rust-default RC decision. |
-| `tm_sysfs` task-manager provider | Rust opt-in | `qsoe-tm-sysfs` exports the existing `tm_sysfs.h` ABI behind `QSOE_RUST_TM_SYSFS=1`; `make tm-sysfs-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. Next gate: add a focused `/sys` runtime smoke before any Rust-default RC decision. |
+| `tm_sysfs` task-manager provider | Rust opt-in | `qsoe-tm-sysfs` exports the existing `tm_sysfs.h` ABI behind `QSOE_RUST_TM_SYSFS=1`; `make tm-sysfs-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. `make tm-sysfs-runtime-smoke` boots LQ with Rust `tm_sysfs` selected, enumerates `/sys`, and reads all five portable `/sys` files from sysinit. Next gate: separate Rust-default RC decision. |
 | Kernel Rust | Deferred | Current decision rejects near-term Rust in `nq` kernel code; only fixture/audit candidates are documented. |
 | C retirement | Five removals complete | `test_msgpass` is the first retired C helper; `slogger`, `pipe`, and `devb-virtio` are retired C production paths after their Rust-default RC evidence; `tm_procfs` is the first retired task-manager provider. Future removals still require #26's checklist and a separate removal PR. |
 
@@ -120,7 +120,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 - `tm_cpio`, `tm_cred`, `tm_elf`, `tm_fdt`, `tm_pathmgr`, `tm_pseudodev`,
   `tm_rsrcdb`, `tm_script`, `tm_syscfg`, `tm_sysmap`, and `tm_sysfs` are Rust
   opt-in task-manager providers only.
-  `tm_cpio`, `tm_elf`, `tm_fdt`, `tm_script`, `tm_syscfg`, and `tm_sysmap` now have focused runtime
+  `tm_cpio`, `tm_elf`, `tm_fdt`, `tm_script`, `tm_syscfg`, `tm_sysmap`, and `tm_sysfs` now have focused runtime
   smoke coverage; keep all opt-in providers C-default until their runtime
   evidence and separate RC decisions exist.
 
@@ -186,6 +186,7 @@ make tm-sysmap-runtime-smoke
 make check-tm-sysfs-model
 make rust-tm-sysfs-provider
 make tm-sysfs-evidence
+make tm-sysfs-runtime-smoke
 make tm-procfs-rc-smoke
 QSOE_RUST_TM_PROCFS=1 make procfs-smoke
 make procfs-smoke

@@ -87,6 +87,7 @@ The full opt-in evidence gate is:
 
 ```sh
 make tm-sysfs-evidence
+make tm-sysfs-runtime-smoke
 ```
 
 It runs the C fixture, Rust host tests, builds and audits the Rust staticlib,
@@ -95,9 +96,36 @@ links both NQ and LQ taskman in C rollback and Rust-selected modes. The gate
 also verifies `tm_sysfs.o` is present for `QSOE_RUST_TM_SYSFS=0` and absent for
 `QSOE_RUST_TM_SYSFS=1`.
 
+`make tm-sysfs-runtime-smoke` verifies the Rust-selected provider in a booted
+LQ image. The smoke:
+
+- rebuilds QSOE/L with `QSOE_RUST_TM_SYSFS=1` and mandatory
+  `QSOE_RUST_TM_PROCFS=1`;
+- verifies the selected `libtaskman.a` no longer contains C `tm_sysfs.o`;
+- verifies the shared Rust provider archive exports all six `tm_sysfs_*` ABI
+  symbols;
+- waits for taskman's `syscfg built from FDT` and `sysmap page built` markers;
+- runs `/bin/ls /sys` from sysinit to exercise `tm_sysfs_nentries()` and
+  `tm_sysfs_entry_name()` through LQ's existing C readdir path;
+- reads `/sys/board`, `/sys/builddate`, `/sys/cmdline`, `/sys/osname`, and
+  `/sys/version` from sysinit to exercise path resolution and content lookup.
+
+Expected runtime markers:
+
+```text
+syscfg built from FDT
+sysmap page built
+tm-sysfs-runtime-smoke: /sys readdir ok
+tm-sysfs-runtime-smoke: /sys/board ok
+tm-sysfs-runtime-smoke: /sys/builddate ok
+tm-sysfs-runtime-smoke: /sys/cmdline ok
+tm-sysfs-runtime-smoke: /sys/osname ok
+tm-sysfs-runtime-smoke: /sys/version ok
+```
+
 ## Current State
 
 `tm_sysfs` is Rust opt-in only. It is not a Rust-default release candidate and
 has no C retirement approval. Keep `libtaskman/src/tm_sysfs.c` as the rollback
-implementation until a `/sys` runtime smoke, the global retirement checklist,
-and a separate removal PR are satisfied.
+implementation until a separate Rust-default RC decision exists; C retirement
+still requires the global retirement checklist and a separate removal PR.

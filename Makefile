@@ -70,7 +70,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         rust-tm-rsrcdb-provider rust-tm-script-provider rust-tm-syscfg-provider rust-tm-sysmap-provider rust-tm-sysfs-provider \
         rust-tm-pseudodev-provider rust-tm-providers \
         tm-cpio-evidence tm-cpio-runtime-smoke tm-cred-evidence tm-elf-evidence tm-elf-runtime-smoke tm-fdt-evidence tm-fdt-runtime-smoke tm-pathmgr-evidence tm-procfs-evidence tm-providers-evidence tm-rsrcdb-evidence tm-script-evidence tm-script-runtime-smoke \
-        tm-syscfg-evidence tm-syscfg-runtime-smoke tm-sysmap-evidence tm-sysmap-runtime-smoke tm-sysfs-evidence tm-pseudodev-evidence \
+        tm-syscfg-evidence tm-syscfg-runtime-smoke tm-sysmap-evidence tm-sysmap-runtime-smoke tm-sysfs-evidence tm-sysfs-runtime-smoke tm-pseudodev-evidence \
         rust-slogger-boot-smoke \
         rust-virtio-boot-smoke rust-virtio-file-smoke \
         virtio-rc-file-smoke \
@@ -96,7 +96,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-tm-pseudodev-provider container-rust-tm-providers \
         container-tm-cpio-evidence container-tm-cpio-runtime-smoke container-tm-cred-evidence container-tm-elf-evidence container-tm-elf-runtime-smoke container-tm-fdt-evidence container-tm-fdt-runtime-smoke container-tm-pathmgr-evidence container-tm-procfs-evidence container-tm-providers-evidence \
         container-tm-rsrcdb-evidence container-tm-script-evidence container-tm-script-runtime-smoke container-tm-syscfg-evidence container-tm-syscfg-runtime-smoke \
-        container-tm-sysmap-evidence container-tm-sysmap-runtime-smoke container-tm-sysfs-evidence container-tm-pseudodev-evidence \
+        container-tm-sysmap-evidence container-tm-sysmap-runtime-smoke container-tm-sysfs-evidence container-tm-sysfs-runtime-smoke container-tm-pseudodev-evidence \
         container-rust-virtio-boot-smoke \
         container-virtio-rc-file-smoke \
         container-rust-mkfs-qrv-live-smoke \
@@ -533,6 +533,9 @@ tm-sysmap-runtime-smoke:
 tm-sysfs-evidence:
 	@scripts/tm-sysfs-evidence.sh
 
+tm-sysfs-runtime-smoke:
+	@scripts/tm-sysfs-runtime-smoke.sh
+
 tm-pseudodev-evidence:
 	@scripts/tm-pseudodev-evidence.sh
 
@@ -756,6 +759,9 @@ container-tm-sysmap-runtime-smoke:
 
 container-tm-sysfs-evidence:
 	@scripts/container-toolchain.sh run make tm-sysfs-evidence
+
+container-tm-sysfs-runtime-smoke:
+	@scripts/container-toolchain.sh run make tm-sysfs-runtime-smoke
 
 container-tm-pseudodev-evidence:
 	@scripts/container-toolchain.sh run make tm-pseudodev-evidence

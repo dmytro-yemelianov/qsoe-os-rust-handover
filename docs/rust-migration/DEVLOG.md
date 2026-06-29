@@ -24,6 +24,37 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-29 23:26 CEST - tm_sysfs Runtime Smoke
+
+Scope:
+
+- Added `make tm-sysfs-runtime-smoke` and container CI wiring.
+- The smoke rebuilds QSOE/L with `QSOE_RUST_TM_SYSFS=1` and mandatory
+  `QSOE_RUST_TM_PROCFS=1`.
+- It verifies the Rust-selected `libtaskman.a` omits C `tm_sysfs.o`, verifies
+  all six `tm_sysfs_*` ABI symbols in the shared Rust provider archive, waits
+  for taskman's syscfg/sysmap markers, then runs `/bin/ls /sys` and reads all
+  five portable `/sys` files from sysinit.
+- Updated `tm_sysfs` status docs so the next gate is a separate Rust-default RC
+  decision rather than missing focused `/sys` runtime coverage.
+
+Commands:
+
+- `bash -n scripts/tm-sysfs-runtime-smoke.sh scripts/tm-sysfs-evidence.sh scripts/boot-smoke.sh`
+- `make -n tm-sysfs-runtime-smoke container-tm-sysfs-runtime-smoke`
+- `make tm-sysfs-runtime-smoke`
+
+Result:
+
+- The local `make tm-sysfs-runtime-smoke` run passed.
+- The smoke proves the Rust-selected `/sys` model is exercised through LQ's
+  existing C open/read/readdir dispatch in a booted system.
+
+Follow-up:
+
+- Keep `tm_sysfs` Rust opt-in while deciding whether to open a separate
+  Rust-default RC window.
+
 ## 2026-06-29 23:58 CEST - tm_sysmap Runtime Smoke
 
 Scope:
@@ -992,9 +1023,8 @@ Result:
 
 Follow-up:
 
-- Keep `tm_sysfs` Rust opt-in only until a focused `/sys` runtime smoke covers
-  the read-only pseudo-filesystem and a separate Rust-default RC decision
-  exists.
+- Later `make tm-sysfs-runtime-smoke` added focused `/sys` readdir and all-file
+  runtime coverage. Keep `tm_sysfs` Rust opt-in pending a separate RC decision.
 
 ## 2026-06-29 11:06 CEST - tm_pseudodev Rust Opt-In Provider
 
