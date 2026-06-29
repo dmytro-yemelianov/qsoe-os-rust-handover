@@ -38,6 +38,8 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
   for the canonical migration tracker.
 - `docs/rust-migration/HANDOVER.md` for the current repository state and next
   work.
+- `docs/rust-migration/INVENTORY.md` for the OS-wide C inventory and remaining
+  translation buckets.
 - `docs/rust-migration/STATUS.md` for component-by-component migration state.
 - `docs/rust-migration/RETIREMENT.md` for the gate before any C code removal.
 - `docs/rust-migration/DEVLOG.md` for command history and validation evidence.
