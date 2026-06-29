@@ -1,0 +1,201 @@
+diff --git a/Makefile b/Makefile
+--- a/Makefile
++++ b/Makefile
+@@ -36,6 +36,7 @@ COMPONENTS := libpci \
+               fs/qrv \
+               test/cred_probe \
+               test/pathmgr_probe \
++              test/pseudodev_probe \
+               test/rsrcdb_probe \
+               test/syncspace \
+               test/suite
+diff --git a/test/pseudodev_probe/Makefile b/test/pseudodev_probe/Makefile
+new file mode 100644
+--- /dev/null
++++ b/test/pseudodev_probe/Makefile
+@@ -0,0 +1,11 @@
++# quser/test/pseudodev_probe/Makefile -- pseudo-device runtime probe.
++#
++# Copyright (c) 2026 Yuri Zaporozhets <yuriz@qsoe.net>
++# SPDX-License-Identifier: Apache-2.0
++
++include ../../common.mk
++
++PROGRAM := pseudodev_probe
++SRCS    := main.c
++
++include $(QUSER)/build_prog.mk
+diff --git a/test/pseudodev_probe/main.c b/test/pseudodev_probe/main.c
+new file mode 100644
+--- /dev/null
++++ b/test/pseudodev_probe/main.c
+@@ -0,0 +1,169 @@
++/*
++ * pseudodev_probe: runtime /dev/null and /dev/zero smoke helper.
++ *
++ * Exercises taskman's pseudo-device handlers through the public libc
++ * open/write/read/fstat path.
++ *
++ * Copyright (c) 2026 Yuri Zaporozhets <yuriz@qsoe.net>
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++#include <fcntl.h>
++#include <stdio.h>
++#include <string.h>
++#include <sys/qsoe.h>
++#include <sys/stat.h>
++#include <unistd.h>
++
++#define NULL_PATH       "/dev/null"
++#define ZERO_PATH       "/dev/zero"
++#define ZERO_READ_LEN   64u
++
++static int fail_errno(const char *msg)
++{
++    printf("tm-pseudodev-runtime-smoke: %s errno=%d\n", msg, qsoe_errno);
++    return 1;
++}
++
++static int close_checked(int fd, const char *context)
++{
++    if (close(fd) != 0)
++        return fail_errno(context);
++    return 0;
++}
++
++static int check_stat(const struct stat *st, unsigned long ino,
++                      unsigned long rdev, const char *context)
++{
++    if (!S_ISCHR(st->st_mode) ||
++        (st->st_mode & 0777u) != 0666u ||
++        (unsigned long)st->st_dev != 1ul ||
++        (unsigned long)st->st_ino != ino ||
++        (unsigned long)st->st_rdev != rdev ||
++        st->st_nlink != 1 ||
++        st->st_blksize != 4096) {
++        printf("tm-pseudodev-runtime-smoke: %s stat mismatch "
++               "mode=0%o dev=%lu ino=%lu rdev=%lu nlink=%lu blksize=%ld\n",
++               context,
++               (unsigned)st->st_mode,
++               (unsigned long)st->st_dev,
++               (unsigned long)st->st_ino,
++               (unsigned long)st->st_rdev,
++               (unsigned long)st->st_nlink,
++               (long)st->st_blksize);
++        return 1;
++    }
++    return 0;
++}
++
++static int exercise_null(void)
++{
++    static const char payload[] = "discard this payload";
++    char buf[8];
++    struct stat st;
++
++    int fd = open(NULL_PATH, O_WRONLY);
++    if (fd < 0)
++        return fail_errno("open /dev/null write failed");
++    ssize_t wrote = write(fd, payload, sizeof payload - 1);
++    if (wrote != (ssize_t)(sizeof payload - 1)) {
++        printf("tm-pseudodev-runtime-smoke: null write mismatch wrote=%ld\n",
++               (long)wrote);
++        (void)close(fd);
++        return 1;
++    }
++    if (close_checked(fd, "close /dev/null write failed") != 0)
++        return 1;
++    printf("tm-pseudodev-runtime-smoke: null write ok\n");
++
++    fd = open(NULL_PATH, O_RDONLY);
++    if (fd < 0)
++        return fail_errno("open /dev/null read failed");
++    if (fstat(fd, &st) != 0) {
++        (void)close(fd);
++        return fail_errno("fstat /dev/null failed");
++    }
++    if (check_stat(&st, 3ul, (1ul << 8) | 3ul, "null") != 0) {
++        (void)close(fd);
++        return 1;
++    }
++    printf("tm-pseudodev-runtime-smoke: null stat ok\n");
++
++    memset(buf, 0x5a, sizeof buf);
++    ssize_t got = read(fd, buf, sizeof buf);
++    if (got != 0) {
++        printf("tm-pseudodev-runtime-smoke: null read mismatch got=%ld\n",
++               (long)got);
++        (void)close(fd);
++        return 1;
++    }
++    if (close_checked(fd, "close /dev/null read failed") != 0)
++        return 1;
++    printf("tm-pseudodev-runtime-smoke: null read eof ok\n");
++    return 0;
++}
++
++static int exercise_zero(void)
++{
++    static const char payload[] = "discard this too";
++    unsigned char buf[ZERO_READ_LEN];
++    struct stat st;
++
++    int fd = open(ZERO_PATH, O_WRONLY);
++    if (fd < 0)
++        return fail_errno("open /dev/zero write failed");
++    ssize_t wrote = write(fd, payload, sizeof payload - 1);
++    if (wrote != (ssize_t)(sizeof payload - 1)) {
++        printf("tm-pseudodev-runtime-smoke: zero write mismatch wrote=%ld\n",
++               (long)wrote);
++        (void)close(fd);
++        return 1;
++    }
++    if (close_checked(fd, "close /dev/zero write failed") != 0)
++        return 1;
++    printf("tm-pseudodev-runtime-smoke: zero write ok\n");
++
++    fd = open(ZERO_PATH, O_RDONLY);
++    if (fd < 0)
++        return fail_errno("open /dev/zero read failed");
++    if (fstat(fd, &st) != 0) {
++        (void)close(fd);
++        return fail_errno("fstat /dev/zero failed");
++    }
++    if (check_stat(&st, 5ul, (1ul << 8) | 5ul, "zero") != 0) {
++        (void)close(fd);
++        return 1;
++    }
++    printf("tm-pseudodev-runtime-smoke: zero stat ok\n");
++
++    memset(buf, 0xa5, sizeof buf);
++    ssize_t got = read(fd, buf, sizeof buf);
++    if (got != (ssize_t)sizeof buf) {
++        printf("tm-pseudodev-runtime-smoke: zero read mismatch got=%ld\n",
++               (long)got);
++        (void)close(fd);
++        return 1;
++    }
++    for (unsigned i = 0; i < sizeof buf; ++i) {
++        if (buf[i] != 0) {
++            printf("tm-pseudodev-runtime-smoke: zero read byte %u = 0x%x\n",
++                   i, (unsigned)buf[i]);
++            (void)close(fd);
++            return 1;
++        }
++    }
++    if (close_checked(fd, "close /dev/zero read failed") != 0)
++        return 1;
++    printf("tm-pseudodev-runtime-smoke: zero read ok\n");
++    return 0;
++}
++
++int main(void)
++{
++    if (exercise_null() != 0)
++        return 1;
++    if (exercise_zero() != 0)
++        return 1;
++    printf("tm-pseudodev-runtime-smoke: pseudodev probe ok\n");
++    return 0;
++}

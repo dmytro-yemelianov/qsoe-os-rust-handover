@@ -24,6 +24,47 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 01:12 CEST - tm_pseudodev Runtime Smoke
+
+Scope:
+
+- Added `make tm-pseudodev-runtime-smoke` and container CI wiring.
+- Added `/usr/bin/pseudodev_probe`, a qrvfs-staged helper that exercises live
+  `/dev/null` and `/dev/zero` open, write, read, and fstat calls through libc.
+- The smoke rebuilds QSOE/L with `QSOE_RUST_TM_PSEUDODEV=1` and mandatory
+  `QSOE_RUST_TM_PROCFS=1`, verifies the selected `libtaskman.a` omits C
+  `devnull.o` and `devzero.o`, and verifies the Rust provider archive exports
+  the six `tm_dev*` ABI symbols.
+- The helper is staged only through the smoke-specific `FSQRV_BINS`, keeping the
+  production qrvfs root unchanged.
+
+Commands:
+
+- `bash -n scripts/tm-pseudodev-runtime-smoke.sh scripts/apply-component-overrides.sh scripts/boot-smoke.sh`
+- `make -n tm-pseudodev-runtime-smoke container-tm-pseudodev-runtime-smoke`
+- `patch -d quser --reverse --dry-run -p1 < patches/components/quser-pseudodev-probe.patch`
+- `./scripts/apply-component-overrides.sh`
+- `make tm-pseudodev-runtime-smoke`
+- `make tm-pseudodev-evidence`
+- `git diff --check`
+- `make check-qrvfs-rust-writer-production-root`
+
+Result:
+
+- `make tm-pseudodev-runtime-smoke` passes locally with markers for
+  `/dev/null` write discard, `/dev/null` fstat, `/dev/null` EOF read,
+  `/dev/zero` write discard, `/dev/zero` fstat, `/dev/zero` zero-filled read,
+  and final probe success.
+- `make tm-pseudodev-evidence` continues to pass, including Rust host tests,
+  provider archive audit, and LQ C-default/Rust-selected link checks.
+- The runtime smoke closes the pseudo-device runtime coverage gate for #152,
+  but `tm_pseudodev` remains Rust opt-in pending a separate Rust-default RC
+  decision.
+
+Follow-up:
+
+- Publish the PR, wait for trusted CI, merge, and update #152.
+
 ## 2026-06-30 00:56 CEST - tm_rsrcdb Runtime Smoke
 
 Scope:

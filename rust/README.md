@@ -506,6 +506,7 @@ taskman staticlib without changing the normal taskman default:
 ```sh
 make rust-tm-pseudodev-provider
 make tm-pseudodev-evidence
+make tm-pseudodev-runtime-smoke
 ```
 
 With the default `QSOE_RUST_TM_PSEUDODEV=0`, LQ taskman links the existing C
@@ -514,6 +515,9 @@ Makefile selector omits those two objects, builds `qsoe-tm-pseudodev` for
 `riscv64imac-unknown-none-elf`, and links `libqsoe_tm_pseudodev.a` into
 taskman. Path dispatch, fd ownership, request decoding, process tables, and
 seL4 invocation code remain C.
+The runtime smoke boots LQ with Rust `tm_pseudodev` selected and runs a staged
+`/usr/bin/pseudodev_probe` helper through live `/dev/null` and `/dev/zero`
+open, write, read, and fstat calls.
 
 ## Task Manager Resource DB Selection
 

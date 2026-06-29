@@ -303,6 +303,9 @@ apply_patch_if_possible_or_present quser quser-cred-probe.patch \
 apply_patch_if_possible_or_present quser quser-rsrcdb-probe.patch \
     "$ROOT/quser/Makefile" \
     'test/rsrcdb_probe'
+apply_patch_if_possible_or_present quser quser-pseudodev-probe.patch \
+    "$ROOT/quser/Makefile" \
+    'test/pseudodev_probe'
 apply_patch_if_possible quser quser-msgpass-lq-no-reply-skip.patch
 
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
@@ -519,6 +522,9 @@ require_line "$ROOT/quser/test/cred_probe/main.c" 'tm-cred-runtime-smoke: creden
 require_line "$ROOT/quser/Makefile" '              test/rsrcdb_probe \'
 require_line "$ROOT/quser/test/rsrcdb_probe/Makefile" 'PROGRAM := rsrcdb_probe'
 require_line "$ROOT/quser/test/rsrcdb_probe/main.c" 'tm-rsrcdb-runtime-smoke: rsrcdb probe ok'
+require_line "$ROOT/quser/Makefile" '              test/pseudodev_probe \'
+require_line "$ROOT/quser/test/pseudodev_probe/Makefile" 'PROGRAM := pseudodev_probe'
+require_line "$ROOT/quser/test/pseudodev_probe/main.c" 'tm-pseudodev-runtime-smoke: pseudodev probe ok'
 require_line "$ROOT/quser/test/suite/msgpass_test.c" '(void) ProcessTerminate(nr_pid, 0);'
 
 echo "apply-component-overrides.sh: component overrides ready"

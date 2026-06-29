@@ -80,6 +80,7 @@ The full opt-in evidence gate is:
 
 ```sh
 make tm-pseudodev-evidence
+make tm-pseudodev-runtime-smoke
 ```
 
 It runs the Rust host tests, builds and audits the Rust staticlib, checks the
@@ -89,9 +90,17 @@ verifies the LQ Rust-selected dry-run link plan omits those objects and links
 the shared taskman Rust provider archive. It also links LQ taskman in both
 C-default and Rust-selected modes and audits the resulting ELF.
 
+`make tm-pseudodev-runtime-smoke` boots LQ with Rust `tm_pseudodev` selected,
+verifies the selected `libtaskman.a` omits C `devnull.o` and `devzero.o`,
+verifies the shared Rust provider archive exports all six `tm_dev*` symbols,
+and runs a qrvfs-staged `/usr/bin/pseudodev_probe` helper. The helper checks
+`/dev/null` write discard, `/dev/null` EOF reads, `/dev/zero` write discard,
+`/dev/zero` zero-filled reads, and fstat metadata for both character devices.
+
 ## Current State
 
 `tm_pseudodev` is Rust opt-in only. It is not a Rust-default release candidate
 and has no C retirement approval. Keep `lq/taskman/sys/devnull.c` and
-`lq/taskman/sys/devzero.c` as rollback implementations until the global
-retirement checklist and a separate removal PR are satisfied.
+`lq/taskman/sys/devzero.c` as rollback implementations until a separate RC
+decision exists, and until the global retirement checklist and a separate
+removal PR are satisfied.

@@ -156,6 +156,10 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-pseudodev-evidence
 
+      - name: Run tm_pseudodev Rust runtime smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-tm-pseudodev-runtime-smoke
+
       - name: Run tm_sysfs Rust opt-in evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-sysfs-evidence
@@ -213,6 +217,8 @@ jobs:
             build/tm-procfs-evidence/**/*.txt
             build/tm-pseudodev-evidence/**/*.log
             build/tm-pseudodev-evidence/**/*.txt
+            build/tm-pseudodev-runtime-smoke/*.log
+            build/tm-pseudodev-runtime-smoke/*.txt
             build/tm-sysfs-evidence/**/*.log
             build/tm-sysfs-evidence/**/*.txt
             build/tm-sysfs-runtime-smoke/*.log

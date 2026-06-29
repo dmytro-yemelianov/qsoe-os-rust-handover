@@ -237,6 +237,7 @@ make rust-tm-cred-provider
 make tm-cred-evidence
 make rust-tm-pseudodev-provider
 make tm-pseudodev-evidence
+make tm-pseudodev-runtime-smoke
 make check-tm-sysfs-model
 make rust-tm-sysfs-provider
 make tm-sysfs-evidence
@@ -329,9 +330,10 @@ The strict ELF audit showed:
   exists.
 - `tm_pseudodev` has a Rust opt-in provider behind
   `QSOE_RUST_TM_PSEUDODEV=1`. The selector replaces only LQ `sys/devnull.o`
-  and `sys/devzero.o` with the selected Rust provider archive. C remains
-  default and rollback until a focused `/dev/null` and `/dev/zero` runtime
-  smoke and separate RC decision exist.
+  and `sys/devzero.o` with the selected Rust provider archive.
+  `make tm-pseudodev-runtime-smoke` covers live `/dev/null` and `/dev/zero`
+  open, write, read, and fstat calls. C remains default and rollback until a
+  separate RC decision exists.
 - `tm_cpio` has a Rust opt-in provider behind `QSOE_RUST_TM_CPIO=1`. The
   selector removes C `cpio.o` from `libtaskman.a` and links through the shared
   taskman Rust provider archive. `make tm-cpio-runtime-smoke` covers the
