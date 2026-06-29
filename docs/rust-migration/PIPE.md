@@ -7,13 +7,13 @@ Selected: 2026-06-24 01:47 CEST.
 and shaped like a resource manager without touching storage or console-driver
 hardware.
 
-The existing C implementation remains the default and rollback path. A Rust
-implementation now exists as an explicit opt-in.
+The Rust implementation is now the default and only staged service. The former C
+implementation is retained in this document as historical behavior context.
 
-## Current C Component
+## Historical C Component
 
-- Source: `quser/sbin/pipe/main.c`
-- Binary: `quser/build/sbin/pipe/pipe.elf`
+- Former source: `quser/sbin/pipe/main.c`
+- Former binary: `quser/build/sbin/pipe/pipe.elf`
 - Registered path: `/dev/pipe`
 - Scope: anonymous pipes only
 - Out of scope: named FIFOs, multi-waiter queues, changing taskman pipe minting,
@@ -67,7 +67,7 @@ Blocking behavior follows the current QNX-style saved-rcvid pattern:
 - write with remaining data fills the ring and may park the writer
 - close wakes parked opposite-end callers where required
 
-## Rust Opt-In Implementation
+## Rust Implementation
 
 The Rust version is split into:
 
@@ -79,17 +79,21 @@ Unsafe code stays in the service boundary and FFI calls. The ring/state crate
 does not allocate and reports explicit reply outcomes for immediate replies,
 parked callers, and parked-caller wakeups.
 
-The implemented opt-in targets are:
+The current Rust-only targets are:
 
 ```sh
 make rust-pipe-link-smoke
-QSOE_RUST_PIPE=1 make pipe-artifact
+make pipe-artifact
 make rust-pipe-smoke
 make rust-pipe-data-smoke
 ```
 
-`make rust-pipe-smoke` replaces only `/sbin/pipe` in a temporary LQ boot CPIO,
-starts it from a temporary sysinit fragment, reaches `login:`, and requires:
+`make pipe-artifact` always stages Rust `pipe-rs` to
+`build/rust/selected/sbin/pipe.elf`. `QSOE_RUST_PIPE=0` is rejected because the
+C service is retired.
+
+`make rust-pipe-smoke` boots an LQ image with Rust `/sbin/pipe`, starts it from
+a temporary sysinit fragment, reaches `login:`, and requires:
 
 - `[pipe-rs] /dev/pipe registered`
 - `rust-pipe-smoke: started /sbin/pipe`
@@ -99,51 +103,49 @@ stages `/usr/bin/test_pipe_data` into a temporary qrvfs image. That helper calls
 normal libc `pipe(2)`, writes to the write end, reads the same payload from the
 read end, closes the writer, and verifies EOF on the read end.
 
-## Rust-Default RC
+## Rust-Only Image Path
 
-`pipe-rs` now has a Rust-default release-candidate path:
+`pipe-rs` moved through a Rust-default release-candidate path and is now retired
+from C:
 
 ```sh
 make pipe-rc-data-smoke
-make pipe-rc-rollback-smoke
 ```
 
-The default RC target selects Rust `/sbin/pipe` without requiring
-`QSOE_RUST_PIPE=1` from the caller. The rollback target sets
-`QSOE_PIPE_RC_ROLLBACK=1`, selects the C `/sbin/pipe`, and runs the same
-pipe(2) data-path smoke. See `PIPE_RC.md` for the rollback window and review
-notes.
+The compatibility target validates the Rust-only `/sbin/pipe` data path.
+`QSOE_PIPE_RC_ROLLBACK=1` is rejected because the rollback window is closed. See
+`PIPE_RC.md` for historical RC evidence and `PIPE_RETIREMENT.md` for the
+retirement record.
 
-## C Baseline Smoke
+## Historical C Baseline Smoke
 
-Run the C registration smoke:
+The former C registration smoke was:
 
 ```sh
 make pipe-smoke
 ```
 
-The smoke creates a temporary `/usr/conf/sysinit/*.sh` fragment, rebuilds the
-normal QSOE/L image, boots it, starts the current C `/sbin/pipe` after `/usr`
-mounts, and requires:
+The current `make pipe-smoke` target has been updated to validate the Rust
+service in the normal QSOE/L image. The former C smoke created a temporary
+`/usr/conf/sysinit/*.sh` fragment, rebuilt QSOE/L, booted it, started the C
+`/sbin/pipe` after `/usr` mounted, and required:
 
 - `[pipe] registered at /dev/pipe`
 - `pipe-smoke: started /sbin/pipe`
 - the normal `login:` boot milestone
 
-This proves the selected service can start and register cleanly before any Rust
-implementation is introduced.
+That historical smoke proved the selected C service could start and register
+cleanly before Rust implementation work began.
 
-## Later Rust Acceptance
+## Current Acceptance
 
-Before selecting Rust `pipe` by default:
+For the retired Rust-only path:
 
 - host tests must continue to cover ring wrap, EOF, wrong-end errors, parked
   reader, parked writer, close wakeups, and pool exhaustion
 - the Rust binary must continue to link and pass
   `scripts/audit-elf.sh --strict-qsoe-user`
-- the opt-in boot smoke must continue to replace only `/sbin/pipe` and preserve
-  login
+- the boot smoke must continue to start `/sbin/pipe` and preserve login
 - keep `make rust-pipe-data-smoke` passing on the hosted runner; trusted
   `main` CI run `28102250069` accepted the #96 data-path evidence
-- keep `make pipe-rc-data-smoke` and `make pipe-rc-rollback-smoke` passing
-  before any C retirement decision
+- keep `make pipe-rc-data-smoke` passing for the Rust-only service path

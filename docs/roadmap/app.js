@@ -12,7 +12,7 @@ const PURPOSE = {
     "Use Rust type, ownership, and Result-based error handling where they improve maintenance and review quality.",
     "Keep high-risk boot, loader, spawn, capability, and kernel-adjacent code in C until boundaries are proven."
   ],
-  operatingRule: "Every Rust candidate needs a selector, C rollback path, host tests, runtime or boot evidence, and documentation before it can become a default. C is not removed just because a Rust version exists."
+  operatingRule: "Every Rust candidate needs a selector, C rollback path through the RC window, host tests, runtime or boot evidence, and documentation before it can become a default. C is removed only by a separate retirement step after that evidence exists."
 };
 
 const POLICY_GATES = [
@@ -24,7 +24,7 @@ const POLICY_GATES = [
   {
     id: "rollback",
     name: "C rollback",
-    description: "A one-command C rollback path must exist and be tested."
+    description: "A one-command C rollback path must exist and be tested through the RC window."
   },
   {
     id: "host-tests",
@@ -312,17 +312,18 @@ function renderProgressVisuals() {
   const componentReadiness = Math.round(avg(components.map(componentScore)));
   const phaseReadiness = Math.round(avg(roadmapPhases.map((phase) => PHASE_SCORE[phase.status] ?? 0)));
   const rustDefaultCount = components.filter((component) => component.rustDefault).length;
-  const rollbackCount = components.filter((component) => component.cRollback.length > 0).length;
+  const activeComponents = components.filter((component) => !component.retired);
+  const rollbackCount = activeComponents.filter((component) => component.cRollback.length > 0).length;
   const retiredCount = components.filter((component) => component.retired).length;
   const overallReadiness = Math.round(avg([componentReadiness, phaseReadiness]));
 
   els.progressNote.textContent =
-    "Computed from roadmap issues: tracked components, rollback coverage, phase status, and remaining backlog posture.";
+    "Computed from roadmap issues: tracked components, active rollback coverage, phase status, and remaining backlog posture.";
 
   els.progressGauges.replaceChildren(
     gauge("Overall readiness", overallReadiness, "Component posture + phase completion", "accent"),
     gauge("Rust-default RC coverage", pct(rustDefaultCount, components.length), `${rustDefaultCount}/${components.length} tracked components`, "good"),
-    gauge("Rollback coverage", pct(rollbackCount, components.length), `${rollbackCount}/${components.length} components keep C rollback`, "info"),
+    gauge("Active rollback coverage", pct(rollbackCount, activeComponents.length), `${rollbackCount}/${activeComponents.length} non-retired components keep C rollback`, "info"),
     gauge("C retirement progress", pct(retiredCount, components.length), `${retiredCount}/${components.length} C implementations retired`, "warn")
   );
 

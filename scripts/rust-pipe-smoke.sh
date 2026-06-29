@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Boot QSOE/L with an opt-in Rust /sbin/pipe and verify registration.
+# Boot QSOE/L with Rust /sbin/pipe and verify registration.
 
 set -eu
 
@@ -8,13 +8,13 @@ usage() {
     cat <<'EOF'
 usage: scripts/rust-pipe-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
-Builds a temporary Rust-pipe LQ modpkg.cpio under build/rust-pipe/,
-rebuilds the LQ QEMU image with MODPKG_CPIO pointing at it, injects a sysinit
-fragment that starts /sbin/pipe, and verifies the Rust pipe registration marker.
+Builds a temporary Rust-pipe LQ modpkg.cpio under build/rust-pipe/, rebuilds
+the LQ QEMU image with MODPKG_CPIO pointing at it, injects a sysinit fragment
+that starts /sbin/pipe, and verifies the Rust pipe registration marker.
 
 Environment:
   RUST_PIPE_MODPKG_CPIO   output archive, default build/rust-pipe/modpkg-lq-rust-pipe.cpio
-  RUST_PIPE_BASE_CPIO     intermediate C archive, default build/rust-pipe/modpkg-lq-c.cpio
+  RUST_PIPE_BASE_CPIO     intermediate archive, default build/rust-pipe/modpkg-lq-base.cpio
 EOF
 }
 
@@ -73,7 +73,7 @@ if [ "$timeout_s" -le 0 ]; then
 fi
 
 workdir=${RUST_PIPE_WORKDIR:-"$ROOT/build/rust-pipe"}
-base_cpio=${RUST_PIPE_BASE_CPIO:-"$workdir/modpkg-lq-c.cpio"}
+base_cpio=${RUST_PIPE_BASE_CPIO:-"$workdir/modpkg-lq-base.cpio"}
 rust_cpio=${RUST_PIPE_MODPKG_CPIO:-"$workdir/modpkg-lq-rust-pipe.cpio"}
 selected_pipe="$ROOT/build/rust/selected/sbin/pipe.elf"
 lq_libc="$ROOT/lq/build/libc/libc.so"
@@ -129,7 +129,8 @@ echo "rust-pipe-smoke.sh: building base LQ modpkg.cpio"
     MODPKG_CPIO="$base_cpio" \
     LIBC_SO="$lq_libc" \
     RTLD_SO="$lq_rtld" \
-    DYNLIBC_SO="$lq_libc"
+    DYNLIBC_SO="$lq_libc" \
+    SBIN_PIPE_ELF="$selected_pipe"
 
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/qsoe-rust-pipe-cpio.XXXXXX")
 cleanup_tmp() {

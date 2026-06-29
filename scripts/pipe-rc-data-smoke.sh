@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Boot the pipe Rust-default release-candidate image, or its C rollback, and
-# verify pipe(2) data flow through the selected /sbin/pipe.
+# Boot the retired pipe Rust image and verify pipe(2) data flow through
+# /sbin/pipe.
 
 set -eu
 
@@ -9,12 +9,11 @@ usage() {
     cat <<'EOF'
 usage: scripts/pipe-rc-data-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
-Builds and boots the pipe release-candidate image. The RC default selects
-pipe-rs at /sbin/pipe. Set QSOE_PIPE_RC_ROLLBACK=1 to prove the C rollback
-image through the same pipe(2) data-path smoke.
+Builds and boots the retired pipe image. The image selects pipe-rs at
+/sbin/pipe. C pipe rollback is retired and no longer selectable.
 
 Environment:
-  QSOE_PIPE_RC_ROLLBACK   set 1 to select the C rollback artifact
+  QSOE_PIPE_RC_ROLLBACK   unsupported after C retirement
   RUST_PIPE_DATA_WORKDIR  output directory, default build/pipe-rc
 EOF
 }
@@ -25,14 +24,14 @@ rollback=${QSOE_PIPE_RC_ROLLBACK:-0}
 case "$rollback" in
     0|false|FALSE|no|NO)
         export QSOE_RUST_PIPE=1
-        mode=rust-default
+        mode=rust-retired
         ;;
     1|true|TRUE|yes|YES)
-        export QSOE_RUST_PIPE=0
-        mode=c-rollback
+        echo "pipe-rc-data-smoke.sh: C pipe rollback is retired" >&2
+        exit 2
         ;;
     *)
-        echo "pipe-rc-data-smoke.sh: QSOE_PIPE_RC_ROLLBACK must be 0 or 1" >&2
+        echo "pipe-rc-data-smoke.sh: QSOE_PIPE_RC_ROLLBACK must be 0 after C retirement" >&2
         exit 2
         ;;
 esac

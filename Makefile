@@ -18,7 +18,7 @@
 QSOE_RUST_SLOGGER ?= 1
 QSOE_RUST_VIRTIO ?= 0
 QSOE_RUST_TEST_MSGPASS ?= 1
-QSOE_RUST_PIPE ?= 0
+QSOE_RUST_PIPE ?= 1
 QSOE_RUST_TM_CPIO ?= 0
 QSOE_RUST_TM_CRED ?= 0
 QSOE_RUST_TM_ELF ?= 0
@@ -75,7 +75,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         rust-virtio-boot-smoke rust-virtio-file-smoke \
         virtio-rc-file-smoke virtio-rc-rollback-smoke \
         rust-test-msgpass-smoke test-msgpass-rc-smoke pipe-smoke rust-pipe-smoke \
-        rust-pipe-data-smoke pipe-rc-data-smoke pipe-rc-rollback-smoke \
+        rust-pipe-data-smoke pipe-rc-data-smoke \
         procfs-smoke tm-procfs-rc-smoke tm-procfs-rc-rollback-smoke \
         container-toolchain-build container-shell container-check \
         container-index-c container-index-c-static container-index-c-compile-db \
@@ -106,7 +106,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-test-msgpass-smoke container-test-msgpass-rc-smoke \
         container-rust-virtio-file-smoke container-pipe-smoke \
         container-rust-pipe-smoke container-rust-pipe-data-smoke \
-        container-pipe-rc-data-smoke container-pipe-rc-rollback-smoke \
+        container-pipe-rc-data-smoke \
         container-check-qrvfs-rust-writer-fixture \
         container-check-qrvfs-rust-writer-production-root \
         container-procfs-smoke container-tm-procfs-rc-smoke \
@@ -531,9 +531,6 @@ rust-pipe-data-smoke:
 pipe-rc-data-smoke:
 	@scripts/pipe-rc-data-smoke.sh
 
-pipe-rc-rollback-smoke:
-	@QSOE_PIPE_RC_ROLLBACK=1 scripts/pipe-rc-data-smoke.sh
-
 procfs-smoke:
 	@scripts/procfs-smoke.sh
 
@@ -751,9 +748,6 @@ container-rust-pipe-data-smoke:
 
 container-pipe-rc-data-smoke:
 	@scripts/container-toolchain.sh run make pipe-rc-data-smoke
-
-container-pipe-rc-rollback-smoke:
-	@scripts/container-toolchain.sh run make pipe-rc-rollback-smoke
 
 container-procfs-smoke:
 	@scripts/container-toolchain.sh run make procfs-smoke

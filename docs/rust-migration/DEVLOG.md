@@ -24,6 +24,67 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-29 19:27 CEST - Retired C pipe Service
+
+Scope:
+
+- Retired the C `quser/sbin/pipe` service after the Rust-default
+  `pipe-rs` RC and rollback evidence.
+- Changed `QSOE_RUST_PIPE` to default to Rust and reject `0` because the C
+  service is no longer staged.
+- Removed the `pipe-rc-rollback-smoke` and container rollback targets.
+- Added tracked NQ/LQ component patches so fresh CPIO builds call top-level
+  `make pipe-artifact` and pass `SBIN_PIPE_ELF` into `quser`.
+- Removed the C `pipe` source from the `quser` component override.
+- Updated README/status/inventory/retirement docs and added
+  `PIPE_RETIREMENT.md`.
+
+Commands:
+
+- `./scripts/apply-component-overrides.sh`
+- `patch -d nq --reverse --silent --dry-run -p1 < patches/components/nq-makefile-rust-pipe-retired.patch`
+- `patch -d lq --reverse --silent --dry-run -p1 < patches/components/lq-makefile-rust-pipe-retired.patch`
+- `patch -d quser --reverse --silent --dry-run -p1 < patches/components/quser-retire-pipe-c.patch`
+- `bash -n scripts/apply-component-overrides.sh scripts/select-pipe-artifact.sh scripts/rust-pipe-smoke.sh scripts/rust-pipe-data-smoke.sh scripts/pipe-rc-data-smoke.sh scripts/pipe-smoke.sh`
+- `QSOE_RUST_PIPE=0 make pipe-artifact`
+- `QSOE_PIPE_RC_ROLLBACK=1 scripts/pipe-rc-data-smoke.sh`
+- `make rust-pipe-link-smoke`
+- `make pipe-artifact`
+- `make rust-check`
+- `make slogger-artifact pipe-artifact && make -C quser cpio`
+- `make rust-pipe-data-smoke`
+- `make pipe-rc-data-smoke`
+- `make pipe-smoke`
+- `make`
+- `scripts/boot-smoke.sh -k lq -t 120`
+- `scripts/c-index.sh files`
+
+Result:
+
+- Component overrides replayed idempotently and verified `quser/sbin/pipe`
+  is absent.
+- The retired C selector and rollback flags fail fast with status 2 and clear
+  retirement messages.
+- `qsoe-pipe-rs` links and passes strict user ELF audit with no TLS or unwind
+  sections.
+- `make rust-check` passed for formatting, check, clippy, and host tests.
+- Direct `quser` CPIO packaging succeeds when the selected Rust `slogger` and
+  `pipe` artifacts are present.
+- The Rust-only pipe data-path smoke passes and observes `/dev/pipe`
+  registration, libc `pipe(2)` round trip, EOF behavior, and helper exit.
+- The compatibility `pipe-rc-data-smoke` wrapper now exercises the Rust-only
+  service path and passes.
+- Normal source build, normal QSOE/L boot smoke, and focused `pipe-smoke`
+  stage Rust `pipe-rs` as `/sbin/pipe` and reach the expected milestones.
+- The C inventory now reports 813 indexed files and 130,795 approximate LOC;
+  `quser` dropped to 124 indexed files after removing C `pipe`.
+
+Follow-up:
+
+- Merge the retirement PR, then update #139 to `status:retired` and close it.
+- Continue with the next production-service candidate only after its own RC
+  evidence and removal PR.
+
 ## 2026-06-29 18:45 CEST - Retired C slogger Service
 
 Scope:

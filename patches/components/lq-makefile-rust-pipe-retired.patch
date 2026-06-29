@@ -1,0 +1,29 @@
+diff --git a/Makefile b/Makefile
+--- a/Makefile
++++ b/Makefile
+@@ -115,6 +115,7 @@ QUSER         := $(abspath $(TOP)/..)/quser
+ MODPKG_CPIO   := $(QUSER)/build/modpkg.cpio
+ export MODPKG_CPIO
+ SELECTED_SLOGGER_ELF ?= $(abspath $(TOP)/..)/build/rust/selected/sbin/slogger.elf
++SELECTED_PIPE_ELF ?= $(abspath $(TOP)/..)/build/rust/selected/sbin/pipe.elf
+ 
+ # taskman.elf is board-independent (the seL4 API it builds against is the
+ # same on every platform) and therefore built once and shared.
+@@ -599,12 +600,16 @@ $(GEN)/qsoe/sys_version.h: $(wildcard .git/HEAD .git/index)
+ $(MODPKG_CPIO): $(LIBC_SO) $(LIBC_CRT0) $(RTLD_SO)
+ 	+$(MAKE) -C $(abspath $(TOP)/..) slogger-artifact \
+ 	    LIBC_SO=$(LIBC_SO) \
+ 	    SELECTED_SLOGGER_ELF=$(SELECTED_SLOGGER_ELF)
++	+$(MAKE) -C $(abspath $(TOP)/..) pipe-artifact \
++	    LIBC_SO=$(LIBC_SO) \
++	    SELECTED_PIPE_ELF=$(SELECTED_PIPE_ELF)
+ 	+$(MAKE) -C $(QUSER) cpio \
+ 	    LIBC_SO=$(LIBC_SO) \
+ 	    RTLD_SO=$(RTLD_SO) \
+ 	    DYNLIBC_SO=$(LIBC_SO) \
+-	    SBIN_SLOG_ELF=$(SELECTED_SLOGGER_ELF)
++	    SBIN_SLOG_ELF=$(SELECTED_SLOGGER_ELF) \
++	    SBIN_PIPE_ELF=$(SELECTED_PIPE_ELF)
+ 
+ clean:
+ 	rm -rf $(BUILD)

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Boot QSOE/L with a selected /sbin/pipe and verify pipe(2) data flow.
+# Boot QSOE/L with Rust /sbin/pipe and verify pipe(2) data flow.
 
 set -eu
 
@@ -11,14 +11,12 @@ usage: scripts/rust-pipe-data-smoke.sh [-t seconds] [-o log] [--keep-running] [-
 Builds a temporary LQ modpkg.cpio under build/rust-pipe-data/, stages a focused
 /usr/bin/test_pipe_data helper into a temporary qrvfs image, starts /sbin/pipe
 from sysinit, and verifies a libc/taskman pipe(2) write/read round trip through
-the selected pipe service. Rust is selected by default; set QSOE_RUST_PIPE=0
-for the C rollback path.
+Rust pipe-rs. C pipe rollback is retired and no longer selectable.
 
 Environment:
-  QSOE_RUST_PIPE             selected artifact mode, default 1 (Rust)
-                              set 0 to prepare the C rollback image
-  RUST_PIPE_DATA_MODPKG_CPIO  output archive, default is mode-specific under build/rust-pipe-data/
-  RUST_PIPE_DATA_BASE_CPIO    intermediate C archive, default build/rust-pipe-data/modpkg-lq-c.cpio
+  QSOE_RUST_PIPE             must remain 1 after C retirement
+  RUST_PIPE_DATA_MODPKG_CPIO  output archive, default build/rust-pipe-data/modpkg-lq-rust-pipe.cpio
+  RUST_PIPE_DATA_BASE_CPIO    intermediate archive, default build/rust-pipe-data/modpkg-lq-base.cpio
   RUST_PIPE_DATA_WORKDIR      output directory, default build/rust-pipe-data
 EOF
 }
@@ -80,27 +78,25 @@ fi
 QSOE_RUST_PIPE=${QSOE_RUST_PIPE:-1}
 case "$QSOE_RUST_PIPE" in
     0|false|FALSE|no|NO)
-        pipe_mode=c
-        registration="[pipe] registered at /dev/pipe"
+        echo "rust-pipe-data-smoke.sh: C pipe is retired; use Rust pipe-rs" >&2
+        exit 2
         ;;
     1|true|TRUE|yes|YES)
         pipe_mode=rust
         registration="[pipe-rs] /dev/pipe registered"
         ;;
     *)
-        echo "rust-pipe-data-smoke.sh: QSOE_RUST_PIPE must be 0 or 1" >&2
+        echo "rust-pipe-data-smoke.sh: QSOE_RUST_PIPE must be 1 after C retirement" >&2
         exit 2
         ;;
 esac
 
 workdir=${RUST_PIPE_DATA_WORKDIR:-"$ROOT/build/rust-pipe-data"}
-base_cpio=${RUST_PIPE_DATA_BASE_CPIO:-"$workdir/modpkg-lq-c.cpio"}
+base_cpio=${RUST_PIPE_DATA_BASE_CPIO:-"$workdir/modpkg-lq-base.cpio"}
 if [ -n "${RUST_PIPE_DATA_MODPKG_CPIO:-}" ]; then
     selected_cpio=$RUST_PIPE_DATA_MODPKG_CPIO
-elif [ "$pipe_mode" = rust ]; then
-    selected_cpio="$workdir/modpkg-lq-rust-pipe.cpio"
 else
-    selected_cpio="$workdir/modpkg-lq-c-rollback-pipe.cpio"
+    selected_cpio="$workdir/modpkg-lq-rust-pipe.cpio"
 fi
 selected_pipe="$ROOT/build/rust/selected/sbin/pipe.elf"
 selected_msgpass="$ROOT/build/rust/selected/usr/bin/test_msgpass.elf"
@@ -118,11 +114,7 @@ round_trip="[test_pipe_data] pipe round-trip ok"
 eof_marker="[test_pipe_data] pipe eof ok"
 
 if [ -z "$log" ]; then
-    if [ "$pipe_mode" = rust ]; then
-        log="$workdir/boot-smoke-lq-rust-pipe-data.log"
-    else
-        log="$workdir/boot-smoke-lq-c-pipe-data.log"
-    fi
+    log="$workdir/boot-smoke-lq-rust-pipe-data.log"
 elif [ "${log#/}" = "$log" ]; then
     log="$ROOT/$log"
 fi
@@ -294,7 +286,8 @@ echo "rust-pipe-data-smoke.sh: building base LQ modpkg.cpio"
     MODPKG_CPIO="$base_cpio" \
     LIBC_SO="$lq_libc" \
     RTLD_SO="$lq_rtld" \
-    DYNLIBC_SO="$lq_libc"
+    DYNLIBC_SO="$lq_libc" \
+    SBIN_PIPE_ELF="$selected_pipe"
 
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/qsoe-rust-pipe-data-cpio.XXXXXX")
 cleanup_tmp() {

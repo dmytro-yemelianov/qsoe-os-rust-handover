@@ -25,12 +25,12 @@ gate in `docs/rust-migration/RETIREMENT.md`.
 ## Current Status
 
 - Rust-default release-candidate paths exist for `qrvfs-tree`, `mkfs-qrv-rs`,
-  `devb-virtio-rs`, `pipe-rs`, and `qsoe-tm-procfs`.
+  `devb-virtio-rs`, and `qsoe-tm-procfs`.
 - Retired C implementations: the C `test_msgpass` helper is removed from
-  tracked `quser` test-image paths, and the C `/sbin/slogger` service is
-  removed from tracked `quser` service paths. Test images stage Rust
-  `test_msgpass-rs` at `/usr/bin/test_msgpass`; normal NQ/LQ images stage Rust
-  `slogger-rs` at `/sbin/slogger`.
+  tracked `quser` test-image paths, and the C `/sbin/slogger` and `/sbin/pipe`
+  services are removed from tracked `quser` service paths. Test images stage
+  Rust `test_msgpass-rs` at `/usr/bin/test_msgpass`; normal NQ/LQ images stage
+  Rust `slogger-rs` at `/sbin/slogger` and Rust `pipe-rs` at `/sbin/pipe`.
 - Rust opt-in task-manager providers exist for `qsoe-tm-cpio`,
   `qsoe-tm-cred`, `qsoe-tm-elf`, `qsoe-tm-fdt`, `qsoe-tm-pseudodev`,
   `qsoe-tm-rsrcdb`, `qsoe-tm-script`, `qsoe-tm-syscfg`,
@@ -66,7 +66,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | `slogger` service | Retired C service | `slogger-rs` links, boots, registers `/dev/slog`, is staged as `/sbin/slogger` in normal NQ/LQ images, and passes the `/dev/slog` readback smoke through `make slogger-rc-readback-smoke`. The C service source and rollback targets are removed by the retirement PR. |
 | `devb-virtio` block driver | Rust default RC | Rust MMIO/virtqueue model, host queue tests, opt-in boot/file-read smokes, and `make virtio-rc-file-smoke` plus `make virtio-rc-rollback-smoke` cover the Rust-default file-read RC path with C rollback. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
 | Shared parsers | Complete for current scope | CPIO, syscfg/sysmap, and ELF inspection crates exist with host tests and host/guest reuse coverage. |
-| `pipe` service | Rust default RC | `qsoe-pipe` host tests pass, `pipe-rs` links and audits, `make rust-pipe-smoke` boots LQ with Rust `/sbin/pipe` registered, `make rust-pipe-data-smoke` proves a libc/taskman `pipe(2)` write/read round trip, and `make pipe-rc-data-smoke` selects Rust by default with `make pipe-rc-rollback-smoke` preserving C rollback. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
+| `pipe` service | Retired C service | `qsoe-pipe` host tests pass, `pipe-rs` links and audits, `make rust-pipe-smoke` boots LQ with Rust `/sbin/pipe` registered, `make rust-pipe-data-smoke` proves a libc/taskman `pipe(2)` write/read round trip, and `make pipe-rc-data-smoke` validates the Rust-only service path. The C service source and rollback targets are removed by the retirement PR. |
 | `test_msgpass` helper | Retired C helper | `test_msgpass-rs` links, is always staged into the qrvfs test image as `/usr/bin/test_msgpass`, and passes the existing suite `[msgpass]` section through `make rust-test-msgpass-smoke` and `make test-msgpass-rc-smoke`. The C helper source and rollback target are removed by the retirement PR. |
 | `tm_procfs` task-manager pilot | Rust default RC | `qsoe-tm-procfs` exports the existing C ABI behind `QSOE_RUST_TM_PROCFS=1`; `make tm-procfs-rc-smoke` selects Rust by default for the RC image and `make tm-procfs-rc-rollback-smoke` restores C. Host model tests, Rust host tests, selected NQ/LQ taskman links, `make tm-procfs-evidence`, and `/proc` smokes cover the gate. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
 | `tm_cpio` task-manager provider | Rust opt-in | `qsoe-tm-cpio` exports the existing `tm_cpio.h` ABI behind `QSOE_RUST_TM_CPIO=1`; `make tm-cpio-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. Next gate: add boot/runtime coverage for CPIO-backed spawn and file access before any Rust-default RC decision. |
@@ -81,7 +81,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | `tm_sysmap` task-manager provider | Rust opt-in | `qsoe-tm-sysmap` exports the existing LQ `tm_sysmap_*` ABI behind `QSOE_RUST_TM_SYSMAP=1`; `make tm-sysmap-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies LQ taskman links with C rollback and Rust-selected archives. Next gate: add boot/runtime coverage for the mapped `PSYS` page before any Rust-default RC decision. |
 | `tm_sysfs` task-manager provider | Rust opt-in | `qsoe-tm-sysfs` exports the existing `tm_sysfs.h` ABI behind `QSOE_RUST_TM_SYSFS=1`; `make tm-sysfs-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. Next gate: add a focused `/sys` runtime smoke before any Rust-default RC decision. |
 | Kernel Rust | Deferred | Current decision rejects near-term Rust in `nq` kernel code; only fixture/audit candidates are documented. |
-| C retirement | Two removals complete | `test_msgpass` is the first retired C helper and `slogger` is the first retired C production service after their Rust-default RC evidence. Future removals still require #26's checklist and a separate removal PR. |
+| C retirement | Three removals complete | `test_msgpass` is the first retired C helper; `slogger` and `pipe` are retired C production services after their Rust-default RC evidence. Future removals still require #26's checklist and a separate removal PR. |
 
 ## Current Follow-ups
 
@@ -94,12 +94,12 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
   removal PR.
 - `mkfs-qrv-rs` now has Rust-default writer RC and C rollback smokes. Keep
   `host_tools/mkfs-qrv.c` until #26's checklist and a separate removal PR.
-- `pipe-rs` now has a Rust-default release-candidate path with explicit C
-  rollback. Keep C retirement blocked until #26's checklist and a separate
-  removal PR.
 - `slogger-rs` has moved past its Rust-default release-candidate path into C
   service retirement. The old C rollback flags now fail fast; normal NQ/LQ
   images stage Rust `slogger-rs` as `/sbin/slogger`.
+- `pipe-rs` has moved past its Rust-default release-candidate path into C
+  service retirement. The old C rollback flags now fail fast; normal NQ/LQ
+  images stage Rust `pipe-rs` as `/sbin/pipe`.
 - `test_msgpass-rs` passed its Rust-default test-image release-candidate path
   with explicit C rollback, then became the first C retirement candidate. The
   current image path stages Rust only.
@@ -140,7 +140,6 @@ make pipe-smoke
 make rust-pipe-smoke
 make rust-pipe-data-smoke
 make pipe-rc-data-smoke
-make pipe-rc-rollback-smoke
 make check-tm-cpio-model
 make rust-tm-cpio-provider
 make tm-cpio-evidence

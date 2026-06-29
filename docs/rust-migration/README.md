@@ -41,52 +41,55 @@ Read in this order:
    rollback drill.
 22. `SERVICE_RANKING.md`: remaining userland service scores for Phase 8
    selection.
-23. `PIPE.md`: selected second Rust service mini-spec and C registration smoke.
-24. `PIPE_RC.md`: Rust-default `pipe` release-candidate note and C rollback
-   drill.
-25. `TEST_HELPER.md`: selected first Rust in-guest test helper and safety
+23. `PIPE.md`: selected second Rust service mini-spec, RC history, and
+   retirement status.
+24. `PIPE_RC.md`: historical Rust-default `pipe` release-candidate note and C
+   rollback drill.
+25. `PIPE_RETIREMENT.md`: C service retirement note for `pipe`, including the
+   Rust-only image path and removed rollback.
+26. `TEST_HELPER.md`: selected first Rust in-guest test helper and safety
    constraints.
-26. `TEST_MSGPASS_RC.md`: historical Rust-default `test_msgpass` test-image
+27. `TEST_MSGPASS_RC.md`: historical Rust-default `test_msgpass` test-image
    release-candidate note and C rollback drill.
-27. `TEST_MSGPASS_RETIREMENT.md`: first C helper retirement note for
+28. `TEST_MSGPASS_RETIREMENT.md`: first C helper retirement note for
    `test_msgpass`, including the Rust-only image path and removed rollback.
-28. `RETIREMENT.md`: C removal gate, current retirement status, and future
+29. `RETIREMENT.md`: C removal gate, current retirement status, and future
    removal checklist.
-29. `STATUS.md`: current C default, Rust opt-in, Rust default, and retired
+30. `STATUS.md`: current C default, Rust opt-in, Rust default, and retired
    status for tracked migration components.
-30. `RELEASE_NOTE_TEMPLATE.md`: release-note template for implementation
+31. `RELEASE_NOTE_TEMPLATE.md`: release-note template for implementation
    language changes, rollback flags, evidence, and known limitations.
-31. `TASK_MANAGER.md`: task-manager module inventory for Phase 9 candidate
+32. `TASK_MANAGER.md`: task-manager module inventory for Phase 9 candidate
    selection.
-32. `TASK_MANAGER_PROCFS.md`: selected non-critical task-manager pilot module
+33. `TASK_MANAGER_PROCFS.md`: selected non-critical task-manager pilot module
    and scope exclusions.
-33. `TASK_MANAGER_PROCFS_BOUNDARY.md`: C/Rust ABI, failure behavior, and
+34. `TASK_MANAGER_PROCFS_BOUNDARY.md`: C/Rust ABI, failure behavior, and
    rollback plan for the selected pilot.
-34. `TASK_MANAGER_PROCFS_RC.md`: Rust-default `tm_procfs` release-candidate
+35. `TASK_MANAGER_PROCFS_RC.md`: Rust-default `tm_procfs` release-candidate
    note and C rollback drill.
-35. `TASK_MANAGER_CPIO.md`: Rust opt-in task-manager CPIO archive provider
+36. `TASK_MANAGER_CPIO.md`: Rust opt-in task-manager CPIO archive provider
    and evidence gate.
-36. `TASK_MANAGER_SCRIPT.md`: Rust opt-in task-manager shebang parser provider
+37. `TASK_MANAGER_SCRIPT.md`: Rust opt-in task-manager shebang parser provider
    and evidence gate.
-37. `TASK_MANAGER_SYSCFG.md`: Rust opt-in task-manager syscfg TLV provider
+38. `TASK_MANAGER_SYSCFG.md`: Rust opt-in task-manager syscfg TLV provider
    and evidence gate.
-38. `TASK_MANAGER_CRED.md`: Rust opt-in task-manager credential policy
+39. `TASK_MANAGER_CRED.md`: Rust opt-in task-manager credential policy
    provider and evidence gate.
-39. `TASK_MANAGER_PSEUDODEV.md`: Rust opt-in LQ task-manager `/dev/null` and
+40. `TASK_MANAGER_PSEUDODEV.md`: Rust opt-in LQ task-manager `/dev/null` and
    `/dev/zero` provider and evidence gate.
-40. `TASK_MANAGER_RSRCDB.md`: Rust opt-in LQ task-manager resource DB
+41. `TASK_MANAGER_RSRCDB.md`: Rust opt-in LQ task-manager resource DB
    provider and evidence gate.
-41. `TASK_MANAGER_SYSFS.md`: Rust opt-in task-manager `/sys` provider and
+42. `TASK_MANAGER_SYSFS.md`: Rust opt-in task-manager `/sys` provider and
    evidence gate.
-42. `TASK_MANAGER_ELF.md`: Rust opt-in task-manager ELF view parser provider
+43. `TASK_MANAGER_ELF.md`: Rust opt-in task-manager ELF view parser provider
    and evidence gate.
-43. `TASK_MANAGER_FDT.md`: Rust opt-in LQ task-manager FDT parser provider and
+44. `TASK_MANAGER_FDT.md`: Rust opt-in LQ task-manager FDT parser provider and
    evidence gate.
-44. `TASK_MANAGER_SYSMAP.md`: Rust opt-in LQ task-manager sysmap page builder
+45. `TASK_MANAGER_SYSMAP.md`: Rust opt-in LQ task-manager sysmap page builder
    and evidence gate.
-45. `TASK_MANAGER_PATHMGR.md`: Rust opt-in task-manager path registry provider
+46. `TASK_MANAGER_PATHMGR.md`: Rust opt-in task-manager path registry provider
    and evidence gate.
-46. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+47. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
 47. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
 48. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,

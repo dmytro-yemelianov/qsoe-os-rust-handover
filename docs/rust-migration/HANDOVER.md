@@ -255,7 +255,7 @@ scripts/slog-readback-smoke.py --slogger-rc -t 180 -o build/slogger-rc/slog-read
 scripts/slog-readback-smoke.py --slogger-rc-rollback -t 180 -o build/slogger-rc/slog-readback-c-rollback.log
 scripts/rust-test-msgpass-smoke.sh -t 240 -o build/rust-test-msgpass/boot-smoke-lq-rust-test-msgpass-env-override.log
 make rust-pipe-link-smoke
-QSOE_RUST_PIPE=1 make pipe-artifact
+make pipe-artifact
 scripts/rust-pipe-smoke.sh -t 180 -o build/rust-pipe/boot-smoke-lq-rust-pipe.log
 scripts/rust-pipe-data-smoke.sh -t 240 -o build/rust-pipe-data/boot-smoke-lq-rust-pipe-data.log
 ```
@@ -285,8 +285,8 @@ The strict ELF audit showed:
 - Debian Trixie QEMU `10.0.8` is acceptable for QSOE/L PLIC/virtio boot smoke.
 - QSOE/N AIA MSI/MSI-X experiments still need QEMU `11.0.1+`.
 - The current Rust userland artifacts remain `no_std`, `panic=abort`, no TLS,
-  and no unwind. Retired `test_msgpass` and `slogger` are now Rust-only image
-  paths; non-retired pilots keep C rollback.
+  and no unwind. Retired `test_msgpass`, `slogger`, and `pipe` are now Rust-only
+  image paths; non-retired pilots keep C rollback.
 - Non-retired C implementations remain the rollback path until a Rust service
   has host tests, fixture parity, ELF audit, boot evidence, documented
   differences, and a separate retirement PR.
@@ -303,13 +303,14 @@ The strict ELF audit showed:
   rejects the old rollback flags. The wider suite still reports the known
   unrelated QSOE/L sync failure, so the smoke gates only the targeted
   `[msgpass]` markers and boot-to-login.
-- `pipe` has an opt-in Rust service, registration boot smoke, data-path smoke,
-  and a Rust-default RC path with C rollback. CI includes
-  `container-rust-pipe-data-smoke`, `container-pipe-rc-data-smoke`, and
-  `container-pipe-rc-rollback-smoke` on the configured `[self-hosted, X64]`
-  runner for trusted PRs and pushes. Trusted `main` run `28102250069` passed
-  the hosted-runner opt-in data-path smoke and uploaded the required pipe
-  registration, round-trip, EOF, and helper-exit markers. C remains rollback.
+- `pipe` has moved from opt-in to Rust-default RC to C production-service
+  retirement. CI keeps `container-rust-pipe-data-smoke` and
+  `container-pipe-rc-data-smoke` on the configured `[self-hosted, X64]` runner
+  for trusted PRs and pushes. Trusted `main` run `28102250069` passed the
+  hosted-runner opt-in data-path smoke and uploaded the required pipe
+  registration, round-trip, EOF, and helper-exit markers. The current branch
+  removes the C service from tracked `quser` source/image paths and rejects old
+  rollback flags.
 - `tm_procfs` now has a Rust opt-in provider behind `QSOE_RUST_TM_PROCFS=1`.
   The selector removes C `tm_procfs.o` from `libtaskman.a`, links the
   soft-float `qsoe-tm-procfs` archive into NQ/LQ taskman. `make

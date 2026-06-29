@@ -227,11 +227,13 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: helper validates IPC or sync behavior and is safe to include in
     test images.
 
-- [ ] Retire one C implementation after proving parity.
+- [x] Retire one C implementation after proving parity.
   - Acceptance: removal is approved only after at least one release candidate
     with Rust default and C rollback available.
-  - Status: blocked until a component ships through that release-candidate
-    period; see `RETIREMENT.md` for the required evidence and current status.
+  - Status: complete for the first exercises. `test_msgpass`, `slogger`, and
+    `pipe` have retired C implementations after Rust-default RC evidence; see
+    `RETIREMENT.md` for current status and the checklist future removals must
+    repeat.
 
 ## Phase 9: Task Manager Readiness
 

@@ -17,6 +17,8 @@ Selected artifacts:
   baseline set.
 - The former C `slogger` service is also retired and no longer part of the
   current C baseline set.
+- The former C `pipe` service is retired and no longer part of the current C
+  baseline set.
 
 Regenerate the compact table from a built tree:
 

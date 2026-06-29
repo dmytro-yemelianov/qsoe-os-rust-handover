@@ -76,10 +76,6 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-pipe-rc-data-smoke
 
-      - name: Run pipe C rollback data smoke
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        run: make container-pipe-rc-rollback-smoke
-
       - name: Run tm_cpio Rust opt-in evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-cpio-evidence

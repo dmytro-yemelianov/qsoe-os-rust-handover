@@ -243,28 +243,25 @@ the historical rollback drill is documented in
 
 ## Pipe Selection
 
-The opt-in Rust pipe manager can be linked and audited without changing the
-boot default:
+The retired Rust pipe manager can be linked and audited as the current
+`/sbin/pipe` implementation:
 
 ```sh
 make rust-pipe-link-smoke
 ```
 
 It builds `qsoe-pipe-rs` as a no-std staticlib and links it through the same
-QSOE userland CRT/libc path. The selected artifact target mirrors the other
-service opt-ins:
+QSOE userland CRT/libc path. The selected artifact target always stages Rust:
 
 ```sh
 make pipe-artifact
-QSOE_RUST_PIPE=1 make pipe-artifact
 ```
 
-With the default `QSOE_RUST_PIPE=0`, the target stages the existing C
-`quser/build/sbin/pipe/pipe.elf`. With `QSOE_RUST_PIPE=1`, it first links and
-audits `qsoe-pipe-rs`. Both modes write the selected binary to
-`build/rust/selected/sbin/pipe.elf`; the C service remains the boot default.
+`make pipe-artifact` links and audits `qsoe-pipe-rs`, then writes the selected
+binary to `build/rust/selected/sbin/pipe.elf`. `QSOE_RUST_PIPE=0` is rejected
+after C retirement.
 
-The opt-in LQ boot smoke replaces only `/sbin/pipe` in a temporary boot CPIO:
+The LQ boot smoke validates Rust `/sbin/pipe` registration:
 
 ```sh
 make rust-pipe-smoke
@@ -281,10 +278,10 @@ qrvfs image:
 make rust-pipe-data-smoke
 ```
 
-It keeps C as the default outside the smoke, replaces only `/sbin/pipe` in a
-temporary boot CPIO, starts the Rust pipe service from sysinit, calls normal
-libc `pipe(2)`, and verifies one write/read round trip plus EOF after closing
-the writer.
+It starts the Rust pipe service from sysinit, calls normal libc `pipe(2)`, and
+verifies one write/read round trip plus EOF after closing the writer. The
+compatibility RC target `make pipe-rc-data-smoke` now exercises the same
+Rust-only path; `QSOE_PIPE_RC_ROLLBACK=1` is rejected.
 
 ## Task Manager `/proc` Selection
 

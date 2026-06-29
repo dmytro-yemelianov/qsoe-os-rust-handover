@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Boot QSOE/L with a temporary sysinit fragment that starts the current C
+# Boot QSOE/L with a temporary sysinit fragment that starts the retired Rust
 # /sbin/pipe service, then verify that it registers /dev/pipe and reaches login.
 
 set -eu
@@ -10,7 +10,7 @@ usage() {
 usage: scripts/pipe-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
 Adds a temporary quser/conf/sysinit fragment before rebuilding and booting the
-normal QSOE/L image. The fragment starts /sbin/pipe after /usr is mounted.
+normal QSOE/L image. The fragment starts Rust /sbin/pipe after /usr is mounted.
 
 Environment:
   PIPE_SMOKE_WORKDIR   output directory, default build/pipe-smoke
@@ -76,7 +76,7 @@ source_conf="$ROOT/quser/conf"
 source_sysinit="$source_conf/sysinit"
 fragment=
 marker="pipe-smoke: started /sbin/pipe"
-registration="[pipe] registered at /dev/pipe"
+registration="[pipe-rs] /dev/pipe registered"
 
 if [ -z "$log" ]; then
     log="$workdir/boot-smoke-lq-pipe.log"
@@ -121,7 +121,7 @@ if [ "${#emu_args[@]}" -gt 0 ]; then
     boot_args+=(-- "${emu_args[@]}")
 fi
 
-echo "pipe-smoke.sh: booting C pipe smoke"
+echo "pipe-smoke.sh: booting Rust pipe smoke"
 boot_extra_patterns=$(printf '%s\n' "$marker" "$registration")
 QSOE_BOOT_VIRTIO_PATTERN="/dev/vblk0 ready" \
     QSOE_BOOT_EXTRA_PATTERNS="$boot_extra_patterns" \
@@ -134,4 +134,4 @@ for expected in "$marker" "$registration"; do
     fi
 done
 
-echo "pipe-smoke.sh: C pipe registration smoke passed"
+echo "pipe-smoke.sh: Rust pipe registration smoke passed"

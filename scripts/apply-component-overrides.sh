@@ -166,6 +166,9 @@ apply_patch_if_possible_or_present nq nq-taskman-rust-tm-pathmgr.patch \
 apply_patch_if_possible_or_present nq nq-makefile-rust-slogger-retired.patch \
     "$ROOT/nq/Makefile" \
     'SELECTED_SLOGGER_ELF ?= $(abspath ../build/rust/selected/sbin/slogger.elf)'
+apply_patch_if_possible_or_present nq nq-makefile-rust-pipe-retired.patch \
+    "$ROOT/nq/Makefile" \
+    'SELECTED_PIPE_ELF ?= $(abspath ../build/rust/selected/sbin/pipe.elf)'
 apply_patch_if_possible_or_present lq lq-makefile-rust-tm-procfs.patch \
     "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)'
@@ -211,6 +214,9 @@ apply_patch_if_possible_or_present lq lq-makefile-rust-tm-pathmgr.patch \
 apply_patch_if_possible_or_present lq lq-makefile-rust-slogger-retired.patch \
     "$ROOT/lq/Makefile" \
     'SELECTED_SLOGGER_ELF ?= $(abspath $(TOP)/..)/build/rust/selected/sbin/slogger.elf'
+apply_patch_if_possible_or_present lq lq-makefile-rust-pipe-retired.patch \
+    "$ROOT/lq/Makefile" \
+    'SELECTED_PIPE_ELF ?= $(abspath $(TOP)/..)/build/rust/selected/sbin/pipe.elf'
 apply_patch_if_possible_or_present lq lq-taskman-rust-tm-procfs.patch \
     "$ROOT/lq/taskman/Makefile" \
     'RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a'
@@ -257,6 +263,9 @@ apply_patch_if_possible_or_present quser quser-retire-test-msgpass-c.patch \
 apply_patch_if_possible_or_present quser quser-retire-slogger-c.patch \
     "$ROOT/quser/Makefile" \
     'sbin/slogger C daemon is retired'
+apply_patch_if_possible_or_present quser quser-retire-pipe-c.patch \
+    "$ROOT/quser/Makefile" \
+    'sbin/pipe C service is retired'
 apply_patch_if_possible quser quser-msgpass-lq-no-reply-skip.patch
 
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
@@ -333,8 +342,11 @@ require_before_contains "$ROOT/nq/taskman/Makefile" \
 require_line "$ROOT/nq/taskman/Makefile" 'select at most one taskman Rust provider until they share one staticlib'
 require_line "$ROOT/nq/taskman/Makefile" '$(BUILD)/taskman.elf: $(OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS) taskman.ld'
 require_line "$ROOT/nq/Makefile" 'SELECTED_SLOGGER_ELF ?= $(abspath ../build/rust/selected/sbin/slogger.elf)'
+require_line "$ROOT/nq/Makefile" 'SELECTED_PIPE_ELF ?= $(abspath ../build/rust/selected/sbin/pipe.elf)'
 require_line "$ROOT/nq/Makefile" '$(MAKE) -C .. slogger-artifact'
+require_line "$ROOT/nq/Makefile" '$(MAKE) -C .. pipe-artifact'
 require_line "$ROOT/nq/Makefile" 'SBIN_SLOG_ELF=$(SELECTED_SLOGGER_ELF)'
+require_line "$ROOT/nq/Makefile" 'SBIN_PIPE_ELF=$(SELECTED_PIPE_ELF)'
 
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PROCFS ?= 0'
@@ -361,8 +373,11 @@ require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSCFG=$(QSOE_RUST_TM_SYSCFG)'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSMAP=$(QSOE_RUST_TM_SYSMAP)'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)'
 require_line "$ROOT/lq/Makefile" 'SELECTED_SLOGGER_ELF ?= $(abspath $(TOP)/..)/build/rust/selected/sbin/slogger.elf'
+require_line "$ROOT/lq/Makefile" 'SELECTED_PIPE_ELF ?= $(abspath $(TOP)/..)/build/rust/selected/sbin/pipe.elf'
 require_line "$ROOT/lq/Makefile" '$(MAKE) -C $(abspath $(TOP)/..) slogger-artifact'
+require_line "$ROOT/lq/Makefile" '$(MAKE) -C $(abspath $(TOP)/..) pipe-artifact'
 require_line "$ROOT/lq/Makefile" 'SBIN_SLOG_ELF=$(SELECTED_SLOGGER_ELF)'
+require_line "$ROOT/lq/Makefile" 'SBIN_PIPE_ELF=$(SELECTED_PIPE_ELF)'
 require_adjacent_contains "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_CPIO=$(QSOE_RUST_TM_CPIO)' \
     'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)'
@@ -492,6 +507,11 @@ require_line "$ROOT/quser/Makefile" 'SBIN_SLOG_ELF  ?= $(abspath $(QUSER)/../bui
 require_absent "$ROOT/quser/Makefile" '              sbin/slogger \'
 require_missing "$ROOT/quser/sbin/slogger/Makefile"
 require_missing "$ROOT/quser/sbin/slogger/main.c"
+require_line "$ROOT/quser/Makefile" 'sbin/pipe C service is retired'
+require_line "$ROOT/quser/Makefile" 'SBIN_PIPE_ELF ?= $(abspath $(QUSER)/../build/rust/selected/sbin/pipe.elf)'
+require_absent "$ROOT/quser/Makefile" '              sbin/pipe \'
+require_missing "$ROOT/quser/sbin/pipe/Makefile"
+require_missing "$ROOT/quser/sbin/pipe/main.c"
 require_line "$ROOT/quser/test/suite/msgpass_test.c" '(void) ProcessTerminate(nr_pid, 0);'
 
 echo "apply-component-overrides.sh: component overrides ready"

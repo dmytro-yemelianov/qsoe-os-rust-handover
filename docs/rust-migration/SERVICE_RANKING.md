@@ -2,6 +2,10 @@
 
 Captured: 2026-06-24 01:44 CEST.
 
+Historical note: `pipe` was selected from this ranking, moved through a
+Rust-default RC, and is now a retired C service. Keep the original scores as the
+selection record.
+
 This ranking supports Phase 8 service selection. It excludes components that
 already have Rust pilots (`slogger`, `devb-virtio`) and excludes standalone
 test helpers, which are tracked separately. Higher scores mean lower migration
@@ -53,9 +57,8 @@ from the current `quser/build` artifacts in this checkout.
 
 ## Notes
 
-- `pipe` should be the default second-service candidate if the next task asks
-  for one. It has a resource-server shape similar to earlier Rust work but a
-  smaller behavior surface than storage or console drivers.
+- `pipe` was selected as the second-service candidate and has since retired its
+  C implementation.
 - `getty` and `login` are small, but they sit directly on the user login path.
   They need a smoke that covers prompt, auth failure, auth success, and shell
   handoff before implementation.

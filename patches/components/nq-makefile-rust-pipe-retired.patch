@@ -1,0 +1,30 @@
+diff --git a/Makefile b/Makefile
+--- a/Makefile
++++ b/Makefile
+@@ -102,6 +102,7 @@ QSH_ELF     = ../quser/build/qsh/qsh.elf
+ RTLD_SO     = build/rtld/ld-qsoe.so.1
+ MODPKG      = build/modpkg.cpio
+ SELECTED_SLOGGER_ELF ?= $(abspath ../build/rust/selected/sbin/slogger.elf)
++SELECTED_PIPE_ELF ?= $(abspath ../build/rust/selected/sbin/pipe.elf)
+ 
+ # Distinct object suffixes so `foo.c` and `foo.S` don't both
+ # produce `foo.o` and clash at link time.
+@@ -237,6 +238,9 @@ $(MODPKG): $(TASKMAN_BIN) $(LIBC_SO) $(QSH_ELF) $(RTLD_SO) FORCE
+ 	+@$(MAKE) -C .. slogger-artifact \
+ 	    LIBC_SO=$(abspath $(LIBC_SO)) \
+ 	    SELECTED_SLOGGER_ELF=$(SELECTED_SLOGGER_ELF)
++	+@$(MAKE) -C .. pipe-artifact \
++	    LIBC_SO=$(abspath $(LIBC_SO)) \
++	    SELECTED_PIPE_ELF=$(SELECTED_PIPE_ELF)
+ 	+@$(MAKE) -C ../quser cpio \
+ 	    MODPKG_CPIO=$(abspath $(MODPKG)) \
+ 	    LIBC_SO=$(abspath $(LIBC_SO)) \
+@@ -244,6 +248,7 @@ $(MODPKG): $(TASKMAN_BIN) $(LIBC_SO) $(QSH_ELF) $(RTLD_SO) FORCE
+ 	    DYNLIBC_SO=$(abspath $(LIBC_SO)) \
+ 	    EXTRA_ROOT_FILES="$(abspath $(TASKMAN_BIN))" \
+-	    SBIN_SLOG_ELF=$(SELECTED_SLOGGER_ELF)
++	    SBIN_SLOG_ELF=$(SELECTED_SLOGGER_ELF) \
++	    SBIN_PIPE_ELF=$(SELECTED_PIPE_ELF)
+ 
+ $(KERNEL): $(OBJS) $(LDSCRIPT)
+ 	@echo "  LINK  $@"
