@@ -166,7 +166,7 @@ function normalizeIssueRoadmap(issues) {
     statusSummary: {
       trackedComponents: components.length,
       rustDefaultRcComponents: components.filter((component) => component.rustDefault).length,
-      rustOptInOnlyImplementations: components.filter((component) => component.currentState === "mixed").length,
+      rustOptInOnlyImplementations: components.filter(isRustOptInOnly).length,
       retiredCComponents: components.filter((component) => component.retired).length
     },
     sourceIssueCount: items.length,
@@ -367,7 +367,7 @@ function renderComponentCard(component) {
   const tags = el("div", "tag-row");
   tags.append(
     el("span", "tag", component.cDefault ? "C default" : "C not default"),
-    el("span", "tag", component.rustDefault ? "Rust default RC" : "Rust opt-in"),
+    el("span", "tag", implementationBadge(component)),
     el("span", `tag risk-${slug(component.risk)}`, `Risk: ${component.risk}`),
     issueLink(component.issue)
   );
@@ -593,6 +593,23 @@ function componentScore(component) {
     return 20;
   }
   return 0;
+}
+
+function isRustOptInOnly(component) {
+  return component.rustOptIn && !component.rustDefault && !component.retired;
+}
+
+function implementationBadge(component) {
+  if (component.retired) {
+    return "C retired";
+  }
+  if (component.rustDefault) {
+    return "Rust default RC";
+  }
+  if (component.rustOptIn) {
+    return "Rust opt-in";
+  }
+  return "C only";
 }
 
 function latestIssueUpdate(items) {

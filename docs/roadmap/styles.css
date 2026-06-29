@@ -398,6 +398,7 @@ main {
 }
 
 .bar-fill.risk-mixed,
+.bar-fill.risk-rust-opt-in,
 .bar-fill.risk-needed {
   background: linear-gradient(90deg, var(--purple), var(--blue));
 }
@@ -509,6 +510,10 @@ select:focus {
 }
 
 .state.mixed {
+  background: var(--teal);
+}
+
+.state.rust-opt-in {
   background: var(--teal);
 }
 
