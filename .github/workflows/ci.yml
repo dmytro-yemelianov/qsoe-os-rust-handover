@@ -96,6 +96,10 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-elf-evidence
 
+      - name: Run tm_elf Rust runtime smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-tm-elf-runtime-smoke
+
       - name: Run tm_fdt Rust opt-in evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-fdt-evidence
@@ -149,6 +153,7 @@ jobs:
             build/tm-script-runtime-smoke/*.log
             build/tm-elf-evidence/**/*.log
             build/tm-elf-evidence/**/*.txt
+            build/tm-elf-runtime-smoke/*.log
             build/tm-fdt-evidence/**/*.log
             build/tm-fdt-evidence/**/*.txt
             build/tm-pathmgr-evidence/**/*.log

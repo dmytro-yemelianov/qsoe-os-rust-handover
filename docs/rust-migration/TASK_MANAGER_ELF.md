@@ -62,6 +62,7 @@ The top-level evidence target is:
 
 ```sh
 make tm-elf-evidence
+make tm-elf-runtime-smoke
 ```
 
 Multiple taskman Rust providers may be selected together. The shared
@@ -80,6 +81,7 @@ cargo clippy --manifest-path rust/Cargo.toml -p qsoe-tm-elf --features host-test
 bash -n scripts/check-tm-elf-model.sh scripts/build-rust-tm-elf-provider.sh scripts/tm-elf-evidence.sh scripts/apply-component-overrides.sh
 make rust-tm-elf-provider
 make tm-elf-evidence
+make tm-elf-runtime-smoke
 ```
 
 `make tm-elf-evidence` verified:
@@ -98,8 +100,19 @@ make tm-elf-evidence
   and the linked taskman ELFs pass the evidence script's ELF flag and section
   audit.
 
-This evidence proves ABI compatibility, archive selection, rollback, and linked
-artifact shape. It does not yet prove runtime spawn behavior under the Rust ELF
+`make tm-elf-runtime-smoke` verified the Rust-selected parser in a booted LQ
+image. The smoke injects a sysinit fragment, verifies the staged
+`/usr/bin/sysinfo` binary has a program interpreter, rebuilds QSOE/L with
+`QSOE_RUST_TM_ELF=1`, and waits for:
+
+```text
+tm-elf-runtime-smoke: /usr/bin/sysinfo dynamic ELF spawn ok
+```
+
+`/usr/bin/sysinfo` is a dynamic ELF, so successful spawn exercises
+`tm_elf_parse` for the main image plus the loader path for `rtld` and `libc`.
+This evidence proves ABI compatibility, archive selection, rollback, linked
+artifact shape, and focused dynamic ELF spawn behavior under the Rust ELF
 parser.
 
 ## C Rollback
@@ -110,6 +123,6 @@ C remains the default and rollback path:
 - `QSOE_RUST_TM_ELF=1` excludes `elf.o` and links
   the shared taskman Rust provider archive.
 
-Do not promote this provider to a Rust-default RC until loader/runtime coverage
-proves ELF-backed spawn behavior, and do not retire C until #26 is satisfied in
-a separate removal PR.
+Do not promote this provider to a Rust-default RC until a separate RC decision
+accepts this loader/runtime coverage, and do not retire C until #26 is
+satisfied in a separate removal PR.

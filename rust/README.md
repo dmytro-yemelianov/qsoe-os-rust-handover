@@ -361,6 +361,7 @@ without changing the normal taskman default:
 make check-tm-elf-model
 make rust-tm-elf-provider
 make tm-elf-evidence
+make tm-elf-runtime-smoke
 ```
 
 With the default `QSOE_RUST_TM_ELF=0`, NQ and LQ taskman link the existing
@@ -368,6 +369,12 @@ C `elf.o`. With `QSOE_RUST_TM_ELF=1`, the component Makefile selector omits
 C `elf.o`, builds `qsoe-tm-elf` for `riscv64imac-unknown-none-elf`, and links
 `libqsoe_tm_elf.a` into taskman. Segment mapping, dynamic-linker handling,
 relocation, process tables, and seL4 invocation code remain C.
+
+`make tm-elf-runtime-smoke` boots QSOE/L with Rust `tm_elf` selected, verifies
+the staged `/usr/bin/sysinfo` has a program interpreter, and runs it from
+sysinit. Because `sysinfo` is a dynamic ELF, the smoke covers Rust
+`tm_elf_parse` in the dynamic spawn path while the loader and relocation logic
+remain C.
 
 ## Task Manager FDT Parser Selection
 
