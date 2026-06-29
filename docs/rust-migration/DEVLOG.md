@@ -24,6 +24,53 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 01:30 CEST - tm_cpio Rust-Default RC
+
+Scope:
+
+- Promoted `tm_cpio` to a Rust-default release-candidate selector:
+  `QSOE_RUST_TM_CPIO ?= 1` in the umbrella, `libtaskman`, and applied NQ/LQ
+  component Makefiles.
+- Added component override patches that flip ignored NQ/LQ checkouts to the
+  new default while preserving `QSOE_RUST_TM_CPIO=0` as C rollback.
+- Added `make tm-cpio-rc-smoke` and `make tm-cpio-rc-rollback-smoke`; both
+  verify NQ/LQ `libtaskman.a` archive membership before booting the live LQ
+  CPIO symlink, file-read, and `/bin/sh` symlink-spawn probes.
+- Added CI wiring and `TASK_MANAGER_CPIO_RC.md` to record the RC window and
+  rollback drill.
+
+Commands:
+
+- `bash -n scripts/tm-cpio-rc-smoke.sh scripts/tm-cpio-runtime-smoke.sh scripts/tm-cpio-evidence.sh scripts/apply-component-overrides.sh scripts/boot-smoke.sh`
+- `make -n tm-cpio-rc-smoke tm-cpio-rc-rollback-smoke container-tm-cpio-rc-smoke container-tm-cpio-rc-rollback-smoke`
+- `patch -d nq --reverse --dry-run -p1 < patches/components/nq-taskman-rust-tm-cpio-rc-default.patch`
+- `patch -d lq --reverse --dry-run -p1 < patches/components/lq-makefile-rust-tm-cpio-rc-default.patch`
+- `patch -d lq --reverse --dry-run -p1 < patches/components/lq-taskman-rust-tm-cpio-rc-default.patch`
+- `./scripts/apply-component-overrides.sh`
+- `make tm-cpio-rc-smoke`
+- `make tm-cpio-rc-rollback-smoke`
+- `make tm-cpio-evidence`
+- `make tm-cpio-runtime-smoke`
+- `git diff --check`
+- `make check-qrvfs-rust-writer-production-root`
+- `make -C libtaskman --no-print-directory`
+
+Result:
+
+- `make tm-cpio-rc-smoke` passed with `nq-rust-default cpio.o count: 0` and
+  `lq-rust-default cpio.o count: 0`, then reached all live CPIO runtime
+  markers.
+- `make tm-cpio-rc-rollback-smoke` passed with `nq-c-rollback cpio.o count: 1`
+  and `lq-c-rollback cpio.o count: 1`, then reached the same live runtime
+  markers under `QSOE_RUST_TM_CPIO=0`.
+- The existing `tm-cpio-evidence` and `tm-cpio-runtime-smoke` gates still pass
+  after the default flip.
+
+Follow-up:
+
+- Publish the PR, wait for trusted CI, merge, and update #142 to
+  `status:rc`.
+
 ## 2026-06-30 01:12 CEST - tm_pseudodev Runtime Smoke
 
 Scope:

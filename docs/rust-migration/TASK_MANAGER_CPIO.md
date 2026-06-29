@@ -48,11 +48,11 @@ itself is not 4-byte aligned.
 
 ## Selector
 
-Normal taskman builds remain C-default:
+Normal taskman builds are in a Rust-default RC window:
 
 ```text
-QSOE_RUST_TM_CPIO=0  -> C `libtaskman/src/cpio.c` remains selected
-QSOE_RUST_TM_CPIO=1  -> Rust `qsoe-tm-cpio` staticlib is linked instead
+QSOE_RUST_TM_CPIO=1  -> Rust `qsoe-tm-cpio` provider is selected (default)
+QSOE_RUST_TM_CPIO=0  -> C `libtaskman/src/cpio.c` rollback is selected
 ```
 
 When Rust is selected, `libtaskman/Makefile` excludes `cpio.o` from
@@ -113,6 +113,18 @@ image. The fragment verifies CPIO-root symlink readlink output
 the CPIO symlink into mounted `/usr`, direct `/sbin/init` reads from the boot
 CPIO, and `/bin/sh` symlink spawn.
 
+The Rust-default RC and rollback smokes are:
+
+```sh
+make tm-cpio-rc-smoke
+make tm-cpio-rc-rollback-smoke
+```
+
+The RC smoke first builds NQ and LQ taskman in the default selector mode and
+verifies C `cpio.o` is absent from `libtaskman.a`. The rollback smoke repeats
+the same archive-membership and live runtime checks with
+`QSOE_RUST_TM_CPIO=0`, where C `cpio.o` must be present.
+
 The multi-provider link gate is:
 
 ```sh
@@ -125,9 +137,7 @@ archive, single panic handler, final taskman ELF audits, and dual-provider
 
 ## Current State
 
-`tm_cpio` is Rust opt-in only. It is not a Rust-default release candidate and
-has no C retirement approval. Runtime coverage now exists for the main
-CPIO-backed symlink, file-read, and spawn paths, so the next gate is a separate
-Rust-default RC decision. Keep `libtaskman/src/cpio.c` as the rollback
-implementation until that RC window is accepted, the global retirement
-checklist is satisfied, and a separate removal PR is reviewed.
+`tm_cpio` is a Rust-default release candidate with C rollback still available.
+It has no C retirement approval. Keep `libtaskman/src/cpio.c` as the rollback
+implementation until the global retirement checklist is satisfied and a
+separate removal PR is reviewed.

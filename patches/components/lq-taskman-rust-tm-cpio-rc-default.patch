@@ -1,0 +1,11 @@
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -40,7 +40,7 @@
+ 
+ CROSS      ?= riscv64-linux-gnu-
+ CC         := $(CROSS)gcc
+-QSOE_RUST_TM_CPIO ?= 0
++QSOE_RUST_TM_CPIO ?= 1
+ QSOE_RUST_TM_PROCFS ?= 1
+ QSOE_RUST_TM_CRED ?= 0
+ QSOE_RUST_TM_ELF ?= 0

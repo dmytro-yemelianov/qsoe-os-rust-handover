@@ -84,6 +84,14 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-cpio-runtime-smoke
 
+      - name: Run tm_cpio Rust-default RC smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-tm-cpio-rc-smoke
+
+      - name: Run tm_cpio C rollback RC smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-tm-cpio-rc-rollback-smoke
+
       - name: Run tm_cred Rust opt-in evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-cred-evidence
@@ -184,6 +192,8 @@ jobs:
             build/tm-cpio-evidence/**/*.log
             build/tm-cpio-evidence/**/*.txt
             build/tm-cpio-runtime-smoke/*.log
+            build/tm-cpio-rc/*.log
+            build/tm-cpio-rc/*.txt
             build/tm-cred-evidence/**/*.log
             build/tm-cred-evidence/**/*.txt
             build/tm-cred-runtime-smoke/*.log

@@ -1,0 +1,11 @@
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -19,7 +19,7 @@
+ CC        = $(CROSS)gcc
+ LD        = $(CROSS)ld
+ OBJCOPY   = $(CROSS)objcopy
+-QSOE_RUST_TM_CPIO ?= 0
++QSOE_RUST_TM_CPIO ?= 1
+ QSOE_RUST_TM_PROCFS ?= 1
+ QSOE_RUST_TM_CRED ?= 0
+ QSOE_RUST_TM_ELF ?= 0

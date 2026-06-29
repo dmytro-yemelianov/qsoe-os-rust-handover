@@ -73,25 +73,27 @@ Read in this order:
    `tm_procfs`, including the Rust-only taskman path and removed rollback.
 38. `TASK_MANAGER_PROVIDERS.md`: shared task-manager Rust provider archive,
    multi-provider selector model, and evidence gate.
-39. `TASK_MANAGER_CPIO.md`: Rust opt-in task-manager CPIO archive provider
+39. `TASK_MANAGER_CPIO.md`: Rust-default RC task-manager CPIO archive provider
    and evidence gate.
-40. `TASK_MANAGER_SCRIPT.md`: Rust opt-in task-manager shebang parser provider
+40. `TASK_MANAGER_CPIO_RC.md`: Rust-default `tm_cpio` release-candidate note
+   and C rollback drill.
+41. `TASK_MANAGER_SCRIPT.md`: Rust opt-in task-manager shebang parser provider
    and evidence gate.
-41. `TASK_MANAGER_SYSCFG.md`: Rust opt-in task-manager syscfg TLV provider
+42. `TASK_MANAGER_SYSCFG.md`: Rust opt-in task-manager syscfg TLV provider
    and evidence gate.
-42. `TASK_MANAGER_CRED.md`: Rust opt-in task-manager credential policy
+43. `TASK_MANAGER_CRED.md`: Rust opt-in task-manager credential policy
    provider and evidence gate.
-43. `TASK_MANAGER_PSEUDODEV.md`: Rust opt-in LQ task-manager `/dev/null` and
+44. `TASK_MANAGER_PSEUDODEV.md`: Rust opt-in LQ task-manager `/dev/null` and
    `/dev/zero` provider and evidence gate.
-44. `TASK_MANAGER_RSRCDB.md`: Rust opt-in LQ task-manager resource DB
+45. `TASK_MANAGER_RSRCDB.md`: Rust opt-in LQ task-manager resource DB
    provider and evidence gate.
-45. `TASK_MANAGER_SYSFS.md`: Rust opt-in task-manager `/sys` provider and
+46. `TASK_MANAGER_SYSFS.md`: Rust opt-in task-manager `/sys` provider and
    evidence gate.
-46. `TASK_MANAGER_ELF.md`: Rust opt-in task-manager ELF view parser provider
+47. `TASK_MANAGER_ELF.md`: Rust opt-in task-manager ELF view parser provider
    and evidence gate.
-47. `TASK_MANAGER_FDT.md`: Rust opt-in LQ task-manager FDT parser provider and
+48. `TASK_MANAGER_FDT.md`: Rust opt-in LQ task-manager FDT parser provider and
    evidence gate.
-48. `TASK_MANAGER_SYSMAP.md`: Rust opt-in LQ task-manager sysmap page builder
+49. `TASK_MANAGER_SYSMAP.md`: Rust opt-in LQ task-manager sysmap page builder
    and evidence gate.
 49. `TASK_MANAGER_PATHMGR.md`: Rust opt-in task-manager path registry provider
    and evidence gate.

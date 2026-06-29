@@ -18,7 +18,7 @@
 CROSS    ?= riscv64-linux-gnu-
 CC       := $(CROSS)gcc
 AR       := $(CROSS)ar
-QSOE_RUST_TM_CPIO ?= 0
+QSOE_RUST_TM_CPIO ?= 1
 QSOE_RUST_TM_CRED ?= 0
 QSOE_RUST_TM_ELF ?= 0
 QSOE_RUST_TM_PATHMGR ?= 0

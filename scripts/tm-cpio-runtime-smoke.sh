@@ -9,15 +9,16 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-cpio-runtime-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
-Adds a temporary quser/conf/sysinit fragment before rebuilding and booting the
-normal QSOE/L image with QSOE_RUST_TM_CPIO=1. The fragment runs after /usr is
+Adds a temporary quser/conf/sysinit fragment before rebuilding and booting a
+normal QSOE/L image with Rust tm_cpio selected. The fragment runs after /usr is
 mounted and verifies CPIO-root symlink readlink output, /etc -> /usr/conf file
 access, a direct boot-cpio file read, and /bin/sh symlink spawn.
 
 Environment:
   TM_CPIO_RUNTIME_SMOKE_WORKDIR  output directory, default build/tm-cpio-runtime-smoke
-  QSOE_RUST_TM_CPIO              set to 1; this smoke validates the Rust provider
+  QSOE_RUST_TM_CPIO              defaults to 1; set 0 only with rollback escape hatch
   QSOE_RUST_TM_PROCFS            must remain 1 after C tm_procfs retirement
+  TM_CPIO_RUNTIME_ALLOW_C        internal RC rollback escape hatch
 EOF
 }
 
@@ -75,13 +76,23 @@ if [ "$timeout_s" -le 0 ]; then
     exit 2
 fi
 
+tm_cpio_mode=
 case "${QSOE_RUST_TM_CPIO:-1}" in
     1|true|TRUE|yes|YES)
         export QSOE_RUST_TM_CPIO=1
+        tm_cpio_mode=rust-selected
         ;;
     0|false|FALSE|no|NO)
-        echo "tm-cpio-runtime-smoke.sh: this smoke validates QSOE_RUST_TM_CPIO=1" >&2
-        exit 2
+        case "${TM_CPIO_RUNTIME_ALLOW_C:-0}" in
+            1|true|TRUE|yes|YES)
+                export QSOE_RUST_TM_CPIO=0
+                tm_cpio_mode=c-rollback
+                ;;
+            *)
+                echo "tm-cpio-runtime-smoke.sh: this smoke validates QSOE_RUST_TM_CPIO=1" >&2
+                exit 2
+                ;;
+        esac
         ;;
     *)
         echo "tm-cpio-runtime-smoke.sh: QSOE_RUST_TM_CPIO must be 1" >&2
@@ -172,9 +183,9 @@ fi
 EOF
 chmod 0644 "$fragment"
 
-echo "tm-cpio-runtime-smoke.sh: rebuilding QSOE/L image with Rust tm_cpio"
+echo "tm-cpio-runtime-smoke.sh: rebuilding QSOE/L image with $tm_cpio_mode tm_cpio"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
-    QSOE_RUST_TM_CPIO=1 \
+    QSOE_RUST_TM_CPIO="$QSOE_RUST_TM_CPIO" \
     QSOE_RUST_TM_PROCFS=1
 
 boot_args=(-k lq -t "$timeout_s" -o "$log")
@@ -185,7 +196,7 @@ if [ "${#emu_args[@]}" -gt 0 ]; then
     boot_args+=(-- "${emu_args[@]}")
 fi
 
-echo "tm-cpio-runtime-smoke.sh: booting Rust tm_cpio runtime smoke"
+echo "tm-cpio-runtime-smoke.sh: booting $tm_cpio_mode tm_cpio runtime smoke"
 boot_extra_patterns=$(printf '%s\n' \
     "etc -> /usr/conf" \
     "home -> /usr/home" \

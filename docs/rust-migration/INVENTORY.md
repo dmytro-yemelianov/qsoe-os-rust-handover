@@ -24,7 +24,7 @@ excluded unless `QSOE_INDEX_SEL4=1` is set.
 | `common` | 2 | 359 | Shared CPIO helper code. Rust CPIO parsing exists, but C remains for existing callers. |
 | `host_tools` | 2 | 781 | `qrvfs-tree` and `mkfs-qrv-rs` have Rust-default RC paths with C rollback. Tracked by #136. |
 | `libc` | 447 | 43,080 | Broad runtime, syscall, stdio, allocator, string, rtld, and QSOE wrapper surface. Not a wholesale Rust target. |
-| `libtaskman` | 22 | 2,864 | Best source of host-testable task-manager modules. `tm_procfs` is retired to Rust through the shared provider archive; `tm_cpio`, `tm_cred`, `tm_elf`, `tm_pathmgr`, `tm_script`, `tm_syscfg`, and `tm_sysfs` are Rust opt-in; remaining candidates are tracked in #153. |
+| `libtaskman` | 22 | 2,864 | Best source of host-testable task-manager modules. `tm_procfs` is retired to Rust through the shared provider archive; `tm_cpio` is a Rust-default RC with C rollback; `tm_cred`, `tm_elf`, `tm_pathmgr`, `tm_script`, `tm_syscfg`, and `tm_sysfs` are Rust opt-in; remaining candidates are tracked in #153. |
 | `lq` | 90 | 17,853 | seL4 task manager, LQ libc wrappers, process, capability, path, memory, syscall, and boot glue. Pure/diagnostic slices only are candidates; LQ FDT, sysmap, pseudo-devices, and resource DB accounting are Rust opt-in. |
 | `nq` | 125 | 25,053 | Kernel, NQ libc, and NQ taskman surface. Near-term linked Rust is deferred by policy; fixture-only candidates are tracked in #155. |
 | `quser` | 121 | 40,075 | Userland services, drivers, resource-server support, shell, tests, and utilities. `test_msgpass` is the first retired C helper; `slogger`, `pipe`, and `devb-virtio` are retired C production paths; several services have Rust pilots; many remain C. |
@@ -57,7 +57,7 @@ Issue state, labels, and metadata are the source of truth for current progress.
 | `pipe` | #139 | Retired C service; Rust `pipe-rs` is always staged as `/sbin/pipe` in NQ/LQ images. |
 | `test_msgpass` | #140 | Retired C helper; Rust `test_msgpass-rs` is always staged as `/usr/bin/test_msgpass` in test images. |
 | `tm_procfs` | #141 | Retired C provider; Rust `qsoe-tm-procfs` is mandatory in taskman. |
-| `tm_cpio` | #142 | Rust opt-in provider with C rollback and focused runtime smoke; not a Rust-default RC. |
+| `tm_cpio` | #142 | Rust-default RC provider with C rollback, focused runtime smoke, and explicit RC rollback smoke. |
 | `tm_script` | #143 | Rust opt-in provider with C rollback and focused runtime smoke; not a Rust-default RC. |
 | `tm_elf` | #144 | Rust opt-in provider with C rollback and focused dynamic ELF spawn smoke; not a Rust-default RC. |
 | `tm_fdt` | #146 | Rust opt-in LQ FDT parser provider with C rollback and focused `/chosen`/syscfg runtime smoke; not a Rust-default RC. |

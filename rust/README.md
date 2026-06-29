@@ -308,26 +308,30 @@ C retirement; the prior rollback drill is documented in
 
 ## Task Manager CPIO Selection
 
-The Rust `tm_cpio` provider can be built as a soft-float taskman staticlib
-without changing the normal taskman default:
+The Rust `tm_cpio` provider is in a Rust-default RC window and can still be
+rolled back to the C taskman provider:
 
 ```sh
 make check-tm-cpio-model
 make rust-tm-cpio-provider
 make tm-cpio-evidence
 make tm-cpio-runtime-smoke
+make tm-cpio-rc-smoke
+make tm-cpio-rc-rollback-smoke
 ```
 
-With the default `QSOE_RUST_TM_CPIO=0`, NQ and LQ taskman link the existing
-C `cpio.o`. With `QSOE_RUST_TM_CPIO=1`, the component Makefile selector omits
-C `cpio.o`, builds `qsoe-tm-cpio` for `riscv64imac-unknown-none-elf`, and
-links `libqsoe_tm_cpio.a` into taskman. CPIO-backed file descriptor state,
-path dispatch, spawn, ELF loading, relocation, process tables, and seL4
-invocation code remain C.
+With the default `QSOE_RUST_TM_CPIO=1`, NQ and LQ taskman omit C `cpio.o`,
+build `qsoe-tm-cpio` for `riscv64imac-unknown-none-elf`, and link the shared
+`qsoe-tm-providers` archive into taskman. With `QSOE_RUST_TM_CPIO=0`, NQ and
+LQ taskman restore the existing C `cpio.o` rollback provider. CPIO-backed file
+descriptor state, path dispatch, spawn, ELF loading, relocation, process
+tables, and seL4 invocation code remain C.
 
 `make tm-cpio-runtime-smoke` boots QSOE/L with Rust `tm_cpio` selected and
 checks CPIO-root symlink readlink output, `/etc/passwd` through the `/etc`
 symlink, direct boot-CPIO `/sbin/init` reads, and `/bin/sh` symlink spawn.
+`make tm-cpio-rc-smoke` first audits default Rust archive selection, then runs
+the same live path; `make tm-cpio-rc-rollback-smoke` repeats it with C rollback.
 
 ## Task Manager Shebang Parser Selection
 

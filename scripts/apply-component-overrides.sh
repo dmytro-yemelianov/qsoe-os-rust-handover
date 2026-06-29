@@ -198,7 +198,7 @@ apply_patch_if_possible_or_present lq lq-makefile-rust-tm-sysfs.patch \
     'QSOE_RUST_TM_SYSFS ?= 0'
 apply_patch_if_possible_or_present lq lq-makefile-rust-tm-cpio.patch \
     "$ROOT/lq/Makefile" \
-    'QSOE_RUST_TM_CPIO ?= 0'
+    'QSOE_RUST_TM_CPIO=$(QSOE_RUST_TM_CPIO)'
 apply_patch_if_possible_or_present lq lq-makefile-rust-tm-script.patch \
     "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_SCRIPT ?= 0'
@@ -308,7 +308,17 @@ apply_patch_if_possible_or_present quser quser-pseudodev-probe.patch \
     'test/pseudodev_probe'
 apply_patch_if_possible quser quser-msgpass-lq-no-reply-skip.patch
 
-require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
+apply_patch_if_possible_or_present nq nq-taskman-rust-tm-cpio-rc-default.patch \
+    "$ROOT/nq/taskman/Makefile" \
+    'QSOE_RUST_TM_CPIO ?= 1'
+apply_patch_if_possible_or_present lq lq-makefile-rust-tm-cpio-rc-default.patch \
+    "$ROOT/lq/Makefile" \
+    'QSOE_RUST_TM_CPIO ?= 1'
+apply_patch_if_possible_or_present lq lq-taskman-rust-tm-cpio-rc-default.patch \
+    "$ROOT/lq/taskman/Makefile" \
+    'QSOE_RUST_TM_CPIO ?= 1'
+
+require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 1'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS ?= 1'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
@@ -373,7 +383,7 @@ require_line "$ROOT/nq/Makefile" 'SBIN_SLOG_ELF=$(SELECTED_SLOGGER_ELF)'
 require_line "$ROOT/nq/Makefile" 'SBIN_PIPE_ELF=$(SELECTED_PIPE_ELF)'
 require_line "$ROOT/nq/Makefile" 'SBIN_VIRTIO_ELF=$(SELECTED_VIRTIO_ELF)'
 
-require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
+require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CPIO ?= 1'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PROCFS ?= 1'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
@@ -443,7 +453,7 @@ require_adjacent_contains "$ROOT/lq/Makefile" \
 require_absent "$ROOT/lq/Makefile" 'select at most one taskman Rust provider until they share one staticlib'
 require_line "$ROOT/lq/Makefile" '$(LIBTASKMAN_A): FORCE'
 require_line "$ROOT/lq/Makefile" 'FORCE:'
-require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
+require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 1'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS ?= 1'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
