@@ -375,6 +375,7 @@ main {
 .bar-fill.risk-low,
 .bar-fill.risk-low-medium,
 .bar-fill.risk-rust-default-rc,
+.bar-fill.risk-retired,
 .bar-fill.risk-complete,
 .bar-fill.risk-complete-for-current-scope {
   background: linear-gradient(90deg, var(--green), var(--teal));
@@ -515,6 +516,10 @@ select:focus {
 
 .state.rust-opt-in {
   background: var(--teal);
+}
+
+.state.retired {
+  background: var(--green);
 }
 
 .risk-low,
