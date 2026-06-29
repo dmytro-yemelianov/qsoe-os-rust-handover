@@ -22,7 +22,7 @@ excluded unless `QSOE_INDEX_SEL4=1` is set.
 | Root | Indexed files | Approx LOC | Current migration posture |
 | --- | ---: | ---: | --- |
 | `common` | 2 | 359 | Shared CPIO helper code. Rust CPIO parsing exists, but C remains for existing callers. |
-| `host_tools` | 2 | 781 | `qrvfs-tree` is Rust-default RC; `mkfs-qrv` remains C default while `mkfs-qrv-rs` is opt-in. Tracked by #136. |
+| `host_tools` | 2 | 781 | `qrvfs-tree` and `mkfs-qrv-rs` have Rust-default RC paths with C rollback. Tracked by #136. |
 | `libc` | 447 | 43,080 | Broad runtime, syscall, stdio, allocator, string, rtld, and QSOE wrapper surface. Not a wholesale Rust target. |
 | `libtaskman` | 23 | 3,013 | Best source of host-testable task-manager modules. `tm_procfs` is Rust-default RC; more candidates are tracked in #142-#153. |
 | `lq` | 90 | 17,853 | seL4 task manager, LQ libc wrappers, process, capability, path, memory, syscall, and boot glue. Pure/diagnostic slices only are candidates. |
@@ -51,7 +51,7 @@ Issue state, labels, and metadata are the source of truth for current progress.
 
 | Component | Issue | Current state |
 | --- | --- | --- |
-| Host qrvfs tools | #136 | Mixed: Rust-default `qrvfs-tree`; Rust writer opt-in; C writer remains production default. |
+| Host qrvfs tools | #136 | Rust-default RC for `qrvfs-tree` and `mkfs-qrv-rs`; C remains rollback and no C implementation is retired. |
 | `slogger` | #137 | Rust-default RC with C rollback. |
 | `devb-virtio` | #138 | Rust-default RC with C rollback. |
 | `pipe` | #139 | Rust-default RC with C rollback. |
@@ -65,7 +65,7 @@ be a separate removal PR after an RC window and rollback drill.
 
 | Bucket | Issues | Posture |
 | --- | --- | --- |
-| Host qrvfs writer | #136 | Continue opt-in Rust writer hardening. Next gate is a default-writer RC with C rollback. |
+| Host qrvfs writer | #136 | Rust-default RC complete once `MKFS_QRV_RC.md` evidence is merged. Keep C rollback until #26. |
 | Task-manager pure or diagnostic modules | #142-#153 | Candidate backlog. Prefer host-tested modules that avoid direct seL4 invocations, spawn, capability ownership, relocation writes, and loader admission. |
 | Spawn, capability, relocation, and loader paths | #154 | Deferred. These paths are load-bearing for process creation and teardown. |
 | Kernel Rust | #155 | Deferred. Current policy allows documentation and fixtures only. |
@@ -89,8 +89,8 @@ a scoped candidate and acceptance criteria.
 
 ## Next Recommended Issue Work
 
-1. Keep #136 as the active component work item until Rust `mkfs-qrv-rs` has a
-   default-writer RC with rollback.
+1. Keep #136 open only until its issue metadata records the `mkfs-qrv-rs`
+   Rust-default RC evidence.
 2. Use #142-#153 for small task-manager pilots. Prefer `tm_log`, `tm_cred`, or
    another low-risk pure module before touching path manager or ELF-adjacent
    loader inputs.

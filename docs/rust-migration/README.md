@@ -16,56 +16,58 @@ Read in this order:
 5. `HOST_TOOLS.md`: host-tool behavior and generated fixture checks.
 6. `TREEQRVFS_RC.md`: Rust-default host `treeqrvfs` inspector
    release-candidate note and C rollback drill.
-7. `TOOLCHAIN.md`: Debian container toolchain for source builds and Rust link
-   smokes.
-8. `INDEXING.md`: C source indexing, compile database, and clangd workflow.
-9. `INVENTORY.md`: OS-wide C inventory, issue-backed migration ledger, and
-   remaining translation buckets.
-10. `ELF_BASELINE.md`: representative C userland ELF baseline for Rust
-   comparison.
-11. `RUST_SPIKE.md`: Rust toolchain scaffold and minimal link-smoke contract.
-12. `BINDINGS.md`: current Rust ABI, FFI, and resource-server binding scope.
-13. `WORKFLOW.md`: Rust edit-loop, quality, ABI, and deep-check workflow.
-14. `UNSAFE_REVIEW.md`: unsafe-code review checklist for Rust migration PRs.
-15. `SLOGGER.md`: current C `slogger` behavior and Rust pilot acceptance.
-16. `SLOGGER_BOOT_COMPARE.md`: C vs Rust `slogger` boot-log comparison.
-17. `SLOGGER_RC.md`: Rust-default `slogger` release-candidate note and C
-   rollback drill.
-18. `VIRTIO_BLOCK.md`: current C `devb-virtio` behavior and Rust pilot
-   acceptance contract.
-19. `VIRTIO_RC.md`: Rust-default `devb-virtio` release-candidate note and C
-   rollback drill.
-20. `SERVICE_RANKING.md`: remaining userland service scores for Phase 8
-   selection.
-21. `PIPE.md`: selected second Rust service mini-spec and C registration smoke.
-22. `PIPE_RC.md`: Rust-default `pipe` release-candidate note and C rollback
-   drill.
-23. `TEST_HELPER.md`: selected first Rust in-guest test helper and safety
-   constraints.
-24. `TEST_MSGPASS_RC.md`: Rust-default `test_msgpass` test-image
+7. `MKFS_QRV_RC.md`: Rust-default host `mkfs-qrv-rs` writer
    release-candidate note and C rollback drill.
-25. `RETIREMENT.md`: C removal gate, current retirement status, and future
-   removal checklist.
-26. `STATUS.md`: current C default, Rust opt-in, Rust default, and retired
-   status for tracked migration components.
-27. `RELEASE_NOTE_TEMPLATE.md`: release-note template for implementation
-   language changes, rollback flags, evidence, and known limitations.
-28. `TASK_MANAGER.md`: task-manager module inventory for Phase 9 candidate
+8. `TOOLCHAIN.md`: Debian container toolchain for source builds and Rust link
+   smokes.
+9. `INDEXING.md`: C source indexing, compile database, and clangd workflow.
+10. `INVENTORY.md`: OS-wide C inventory, issue-backed migration ledger, and
+   remaining translation buckets.
+11. `ELF_BASELINE.md`: representative C userland ELF baseline for Rust
+   comparison.
+12. `RUST_SPIKE.md`: Rust toolchain scaffold and minimal link-smoke contract.
+13. `BINDINGS.md`: current Rust ABI, FFI, and resource-server binding scope.
+14. `WORKFLOW.md`: Rust edit-loop, quality, ABI, and deep-check workflow.
+15. `UNSAFE_REVIEW.md`: unsafe-code review checklist for Rust migration PRs.
+16. `SLOGGER.md`: current C `slogger` behavior and Rust pilot acceptance.
+17. `SLOGGER_BOOT_COMPARE.md`: C vs Rust `slogger` boot-log comparison.
+18. `SLOGGER_RC.md`: Rust-default `slogger` release-candidate note and C
+   rollback drill.
+19. `VIRTIO_BLOCK.md`: current C `devb-virtio` behavior and Rust pilot
+   acceptance contract.
+20. `VIRTIO_RC.md`: Rust-default `devb-virtio` release-candidate note and C
+   rollback drill.
+21. `SERVICE_RANKING.md`: remaining userland service scores for Phase 8
    selection.
-29. `TASK_MANAGER_PROCFS.md`: selected non-critical task-manager pilot module
+22. `PIPE.md`: selected second Rust service mini-spec and C registration smoke.
+23. `PIPE_RC.md`: Rust-default `pipe` release-candidate note and C rollback
+   drill.
+24. `TEST_HELPER.md`: selected first Rust in-guest test helper and safety
+   constraints.
+25. `TEST_MSGPASS_RC.md`: Rust-default `test_msgpass` test-image
+   release-candidate note and C rollback drill.
+26. `RETIREMENT.md`: C removal gate, current retirement status, and future
+   removal checklist.
+27. `STATUS.md`: current C default, Rust opt-in, Rust default, and retired
+   status for tracked migration components.
+28. `RELEASE_NOTE_TEMPLATE.md`: release-note template for implementation
+   language changes, rollback flags, evidence, and known limitations.
+29. `TASK_MANAGER.md`: task-manager module inventory for Phase 9 candidate
+   selection.
+30. `TASK_MANAGER_PROCFS.md`: selected non-critical task-manager pilot module
    and scope exclusions.
-30. `TASK_MANAGER_PROCFS_BOUNDARY.md`: C/Rust ABI, failure behavior, and
+31. `TASK_MANAGER_PROCFS_BOUNDARY.md`: C/Rust ABI, failure behavior, and
    rollback plan for the selected pilot.
-31. `TASK_MANAGER_PROCFS_RC.md`: Rust-default `tm_procfs` release-candidate
+32. `TASK_MANAGER_PROCFS_RC.md`: Rust-default `tm_procfs` release-candidate
    note and C rollback drill.
-32. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+33. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
-33. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
-34. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+34. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
+35. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-35. `PLAN.md`: phased migration plan from baseline validation through possible
+36. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-36. `TASKS.md`: executable backlog with acceptance criteria.
+37. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust

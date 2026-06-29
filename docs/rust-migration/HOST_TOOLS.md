@@ -147,6 +147,8 @@ It provides:
 - An opt-in live-image smoke that selects Rust `mkfs-qrv-rs` for the qrvfs
   image, boots QSOE/L from the resulting virtio disk, mounts `/usr`, and reads
   `/usr/conf/passwd`.
+- A Rust-default writer RC smoke and C writer rollback smoke for the same
+  mounted `/usr` file-read path.
 
 Run:
 
@@ -154,6 +156,8 @@ Run:
 make check-qrvfs-rust-writer-fixture
 make check-qrvfs-rust-writer-production-root
 make rust-mkfs-qrv-live-smoke
+make mkfs-qrv-rc-live-smoke
+make mkfs-qrv-rc-rollback-smoke
 ```
 
 The live smoke succeeds when the boot log contains the guest marker
@@ -163,9 +167,10 @@ The live smoke succeeds when the boot log contains the guest marker
 This is not a production writer replacement. The C `mkfs-qrv` remains the
 default image writer for `fsqrv-image`, NVMe population, virtio image
 generation, and rollback. Set `QSOE_RUST_MKFS_QRV=1` to select Rust
-`mkfs-qrv-rs` for qrvfs image construction. The Rust writer still needs a
-default-writer release-candidate path with explicit C rollback before it can
-replace the default C writer.
+`mkfs-qrv-rs` for qrvfs image construction. The Rust-default RC path is
+`make mkfs-qrv-rc-live-smoke`; the rollback drill is
+`make mkfs-qrv-rc-rollback-smoke`. C removal still requires the retirement
+checklist and a separate removal PR.
 
 ## Rust qrvfs Inspection Baseline
 

@@ -30,6 +30,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
 .PHONY: all prepare component-overrides clean nvme nvme-populate virtio fsqrv-image tree \
         treeqrvfs-artifact treeqrvfs-rc-smoke treeqrvfs-rc-rollback-smoke \
         rust-mkfs-qrv-artifact rust-mkfs-qrv-live-smoke \
+        mkfs-qrv-rc-live-smoke mkfs-qrv-rc-rollback-smoke \
         check-host-tools check-qrvfs-fixture check-qrvfs-rust-fixture \
         check-qrvfs-rust-writer-fixture \
         check-qrvfs-rust-writer-production-root \
@@ -71,6 +72,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-virtio-boot-smoke \
         container-virtio-rc-file-smoke container-virtio-rc-rollback-smoke \
         container-rust-mkfs-qrv-live-smoke \
+        container-mkfs-qrv-rc-live-smoke container-mkfs-qrv-rc-rollback-smoke \
         container-rust-slog-readback-smoke container-slogger-rc-boot-smoke \
         container-slogger-rc-readback-smoke container-slogger-rc-rollback-smoke \
         container-rust-test-msgpass-smoke \
@@ -354,6 +356,12 @@ rust-virtio-file-smoke:
 rust-mkfs-qrv-live-smoke:
 	@scripts/rust-mkfs-qrv-live-smoke.sh
 
+mkfs-qrv-rc-live-smoke:
+	@scripts/mkfs-qrv-rc-live-smoke.sh
+
+mkfs-qrv-rc-rollback-smoke:
+	@MKFS_QRV_RC_ROLLBACK=1 scripts/mkfs-qrv-rc-live-smoke.sh
+
 virtio-rc-file-smoke:
 	@scripts/virtio-rc-file-smoke.sh
 
@@ -498,6 +506,12 @@ container-virtio-rc-rollback-smoke:
 
 container-rust-mkfs-qrv-live-smoke:
 	@scripts/container-toolchain.sh run make rust-mkfs-qrv-live-smoke
+
+container-mkfs-qrv-rc-live-smoke:
+	@scripts/container-toolchain.sh run make mkfs-qrv-rc-live-smoke
+
+container-mkfs-qrv-rc-rollback-smoke:
+	@scripts/container-toolchain.sh run make mkfs-qrv-rc-rollback-smoke
 
 container-rust-slog-readback-smoke:
 	@scripts/container-toolchain.sh run make rust-slog-readback-smoke
