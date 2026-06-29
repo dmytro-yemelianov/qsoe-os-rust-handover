@@ -528,6 +528,7 @@ without changing the normal taskman default:
 make check-tm-sysfs-model
 make rust-tm-sysfs-provider
 make tm-sysfs-evidence
+make tm-sysfs-runtime-smoke
 ```
 
 With the default `QSOE_RUST_TM_SYSFS=0`, NQ and LQ taskman link the existing
@@ -536,6 +537,11 @@ omits C `tm_sysfs.o`, builds `qsoe-tm-sysfs` for
 `riscv64imac-unknown-none-elf`, and links `libqsoe_tm_sysfs.a` into taskman.
 Sysmap/syscfg discovery, init path selection, open/read/readdir dispatch, IPC
 decoding, process tables, and seL4 invocation code remain C.
+
+`make tm-sysfs-runtime-smoke` boots QSOE/L with Rust `tm_sysfs` selected,
+verifies the Rust-selected `libtaskman.a` omits C `tm_sysfs.o`, and checks a
+sysinit child can enumerate `/sys` plus read `board`, `builddate`, `cmdline`,
+`osname`, and `version`.
 
 Do not set more than one of `QSOE_RUST_TM_CPIO=1`,
 `QSOE_RUST_TM_CRED=1`, `QSOE_RUST_TM_ELF=1`,
