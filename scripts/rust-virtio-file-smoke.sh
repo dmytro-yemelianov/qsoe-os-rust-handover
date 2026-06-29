@@ -136,7 +136,8 @@ if [ "${#emu_args[@]}" -gt 0 ]; then
 fi
 
 echo "rust-virtio-file-smoke.sh: booting $virtio_mode virtio with temporary /usr file-read fragment"
-"$ROOT/scripts/rust-virtio-boot-smoke.sh" "${boot_args[@]}"
+QSOE_BOOT_EXTRA_PATTERNS="$marker" \
+    "$ROOT/scripts/rust-virtio-boot-smoke.sh" "${boot_args[@]}"
 
 if ! grep -Fq "$marker" "$log"; then
     echo "rust-virtio-file-smoke.sh: missing marker in $log: $marker" >&2

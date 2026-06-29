@@ -29,6 +29,8 @@ Environment:
                               "[slogger] alive"
   QSOE_BOOT_VIRTIO_PATTERN    LQ virtio block milestone; defaults to
                               "devb-virtio: /dev/vblk0 ready"
+  QSOE_BOOT_EXTRA_PATTERNS    optional newline-separated milestones to wait
+                              for before stopping QEMU
 EOF
 }
 
@@ -138,6 +140,15 @@ else
     )
 fi
 
+if [ -n "${QSOE_BOOT_EXTRA_PATTERNS:-}" ]; then
+    while IFS= read -r pattern; do
+        [ -n "$pattern" ] || continue
+        patterns+=("$pattern")
+    done <<EOF
+$QSOE_BOOT_EXTRA_PATTERNS
+EOF
+fi
+
 all_patterns_seen() {
     local p
     for p in "${patterns[@]}"; do
@@ -199,7 +210,7 @@ while kill -0 "$pid" >/dev/null 2>&1; do
 done
 
 if [ "$success" -eq 1 ]; then
-    echo "boot-smoke.sh: boot reached login prompt"
+    echo "boot-smoke.sh: boot milestones reached"
     print_missing_patterns
     if [ "$keep_running" -eq 0 ]; then
         cleanup

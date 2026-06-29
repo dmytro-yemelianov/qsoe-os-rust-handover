@@ -355,15 +355,19 @@ if [ "${#emu_args[@]}" -gt 0 ]; then
 fi
 
 echo "rust-pipe-data-smoke.sh: booting $pipe_mode pipe data smoke"
-FSQRV_BINS="$fsqrv_bins" \
-    QSOE_BOOT_VIRTIO_PATTERN="/dev/vblk0 ready" \
-    "$ROOT/scripts/boot-smoke.sh" "${boot_args[@]}"
-
-for expected in \
+expected_markers=(
     "$registration" \
     "$round_trip" \
     "$eof_marker" \
-    "$exit_marker"; do
+    "$exit_marker"
+)
+boot_extra_patterns=$(printf '%s\n' "${expected_markers[@]}")
+FSQRV_BINS="$fsqrv_bins" \
+    QSOE_BOOT_VIRTIO_PATTERN="/dev/vblk0 ready" \
+    QSOE_BOOT_EXTRA_PATTERNS="$boot_extra_patterns" \
+    "$ROOT/scripts/boot-smoke.sh" "${boot_args[@]}"
+
+for expected in "${expected_markers[@]}"; do
     if ! log_has_marker "$expected"; then
         echo "rust-pipe-data-smoke.sh: missing marker in $log: $expected" >&2
         exit 1

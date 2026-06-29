@@ -178,11 +178,6 @@ if [ "${#emu_args[@]}" -gt 0 ]; then
     boot_args+=(-- "${emu_args[@]}")
 fi
 
-echo "rust-test-msgpass-smoke.sh: booting $msgpass_mode test_msgpass suite smoke"
-FSQRV_BINS="$fsqrv_bins" \
-    QSOE_BOOT_SLOGGER_PATTERN="fs-qrv: mounted qrvfs at /usr" \
-    "$ROOT/scripts/boot-smoke.sh" "${boot_args[@]}"
-
 expected_markers=(
     "PASS  msgpass: resolve /dev/msgpass" \
     "PASS  msgpass: 4MB-2 round-trip" \
@@ -194,6 +189,13 @@ expected_markers=(
 if [ "$msgpass_mode" = rust ]; then
     expected_markers=("[test_msgpass-rs] alive" "${expected_markers[@]}")
 fi
+boot_extra_patterns=$(printf '%s\n' "${expected_markers[@]}")
+
+echo "rust-test-msgpass-smoke.sh: booting $msgpass_mode test_msgpass suite smoke"
+FSQRV_BINS="$fsqrv_bins" \
+    QSOE_BOOT_SLOGGER_PATTERN="fs-qrv: mounted qrvfs at /usr" \
+    QSOE_BOOT_EXTRA_PATTERNS="$boot_extra_patterns" \
+    "$ROOT/scripts/boot-smoke.sh" "${boot_args[@]}"
 
 for expected in "${expected_markers[@]}"; do
     if ! log_has_marker "$expected"; then

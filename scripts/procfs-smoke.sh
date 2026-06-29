@@ -132,7 +132,15 @@ if [ "${#emu_args[@]}" -gt 0 ]; then
 fi
 
 echo "procfs-smoke.sh: booting selected procfs smoke"
+boot_extra_patterns=$(printf '%s\n' \
+    "$ls_marker" \
+    "$info_marker" \
+    "pid: 1" \
+    "ppid: 1" \
+    "state: alive" \
+    "name: taskman")
 QSOE_BOOT_VIRTIO_PATTERN="/dev/vblk0 ready" \
+    QSOE_BOOT_EXTRA_PATTERNS="$boot_extra_patterns" \
     "$ROOT/scripts/boot-smoke.sh" "${boot_args[@]}"
 
 for expected in \

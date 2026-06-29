@@ -175,7 +175,9 @@ if [ "${#emu_args[@]}" -gt 0 ]; then
 fi
 
 echo "rust-pipe-smoke.sh: booting Rust pipe smoke"
+boot_extra_patterns=$(printf '%s\n' "$marker" "$registration")
 QSOE_BOOT_VIRTIO_PATTERN="/dev/vblk0 ready" \
+    QSOE_BOOT_EXTRA_PATTERNS="$boot_extra_patterns" \
     "$ROOT/scripts/boot-smoke.sh" "${boot_args[@]}"
 
 for expected in "$marker" "$registration"; do
