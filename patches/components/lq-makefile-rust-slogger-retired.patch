@@ -1,0 +1,28 @@
+diff --git a/Makefile b/Makefile
+index e556c60..ec0f380 100644
+--- a/Makefile
++++ b/Makefile
+@@ -104,6 +104,7 @@ RTLD_SO         := $(RTLD_BUILD)/ld-qsoe.so.1
+ QUSER         := $(abspath $(TOP)/..)/quser
+ MODPKG_CPIO   := $(QUSER)/build/modpkg.cpio
+ export MODPKG_CPIO
++SELECTED_SLOGGER_ELF ?= $(abspath $(TOP)/..)/build/rust/selected/sbin/slogger.elf
+ 
+ # taskman.elf is board-independent (the seL4 API it builds against is the
+ # same on every platform) and therefore built once and shared.
+@@ -570,10 +571,14 @@ $(GEN)/qsoe/sys_version.h: $(wildcard .git/HEAD .git/index)
+ 
+ # Always re-enter quser's submake; it owns its own incremental discipline.
+ $(MODPKG_CPIO): $(LIBC_SO) $(LIBC_CRT0) $(RTLD_SO)
++	+$(MAKE) -C $(abspath $(TOP)/..) slogger-artifact \
++	    LIBC_SO=$(LIBC_SO) \
++	    SELECTED_SLOGGER_ELF=$(SELECTED_SLOGGER_ELF)
+ 	+$(MAKE) -C $(QUSER) cpio \
+ 	    LIBC_SO=$(LIBC_SO) \
+ 	    RTLD_SO=$(RTLD_SO) \
+-	    DYNLIBC_SO=$(LIBC_SO)
++	    DYNLIBC_SO=$(LIBC_SO) \
++	    SBIN_SLOG_ELF=$(SELECTED_SLOGGER_ELF)
+ 
+ clean:
+ 	rm -rf $(BUILD)

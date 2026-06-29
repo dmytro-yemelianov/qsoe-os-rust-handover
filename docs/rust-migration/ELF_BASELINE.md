@@ -1,6 +1,6 @@
 # QSOE C Userland ELF Baseline
 
-Captured: 2026-06-23 20:04 EEST.
+Captured: 2026-06-29 18:45 CEST.
 
 This baseline records representative C userland ELF properties for comparison
 with future Rust artifacts. It is not a complete release inventory; it focuses
@@ -8,7 +8,6 @@ on binaries relevant to early migration work and smoke coverage.
 
 Selected artifacts:
 
-- `slogger`: preferred first Rust service pilot.
 - `devb-virtio`: later driver pilot.
 - `fs-qrv`: filesystem server and parser-heavy behavior.
 - `qsh`: large shell baseline and high-relocation example.
@@ -16,6 +15,8 @@ Selected artifacts:
 - `test_syncspace`, `suite`: in-guest test helpers. The former C
   `test_msgpass` helper is retired and no longer part of the current C
   baseline set.
+- The former C `slogger` service is also retired and no longer part of the
+  current C baseline set.
 
 Regenerate the compact table from a built tree:
 
@@ -37,7 +38,6 @@ by git. The checked-in table below is the reviewable baseline summary.
 
 | Artifact | Interpreter | Needed | Relocations | Undefined | TLS | Unwind |
 | --- | --- | --- | --- | ---: | --- | --- |
-| `quser/build/sbin/slogger/slogger.elf` | `/lib/ld-qsoe.so.1` | `libc.so` | `R_RISCV_64=1,R_RISCV_JUMP_SLOT=10` | 24 | no | yes |
 | `quser/build/dev/virtio/devb-virtio.elf` | `/lib/ld-qsoe.so.1` | `libc.so` | `R_RISCV_64=1,R_RISCV_JUMP_SLOT=19` | 42 | no | yes |
 | `quser/build/fs/qrv/fs-qrv.elf` | `/lib/ld-qsoe.so.1` | `libc.so` | `R_RISCV_64=1,R_RISCV_JUMP_SLOT=25` | 54 | no | yes |
 | `quser/build/qsh/qsh.elf` | `/lib/ld-qsoe.so.1` | `libc.so` | `R_RISCV_64=186,R_RISCV_JUMP_SLOT=66` | 138 | no | yes |

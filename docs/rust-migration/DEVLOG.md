@@ -24,6 +24,63 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-29 18:45 CEST - Retired C slogger Service
+
+Scope:
+
+- Retired the C `quser/sbin/slogger` service after the `slogger-rs`
+  Rust-default RC and rollback evidence.
+- Changed `QSOE_RUST_SLOGGER` to default to Rust and reject `0` because the C
+  service is no longer staged.
+- Removed the `slogger-rc-rollback-smoke` and container rollback targets.
+- Added tracked component patches so fresh NQ/LQ CPIO builds call top-level
+  `make slogger-artifact` and pass `SBIN_SLOG_ELF` into `quser`.
+- Removed the C `slogger` source from the `quser` component override.
+- Removed the C `slogger` ELF from the default C baseline and Rust relocation
+  fixture list.
+- Updated README/status/inventory/retirement docs and added
+  `SLOGGER_RETIREMENT.md`.
+
+Commands:
+
+- `./scripts/apply-component-overrides.sh`
+- `bash -n scripts/apply-component-overrides.sh scripts/select-slogger-artifact.sh scripts/rust-slogger-boot-smoke.sh scripts/slogger-rc-boot-smoke.sh scripts/capture-elf-baseline.sh`
+- `python3 -m py_compile scripts/slog-readback-smoke.py`
+- `QSOE_RUST_SLOGGER=0 make slogger-artifact`
+- `QSOE_SLOGGER_RC_ROLLBACK=1 scripts/slogger-rc-boot-smoke.sh --prepare-only`
+- `make rust-slogger-link-smoke`
+- `make slogger-artifact`
+- `make rust-check`
+- `make -C quser cpio`
+- `make slogger-rc-readback-smoke`
+- `make`
+- `scripts/boot-smoke.sh -k lq -t 120`
+- `scripts/c-index.sh files`
+
+Result:
+
+- Component overrides replayed idempotently and verified `quser/sbin/slogger`
+  is absent.
+- The retired C selector and rollback flags fail fast with status 2 and clear
+  retirement messages.
+- `qsoe-slogger-rs` links and passes strict user ELF audit with no TLS or
+  unwind sections.
+- `make rust-check` passed for formatting, check, clippy, and host tests.
+- The Rust-only `/dev/slog` readback smoke passes and observes a boot-time
+  `pci-server:` entry through `/bin/sloginfo`.
+- Normal source build and default QSOE/L boot smoke now stage Rust
+  `slogger-rs` as `/sbin/slogger` and reach login.
+- Direct `quser` CPIO packaging succeeds when the selected Rust `slogger`
+  artifact is present.
+- The C inventory now reports 814 indexed files and 131,180 approximate LOC;
+  `quser` dropped to 125 indexed files after removing C `slogger`.
+
+Follow-up:
+
+- Merge the retirement PR, then update #137 to `status:retired` and close it.
+- Keep future production-service retirements separate and require their own RC
+  evidence plus removal PRs.
+
 ## 2026-06-29 18:06 CEST - Retired C test_msgpass Helper
 
 Scope:

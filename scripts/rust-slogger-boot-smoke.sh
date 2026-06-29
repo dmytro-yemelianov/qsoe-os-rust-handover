@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
-# Build an opt-in QSOE/L image whose boot CPIO carries slogger-rs at
-# /sbin/slogger, then boot it under QEMU and wait for login.
+# Build a QSOE/L image whose boot CPIO carries slogger-rs at /sbin/slogger,
+# then boot it under QEMU and wait for login.
 
 set -eu
 
@@ -18,11 +18,10 @@ before starting QEMU. This is intended for narrower smokes that need to
 interact with the guest directly.
 
 Environment:
-  QSOE_RUST_SLOGGER          selected artifact mode, default 1 (Rust)
-                              set 0 to prepare the C rollback image
+  QSOE_RUST_SLOGGER          must be 1 if set; C slogger is retired
   RUST_SLOGGER_WORKDIR        output directory, default build/rust-slogger
   RUST_SLOGGER_MODPKG_CPIO   output archive, default build/rust-slogger/modpkg-lq-rust-slogger.cpio
-  RUST_SLOGGER_BASE_CPIO     intermediate C archive, default build/rust-slogger/modpkg-lq-c.cpio
+  RUST_SLOGGER_BASE_CPIO     intermediate archive, default build/rust-slogger/modpkg-lq-base.cpio
 EOF
 }
 
@@ -85,30 +84,27 @@ if [ "$timeout_s" -le 0 ]; then
     exit 2
 fi
 
-QSOE_RUST_SLOGGER=${QSOE_RUST_SLOGGER:-1}
-case "$QSOE_RUST_SLOGGER" in
-    0|false|FALSE|no|NO)
-        slogger_mode=c
-        slogger_pattern="[slogger] alive"
-        ;;
+case "${QSOE_RUST_SLOGGER:-1}" in
     1|true|TRUE|yes|YES)
-        slogger_mode=rust
+        slogger_mode=rust-retired
         slogger_pattern="[slogger-rs] alive"
         ;;
+    0|false|FALSE|no|NO)
+        echo "rust-slogger-boot-smoke.sh: C slogger is retired" >&2
+        exit 2
+        ;;
     *)
-        echo "rust-slogger-boot-smoke.sh: QSOE_RUST_SLOGGER must be 0 or 1" >&2
+        echo "rust-slogger-boot-smoke.sh: QSOE_RUST_SLOGGER must be 1 after C retirement" >&2
         exit 2
         ;;
 esac
 
 workdir=${RUST_SLOGGER_WORKDIR:-"$ROOT/build/rust-slogger"}
-base_cpio=${RUST_SLOGGER_BASE_CPIO:-"$workdir/modpkg-lq-c.cpio"}
+base_cpio=${RUST_SLOGGER_BASE_CPIO:-"$workdir/modpkg-lq-base.cpio"}
 if [ -n "${RUST_SLOGGER_MODPKG_CPIO:-}" ]; then
     rust_cpio=$RUST_SLOGGER_MODPKG_CPIO
-elif [ "$slogger_mode" = rust ]; then
-    rust_cpio="$workdir/modpkg-lq-rust-slogger.cpio"
 else
-    rust_cpio="$workdir/modpkg-lq-c-rollback-slogger.cpio"
+    rust_cpio="$workdir/modpkg-lq-rust-slogger.cpio"
 fi
 selected_slogger="$ROOT/build/rust/selected/sbin/slogger.elf"
 lq_libc="$ROOT/lq/build/libc/libc.so"
@@ -120,7 +116,7 @@ echo "rust-slogger-boot-smoke.sh: building LQ runtime prerequisites"
 "$MAKE" -C "$ROOT/lq" libc rtld libtaskman --no-print-directory
 
 echo "rust-slogger-boot-smoke.sh: selecting $slogger_mode slogger artifact"
-QSOE_RUST_SLOGGER="$QSOE_RUST_SLOGGER" \
+QSOE_RUST_SLOGGER=1 \
     LIBC_SO="$lq_libc" \
     "$MAKE" -C "$ROOT" slogger-artifact --no-print-directory
 
@@ -132,6 +128,7 @@ fi
 echo "rust-slogger-boot-smoke.sh: building base LQ modpkg.cpio"
 "$MAKE" -C "$ROOT/quser" cpio --no-print-directory \
     MODPKG_CPIO="$base_cpio" \
+    SBIN_SLOG_ELF="$selected_slogger" \
     LIBC_SO="$lq_libc" \
     RTLD_SO="$lq_rtld" \
     DYNLIBC_SO="$lq_libc"

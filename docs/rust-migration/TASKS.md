@@ -147,8 +147,8 @@ small reviewable change unless it explicitly says otherwise.
   - Acceptance: `slogger-rs` links as a QSOE userland binary.
 
 - [x] Add build flag for Rust `slogger`.
-  - Acceptance: C `slogger` remains default; Rust version is selected by one
-    explicit make variable.
+  - Acceptance: the RC window used one explicit make variable; after
+    retirement the Rust selector is the only supported path.
 
 - [x] Boot image with Rust `slogger`.
   - Acceptance: QEMU reaches login and console logs show `slogger-rs` alive.

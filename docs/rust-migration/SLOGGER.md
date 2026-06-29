@@ -251,18 +251,18 @@ falls into the cpio rescue shell after starting `slogger` and `pci-server`.
 `/bin/sloginfo` from the rescue shell and verifies that a `pci-server:` entry is
 observable through `/dev/slog`.
 
-The same smoke can prepare and boot an opt-in image whose `/sbin/slogger`
-artifact is `slogger-rs`:
+The same smoke can prepare and boot an image whose `/sbin/slogger` artifact is
+`slogger-rs`:
 
 ```sh
 make rust-slog-readback-smoke
 ```
 
-This target keeps the C `slogger` as the default image path while proving that
-the Rust-selected service can register `/dev/slog`, store boot-time client log
-events, and return them through `sloginfo`.
+After C retirement, this target uses the same Rust artifact as the normal image
+path and proves that the Rust service can register `/dev/slog`, store
+boot-time client log events, and return them through `sloginfo`.
 
-## Rust-Default Release Candidate
+## Rust-Only Image Path
 
 The first Rust-default release-candidate image path is:
 
@@ -270,19 +270,18 @@ The first Rust-default release-candidate image path is:
 make slogger-rc-readback-smoke
 ```
 
-This target prepares an RC image whose `/sbin/slogger` defaults to
-`slogger-rs`, then runs the same `/bin/sloginfo` readback gate used by the
-opt-in smoke.
+This target prepares an image whose `/sbin/slogger` is `slogger-rs`, then runs
+the same `/bin/sloginfo` readback gate used by the direct Rust smoke.
 
-The C rollback drill is:
+The former C rollback drill was:
 
 ```sh
 make slogger-rc-rollback-smoke
 ```
 
-This keeps the C implementation available and verifies that the RC image path
-can be rebuilt with the C `/sbin/slogger` artifact. The release-candidate note
-and rollback details live in `SLOGGER_RC.md`.
+That command is historical and is now rejected because the C service is
+retired. The release-candidate evidence lives in `SLOGGER_RC.md`; the
+retirement state lives in `SLOGGER_RETIREMENT.md`.
 
 ## Rust Port Acceptance
 
@@ -302,8 +301,8 @@ Before `slogger-rs` is linked into an image:
 - `make rust-slogger-link-smoke` links `qsoe-slogger-rs` through the same QSOE
   `crt0.o` and `libc.so` userland path as the minimal Rust smoke.
 - The artifact passes `scripts/audit-elf.sh --strict-qsoe-user`.
-- C `slogger` remains the default until Rust boot smoke, Rust readback smoke,
-  and the Rust-default release-candidate gate pass.
+- C `slogger` remains retired; Rust boot smoke, Rust readback smoke, and
+  normal source builds use `slogger-rs` staged as `/sbin/slogger`.
 
 ## Open Follow-Ups
 
