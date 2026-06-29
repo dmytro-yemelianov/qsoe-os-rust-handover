@@ -63,7 +63,7 @@ Issue state, labels, and metadata are the source of truth for current progress.
 | `tm_fdt` | #146 | Rust opt-in LQ FDT parser provider with C rollback and focused `/chosen`/syscfg runtime smoke; not a Rust-default RC. |
 | `tm_syscfg` | #145 | Rust opt-in provider with C rollback and focused `/sys`/`sysinfo` runtime smoke; not a Rust-default RC. |
 | `tm_sysmap` | #147 | Rust opt-in LQ sysmap page builder provider with C rollback and focused spawned-child `PSYS` runtime smoke; not a Rust-default RC. |
-| `tm_pathmgr` | #149 | Rust opt-in path registry provider with C rollback; not a Rust-default RC. |
+| `tm_pathmgr` | #149 | Rust opt-in path registry provider with C rollback and focused runtime smoke; not a Rust-default RC. |
 | `tm_rsrcdb` | #151 | Rust opt-in LQ resource DB provider with C rollback; not a Rust-default RC. |
 | `tm_cred` | #150 | Rust opt-in provider with C rollback; not a Rust-default RC. |
 | `tm_pseudodev` | #152 | Rust opt-in LQ pseudo-device provider with C rollback; not a Rust-default RC. |

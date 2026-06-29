@@ -278,6 +278,9 @@ apply_patch_if_possible_or_present lq lq-taskman-rust-tm-shared-providers.patch 
 apply_patch_if_possible_or_present lq lq-taskman-rust-tm-procfs-retired.patch \
     "$ROOT/lq/taskman/Makefile" \
     'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
+apply_patch_if_possible_or_present lq lq-taskman-stack-32k.patch \
+    "$ROOT/lq/taskman/start.S" \
+    '    .skip 32768'
 apply_patch_if_possible lq lq-msgpass-mcs-teardown-and-bulk-copy.patch
 apply_patch_if_possible_or_present quser quser-retire-test-msgpass-c.patch \
     "$ROOT/quser/Makefile" \
@@ -291,6 +294,9 @@ apply_patch_if_possible_or_present quser quser-retire-pipe-c.patch \
 apply_patch_if_possible_or_present quser quser-retire-virtio-c.patch \
     "$ROOT/quser/Makefile" \
     'dev/virtio C block driver is retired'
+apply_patch_if_possible_or_present quser quser-pathmgr-probe.patch \
+    "$ROOT/quser/Makefile" \
+    'test/pathmgr_probe'
 apply_patch_if_possible quser quser-msgpass-lq-no-reply-skip.patch
 
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
@@ -457,6 +463,7 @@ require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_PROVIDERS_A := $(REPO_ROOT)/bu
 require_line "$ROOT/lq/taskman/Makefile" 'TASKMAN_RUST_LIBS += $(RUST_TM_PROVIDERS_A)'
 require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_PROVIDERS_A): FORCE'
 require_line "$ROOT/lq/taskman/Makefile" '$(REPO_ROOT)/scripts/build-rust-tm-providers.sh $@'
+require_line "$ROOT/lq/taskman/start.S" '    .skip 32768'
 require_line "$ROOT/lq/taskman/Makefile" 'TASKMAN_PSEUDODEV_OBJS += $(OBJDIR)/sys/devnull.o'
 require_line "$ROOT/lq/taskman/Makefile" 'TASKMAN_PSEUDODEV_OBJS += $(OBJDIR)/sys/devzero.o'
 require_line "$ROOT/lq/taskman/Makefile" '$(TASKMAN_PSEUDODEV_OBJS)'
@@ -497,6 +504,9 @@ require_missing "$ROOT/quser/dev/virtio/Makefile"
 require_missing "$ROOT/quser/dev/virtio/main.c"
 require_missing "$ROOT/quser/dev/virtio/virtio_blk.c"
 require_missing "$ROOT/quser/dev/virtio/virtio_blk.h"
+require_line "$ROOT/quser/Makefile" '              test/pathmgr_probe \'
+require_line "$ROOT/quser/test/pathmgr_probe/Makefile" 'PROGRAM := pathmgr_probe'
+require_line "$ROOT/quser/test/pathmgr_probe/main.c" 'PATHMGR_PROBE_PATH'
 require_line "$ROOT/quser/test/suite/msgpass_test.c" '(void) ProcessTerminate(nr_pid, 0);'
 
 echo "apply-component-overrides.sh: component overrides ready"

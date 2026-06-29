@@ -1,0 +1,217 @@
+diff --git a/Makefile b/Makefile
+--- a/Makefile
++++ b/Makefile
+@@ -39,6 +39,7 @@ COMPONENTS := libpci \
+               dev/sersifive \
+               dev/nvme \
+               fs/qrv \
++              test/pathmgr_probe \
+               test/syncspace \
+               test/suite
+ 
+diff --git a/test/pathmgr_probe/Makefile b/test/pathmgr_probe/Makefile
+new file mode 100644
+--- /dev/null
++++ b/test/pathmgr_probe/Makefile
+@@ -0,0 +1,11 @@
++# quser/test/pathmgr_probe/Makefile -- pathmgr runtime registration probe.
++#
++# Copyright (c) 2026 Yuri Zaporozhets <yuriz@qsoe.net>
++# SPDX-License-Identifier: Apache-2.0
++
++include ../../common.mk
++
++PROGRAM := pathmgr_probe
++SRCS    := main.c
++
++include $(QUSER)/build_prog.mk
+diff --git a/test/pathmgr_probe/main.c b/test/pathmgr_probe/main.c
+new file mode 100644
+--- /dev/null
++++ b/test/pathmgr_probe/main.c
+@@ -0,0 +1,185 @@
++/*
++ * pathmgr_probe: runtime path manager lifecycle smoke helper.
++ *
++ * The parent spawns this same binary in "child" mode.  The child creates a
++ * channel, registers /dev/pathmgr_probe, waits for a one-byte release message,
++ * replies, and exits.  The parent verifies:
++ *
++ *   - external registration can be resolved to the child pid/chid;
++ *   - duplicate registration of the same path is rejected;
++ *   - MsgSend through the resolved binding works;
++ *   - process teardown unregisters the child's path.
++ *
++ * Copyright (c) 2026 Yuri Zaporozhets <yuriz@qsoe.net>
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++#include <sched.h>
++#include <spawn.h>
++#include <stdio.h>
++#include <string.h>
++#include <sys/qsoe.h>
++#include <sys/wait.h>
++
++#define PATHMGR_PROBE_BIN       "/usr/bin/pathmgr_probe"
++#define PATHMGR_PROBE_PATH      "/dev/pathmgr_probe"
++#define PATHMGR_RESOLVE_RETRIES 100000
++#define PATHMGR_HANDLER_EXTERNAL 0u
++
++static int child_main(void)
++{
++    int chid = ChannelCreate(0);
++    if (chid < 0) {
++        printf("tm-pathmgr-runtime-smoke: child ChannelCreate failed errno=%d\n",
++               qsoe_errno);
++        return 1;
++    }
++
++    if (qsoe_pathmgr_register(PATHMGR_PROBE_PATH, chid) != 0) {
++        printf("tm-pathmgr-runtime-smoke: child register failed errno=%d\n",
++               qsoe_errno);
++        (void) ChannelDestroy(chid);
++        return 1;
++    }
++    printf("tm-pathmgr-runtime-smoke: helper registered\n");
++
++    char msg = 0;
++    int rcvid = MsgReceive(chid, &msg, sizeof msg, 0);
++    if (rcvid < 0) {
++        printf("tm-pathmgr-runtime-smoke: child MsgReceive failed errno=%d\n",
++               qsoe_errno);
++        (void) ChannelDestroy(chid);
++        return 1;
++    }
++
++    if (MsgReply(rcvid, 0, 0, 0) != 0) {
++        printf("tm-pathmgr-runtime-smoke: child MsgReply failed errno=%d\n",
++               qsoe_errno);
++        (void) ChannelDestroy(chid);
++        return 1;
++    }
++
++    (void) ChannelDestroy(chid);
++    return 0;
++}
++
++static int resolve_probe(pid_t *pid_out, int *chid_out, unsigned *kind_out)
++{
++    for (int i = 0; i < PATHMGR_RESOLVE_RETRIES; i++) {
++        if (qsoe_pathmgr_resolve(PATHMGR_PROBE_PATH, pid_out, chid_out,
++                                 kind_out) == 0)
++            return 0;
++        sched_yield();
++    }
++    return -1;
++}
++
++static int wait_until_unregistered(void)
++{
++    pid_t pid = 0;
++    int chid = 0;
++    unsigned kind = 0;
++
++    for (int i = 0; i < PATHMGR_RESOLVE_RETRIES; i++) {
++        if (qsoe_pathmgr_resolve(PATHMGR_PROBE_PATH, &pid, &chid, &kind) != 0)
++            return 0;
++        sched_yield();
++    }
++    return -1;
++}
++
++static int terminate_child(pid_t child)
++{
++    (void) ProcessTerminate(child, 1);
++    (void) waitpid(child, 0, 0);
++    return 1;
++}
++
++static int parent_main(void)
++{
++    char *const argv[] = {
++        (char *) PATHMGR_PROBE_BIN,
++        (char *) "child",
++        0,
++    };
++    char *const envp[] = { 0 };
++    pid_t child = 0;
++    int rc = posix_spawn(&child, PATHMGR_PROBE_BIN, 0, 0, argv, envp);
++    if (rc != 0 || child <= 0) {
++        printf("tm-pathmgr-runtime-smoke: spawn helper failed rc=%d\n", rc);
++        return 1;
++    }
++
++    pid_t pid = 0;
++    int chid = 0;
++    unsigned kind = 0;
++    if (resolve_probe(&pid, &chid, &kind) != 0) {
++        printf("tm-pathmgr-runtime-smoke: helper resolve failed errno=%d\n",
++               qsoe_errno);
++        return terminate_child(child);
++    }
++
++    if (pid != child || chid < 0 || kind != PATHMGR_HANDLER_EXTERNAL) {
++        printf("tm-pathmgr-runtime-smoke: helper resolve mismatch "
++               "pid=%d child=%d chid=%d kind=%u\n",
++               (int) pid, (int) child, chid, kind);
++        return terminate_child(child);
++    }
++    printf("tm-pathmgr-runtime-smoke: helper resolved\n");
++
++    int dup_chid = ChannelCreate(0);
++    if (dup_chid < 0) {
++        printf("tm-pathmgr-runtime-smoke: duplicate ChannelCreate failed errno=%d\n",
++               qsoe_errno);
++        return terminate_child(child);
++    }
++    if (qsoe_pathmgr_register(PATHMGR_PROBE_PATH, dup_chid) == 0) {
++        printf("tm-pathmgr-runtime-smoke: duplicate register unexpectedly succeeded\n");
++        (void) ChannelDestroy(dup_chid);
++        return terminate_child(child);
++    }
++    (void) ChannelDestroy(dup_chid);
++    printf("tm-pathmgr-runtime-smoke: duplicate register rejected\n");
++
++    int coid = ConnectAttach(0, pid, chid, 0, 0);
++    if (coid < 0) {
++        printf("tm-pathmgr-runtime-smoke: ConnectAttach failed errno=%d\n",
++               qsoe_errno);
++        return terminate_child(child);
++    }
++
++    char done = 0;
++    if (MsgSend(coid, &done, sizeof done, 0, 0) != 0) {
++        printf("tm-pathmgr-runtime-smoke: release MsgSend failed errno=%d\n",
++               qsoe_errno);
++        (void) ConnectDetach(coid);
++        return terminate_child(child);
++    }
++    (void) ConnectDetach(coid);
++
++    int status = -1;
++    pid_t got = waitpid(child, &status, 0);
++    if (got != child || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
++        printf("tm-pathmgr-runtime-smoke: helper wait failed "
++               "got=%d status=%d\n",
++               (int) got, status);
++        return 1;
++    }
++
++    if (wait_until_unregistered() != 0) {
++        printf("tm-pathmgr-runtime-smoke: helper unregister failed "
++               "pid=%d chid=%d kind=%u\n",
++               (int) pid, chid, kind);
++        return 1;
++    }
++    printf("tm-pathmgr-runtime-smoke: helper unregistered\n");
++    printf("tm-pathmgr-runtime-smoke: pathmgr probe ok\n");
++    return 0;
++}
++
++int main(int argc, char **argv)
++{
++    if (argc >= 2 && strcmp(argv[1], "child") == 0)
++        return child_main();
++    return parent_main();
++}

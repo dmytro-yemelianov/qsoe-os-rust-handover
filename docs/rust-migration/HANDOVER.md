@@ -354,8 +354,11 @@ The strict ELF audit showed:
   and rollback until a separate RC decision exists.
 - `tm_pathmgr` has a Rust opt-in provider behind `QSOE_RUST_TM_PATHMGR=1`. The
   selector removes C `pathmgr.o` from `libtaskman.a` and links through the
-  shared taskman Rust provider archive. C remains default and rollback until
-  open/device-registration runtime coverage and a separate RC decision exist.
+  shared taskman Rust provider archive. `make tm-pathmgr-runtime-smoke` covers
+  `/dev` PMDIR readdir, `/etc` cpio symlink file access, `/dev/console`
+  repath, dynamic helper registration, duplicate rejection, MsgSend through
+  the resolved binding, and unregister-on-exit cleanup. C remains default and
+  rollback until a separate RC decision exists.
 - `tm_sysfs` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSFS=1`. The
   selector removes C `tm_sysfs.o` from `libtaskman.a` and links through the
   shared taskman Rust provider archive. `make tm-sysfs-runtime-smoke` boots LQ

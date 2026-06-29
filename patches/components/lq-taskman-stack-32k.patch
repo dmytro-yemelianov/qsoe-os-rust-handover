@@ -1,0 +1,11 @@
+diff --git a/taskman/start.S b/taskman/start.S
+index 8b8d474..32d8907 100644
+--- a/taskman/start.S
++++ b/taskman/start.S
+@@ -45,5 +45,5 @@ _start:
+ .section .bss
+     .align 12
+ _stack_bottom:
+-    .skip 8192
++    .skip 32768
+ _stack_top:

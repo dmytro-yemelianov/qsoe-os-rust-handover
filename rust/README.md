@@ -434,6 +434,7 @@ without changing the normal taskman default:
 make check-tm-pathmgr-model
 make rust-tm-pathmgr-provider
 make tm-pathmgr-evidence
+make tm-pathmgr-runtime-smoke
 ```
 
 With the default `QSOE_RUST_TM_PATHMGR=0`, NQ and LQ taskman link the existing
@@ -442,6 +443,13 @@ Makefile selector omits C `pathmgr.o`, builds `qsoe-tm-pathmgr` for
 `riscv64imac-unknown-none-elf`, and links `libqsoe_tm_pathmgr.a` into taskman.
 Path IO dispatch, FD ownership, CPIOFS/PROCFS/SYSFS serving, device-server
 registration policy, process tables, and seL4 invocation code remain C.
+
+`make tm-pathmgr-runtime-smoke` boots QSOE/L with Rust `tm_pathmgr` selected,
+verifies C `pathmgr.o` is absent from the selected `libtaskman.a`, and checks
+runtime consumers through `/dev` readdir, `/etc` symlink file access,
+`/dev/console` repath, dynamic helper registration, duplicate registration
+rejection, MsgSend through the resolved external binding, and
+unregister-on-exit cleanup.
 
 ## Task Manager Sysmap Selection
 
