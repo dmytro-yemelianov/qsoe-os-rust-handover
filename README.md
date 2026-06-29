@@ -59,6 +59,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | `pipe` service | Rust default RC | `qsoe-pipe` host tests pass, `pipe-rs` links and audits, `make rust-pipe-smoke` boots LQ with Rust `/sbin/pipe` registered, `make rust-pipe-data-smoke` proves a libc/taskman `pipe(2)` write/read round trip, and `make pipe-rc-data-smoke` selects Rust by default with `make pipe-rc-rollback-smoke` preserving C rollback. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
 | `test_msgpass` helper | Rust default RC | `test_msgpass-rs` links, can be selected into the qrvfs test image, passes the existing suite `[msgpass]` section through `make rust-test-msgpass-smoke`, and has `make test-msgpass-rc-smoke` plus `make test-msgpass-rc-rollback-smoke` for the Rust-default test-image RC path. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
 | `tm_procfs` task-manager pilot | Rust default RC | `qsoe-tm-procfs` exports the existing C ABI behind `QSOE_RUST_TM_PROCFS=1`; `make tm-procfs-rc-smoke` selects Rust by default for the RC image and `make tm-procfs-rc-rollback-smoke` restores C. Host model tests, Rust host tests, selected NQ/LQ taskman links, `make tm-procfs-evidence`, and `/proc` smokes cover the gate. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
+| `tm_cred` task-manager provider | Rust opt-in | `qsoe-tm-cred` exports the existing `tm_cred.h` ABI behind `QSOE_RUST_TM_CRED=1`; `make tm-cred-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. Next gate: add a credential-specific runtime smoke before any Rust-default RC decision. |
 | Kernel Rust | Deferred | Current decision rejects near-term Rust in `nq` kernel code; only fixture/audit candidates are documented. |
 | C retirement | Blocked by policy | No C implementation is currently approved for removal; #26's checklist and a separate removal PR are still required for every component. |
 
@@ -115,6 +116,9 @@ make rust-pipe-smoke
 make rust-pipe-data-smoke
 make pipe-rc-data-smoke
 make pipe-rc-rollback-smoke
+make check-tm-cred-model
+make rust-tm-cred-provider
+make tm-cred-evidence
 make check-tm-procfs-model
 make rust-tm-procfs-provider
 make tm-procfs-evidence

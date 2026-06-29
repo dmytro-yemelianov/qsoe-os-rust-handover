@@ -18,6 +18,7 @@
 CROSS    ?= riscv64-linux-gnu-
 CC       := $(CROSS)gcc
 AR       := $(CROSS)ar
+QSOE_RUST_TM_CRED ?= 0
 QSOE_RUST_TM_PROCFS ?= 0
 
 O           ?= build
@@ -43,15 +44,21 @@ CFLAGS := $(ARCHFLAGS) -std=c11 -D_XOPEN_SOURCE=700 \
           -Iinclude \
           $(EXTRA_CFLAGS)
 
+ifneq ($(filter $(QSOE_RUST_TM_CRED),0 1),$(QSOE_RUST_TM_CRED))
+$(error QSOE_RUST_TM_CRED must be 0 or 1)
+endif
+
 ifneq ($(filter $(QSOE_RUST_TM_PROCFS),0 1),$(QSOE_RUST_TM_PROCFS))
 $(error QSOE_RUST_TM_PROCFS must be 0 or 1)
 endif
 
 SRCS_ALL := $(wildcard src/*.c)
-ifeq ($(QSOE_RUST_TM_PROCFS),1)
-SRCS := $(filter-out src/tm_procfs.c,$(SRCS_ALL))
-else
 SRCS := $(SRCS_ALL)
+ifeq ($(QSOE_RUST_TM_CRED),1)
+SRCS := $(filter-out src/cred.c,$(SRCS))
+endif
+ifeq ($(QSOE_RUST_TM_PROCFS),1)
+SRCS := $(filter-out src/tm_procfs.c,$(SRCS))
 endif
 OBJS := $(addprefix $(O)/,$(notdir $(SRCS:.c=.o)))
 DEPS := $(OBJS:.o=.d)

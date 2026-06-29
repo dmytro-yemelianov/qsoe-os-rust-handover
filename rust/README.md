@@ -325,6 +325,27 @@ make tm-procfs-rc-rollback-smoke
 `make tm-procfs-rc-rollback-smoke` sets `TM_PROCFS_RC_ROLLBACK=1` and verifies
 the same markers with the C provider restored.
 
+## Task Manager Credential Selection
+
+The Rust `tm_cred` provider can be built as a soft-float taskman staticlib
+without changing the normal taskman default:
+
+```sh
+make check-tm-cred-model
+make rust-tm-cred-provider
+make tm-cred-evidence
+```
+
+With the default `QSOE_RUST_TM_CRED=0`, NQ and LQ taskman link the existing
+C `cred.o`. With `QSOE_RUST_TM_CRED=1`, the component Makefile selector omits
+C `cred.o`, builds `qsoe-tm-cred` for `riscv64imac-unknown-none-elf`, and
+links `libqsoe_tm_cred.a` into taskman. Process-table ownership, IPC decoding,
+filesystem-backed path validation, and seL4 invocation code remain C.
+
+Do not set `QSOE_RUST_TM_CRED=1` and `QSOE_RUST_TM_PROCFS=1` together yet.
+Current taskman providers are separate no-std Rust staticlibs; selecting more
+than one requires a later shared taskman Rust archive.
+
 ## Parser Fuzzing
 
 Parser fuzz targets live under `rust/fuzz` and are intentionally outside the

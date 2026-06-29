@@ -57,6 +57,7 @@ Issue state, labels, and metadata are the source of truth for current progress.
 | `pipe` | #139 | Rust-default RC with C rollback. |
 | `test_msgpass` | #140 | Rust-default RC with C rollback. |
 | `tm_procfs` | #141 | Rust-default RC with C rollback. |
+| `tm_cred` | #150 | Rust opt-in provider with C rollback; not a Rust-default RC. |
 
 No tracked C implementation is retired. Retirement is governed by #26 and must
 be a separate removal PR after an RC window and rollback drill.
@@ -66,7 +67,7 @@ be a separate removal PR after an RC window and rollback drill.
 | Bucket | Issues | Posture |
 | --- | --- | --- |
 | Host qrvfs tools | #136 | Complete for current scope: `qrvfs-tree` and `mkfs-qrv-rs` have Rust-default RC paths. Keep C rollback until #26. |
-| Task-manager pure or diagnostic modules | #142-#153 | Candidate backlog. Prefer host-tested modules that avoid direct seL4 invocations, spawn, capability ownership, relocation writes, and loader admission. |
+| Task-manager pure or diagnostic modules | #142-#149, #151-#153 | Candidate backlog. Prefer host-tested modules that avoid direct seL4 invocations, spawn, capability ownership, relocation writes, and loader admission. |
 | Spawn, capability, relocation, and loader paths | #154 | Deferred. These paths are load-bearing for process creation and teardown. |
 | Kernel Rust | #155 | Deferred. Current policy allows documentation and fixtures only. |
 | First C retirement | #26 | Needed, but blocked until a chosen component satisfies the retirement checklist and a separate removal PR is prepared. |
@@ -89,7 +90,7 @@ a scoped candidate and acceptance criteria.
 
 ## Next Recommended Issue Work
 
-1. Use #142-#153 for small task-manager pilots. Prefer `tm_log`, `tm_cred`, or
-   another low-risk pure module before touching path manager or ELF-adjacent
+1. Use #142-#149 and #151-#153 for small task-manager pilots. Prefer `tm_log`
+   or another low-risk pure module before touching path manager or ELF-adjacent
    loader inputs.
 2. Keep #154, #155, and #26 policy-blocked until their stated gates change.
