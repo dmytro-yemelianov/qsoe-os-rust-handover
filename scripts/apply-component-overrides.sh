@@ -142,6 +142,9 @@ apply_patch_if_possible_or_present nq nq-taskman-rust-tm-script.patch \
 apply_patch_if_possible_or_present nq nq-taskman-rust-tm-syscfg.patch \
     "$ROOT/nq/taskman/Makefile" \
     'RUST_TM_SYSCFG_A := $(REPO_ROOT)/build/rust/tm-syscfg/libqsoe_tm_syscfg.a'
+apply_patch_if_possible_or_present nq nq-taskman-rust-tm-elf.patch \
+    "$ROOT/nq/taskman/Makefile" \
+    'RUST_TM_ELF_A := $(REPO_ROOT)/build/rust/tm-elf/libqsoe_tm_elf.a'
 apply_patch_if_possible_or_present lq lq-makefile-rust-tm-procfs.patch \
     "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)'
@@ -172,6 +175,9 @@ apply_patch_if_possible_or_present lq lq-makefile-rust-tm-syscfg.patch \
 apply_patch_if_possible_or_present lq lq-makefile-rust-tm-rsrcdb.patch \
     "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_RSRCDB ?= 0'
+apply_patch_if_possible_or_present lq lq-makefile-rust-tm-elf.patch \
+    "$ROOT/lq/Makefile" \
+    'QSOE_RUST_TM_ELF ?= 0'
 apply_patch_if_possible_or_present lq lq-taskman-rust-tm-procfs.patch \
     "$ROOT/lq/taskman/Makefile" \
     'RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a'
@@ -199,29 +205,36 @@ apply_patch_if_possible_or_present lq lq-taskman-rust-tm-syscfg.patch \
 apply_patch_if_possible_or_present lq lq-taskman-rust-tm-rsrcdb.patch \
     "$ROOT/lq/taskman/Makefile" \
     'RUST_TM_RSRCDB_A := $(REPO_ROOT)/build/rust/tm-rsrcdb/libqsoe_tm_rsrcdb.a'
+apply_patch_if_possible_or_present lq lq-taskman-rust-tm-elf.patch \
+    "$ROOT/lq/taskman/Makefile" \
+    'RUST_TM_ELF_A := $(REPO_ROOT)/build/rust/tm-elf/libqsoe_tm_elf.a'
 apply_patch_if_possible lq lq-msgpass-mcs-teardown-and-bulk-copy.patch
 apply_patch_if_possible quser quser-msgpass-lq-no-reply-skip.patch
 
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS ?= 0'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
+require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_ELF ?= 0'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_SCRIPT ?= 0'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_SYSCFG ?= 0'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_SYSFS ?= 0'
 require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_CPIO_A := $(REPO_ROOT)/build/rust/tm-cpio/libqsoe_tm_cpio.a'
 require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a'
 require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a'
+require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_ELF_A := $(REPO_ROOT)/build/rust/tm-elf/libqsoe_tm_elf.a'
 require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_SCRIPT_A := $(REPO_ROOT)/build/rust/tm-script/libqsoe_tm_script.a'
 require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_SYSCFG_A := $(REPO_ROOT)/build/rust/tm-syscfg/libqsoe_tm_syscfg.a'
 require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_SYSFS_A := $(REPO_ROOT)/build/rust/tm-sysfs/libqsoe_tm_sysfs.a'
 require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_CPIO_A): FORCE'
 require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_PROCFS_A): FORCE'
 require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_CRED_A): FORCE'
+require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_ELF_A): FORCE'
 require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_SCRIPT_A): FORCE'
 require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_SYSCFG_A): FORCE'
 require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_SYSFS_A): FORCE'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO=$(QSOE_RUST_TM_CPIO)'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)'
+require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_ELF=$(QSOE_RUST_TM_ELF)'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_SCRIPT=$(QSOE_RUST_TM_SCRIPT)'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_SYSCFG=$(QSOE_RUST_TM_SYSCFG)'
@@ -231,6 +244,9 @@ require_adjacent_contains "$ROOT/nq/taskman/Makefile" \
     'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)'
 require_adjacent_contains "$ROOT/nq/taskman/Makefile" \
     'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)' \
+    'QSOE_RUST_TM_ELF=$(QSOE_RUST_TM_ELF)'
+require_adjacent_contains "$ROOT/nq/taskman/Makefile" \
+    'QSOE_RUST_TM_ELF=$(QSOE_RUST_TM_ELF)' \
     'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)'
 require_adjacent_contains "$ROOT/nq/taskman/Makefile" \
     'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)' \
@@ -248,6 +264,9 @@ require_before_contains "$ROOT/nq/taskman/Makefile" \
     '$(RUST_TM_CPIO_A): FORCE' \
     'FORCE:'
 require_before_contains "$ROOT/nq/taskman/Makefile" \
+    '$(RUST_TM_ELF_A): FORCE' \
+    'FORCE:'
+require_before_contains "$ROOT/nq/taskman/Makefile" \
     '$(RUST_TM_SCRIPT_A): FORCE' \
     'FORCE:'
 require_before_contains "$ROOT/nq/taskman/Makefile" \
@@ -259,6 +278,7 @@ require_line "$ROOT/nq/taskman/Makefile" '$(BUILD)/taskman.elf: $(OBJS) $(LIBTAS
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PROCFS ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
+require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_ELF ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PSEUDODEV ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_RSRCDB ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SCRIPT ?= 0'
@@ -266,6 +286,7 @@ require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSCFG ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSFS ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CPIO=$(QSOE_RUST_TM_CPIO)'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)'
+require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_ELF=$(QSOE_RUST_TM_ELF)'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PSEUDODEV=$(QSOE_RUST_TM_PSEUDODEV)'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_RSRCDB=$(QSOE_RUST_TM_RSRCDB)'
@@ -277,6 +298,9 @@ require_adjacent_contains "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)'
 require_adjacent_contains "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)' \
+    'QSOE_RUST_TM_ELF=$(QSOE_RUST_TM_ELF)'
+require_adjacent_contains "$ROOT/lq/Makefile" \
+    'QSOE_RUST_TM_ELF=$(QSOE_RUST_TM_ELF)' \
     'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)'
 require_adjacent_contains "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS)' \
@@ -299,6 +323,7 @@ require_line "$ROOT/lq/Makefile" 'FORCE:'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
+require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_ELF ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PSEUDODEV ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_RSRCDB ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SCRIPT ?= 0'
@@ -307,6 +332,7 @@ require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SYSFS ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_CPIO_A := $(REPO_ROOT)/build/rust/tm-cpio/libqsoe_tm_cpio.a'
 require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a'
 require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a'
+require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_ELF_A := $(REPO_ROOT)/build/rust/tm-elf/libqsoe_tm_elf.a'
 require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_PSEUDODEV_A := $(REPO_ROOT)/build/rust/tm-pseudodev/libqsoe_tm_pseudodev.a'
 require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_RSRCDB_A := $(REPO_ROOT)/build/rust/tm-rsrcdb/libqsoe_tm_rsrcdb.a'
 require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_SCRIPT_A := $(REPO_ROOT)/build/rust/tm-script/libqsoe_tm_script.a'
@@ -315,6 +341,7 @@ require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_SYSFS_A := $(REPO_ROOT)/build/
 require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_CPIO_A): FORCE'
 require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_PROCFS_A): FORCE'
 require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_CRED_A): FORCE'
+require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_ELF_A): FORCE'
 require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_PSEUDODEV_A): FORCE'
 require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_RSRCDB_A): FORCE'
 require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_SCRIPT_A): FORCE'
@@ -332,6 +359,9 @@ require_before_contains "$ROOT/lq/taskman/Makefile" \
     '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
 require_before_contains "$ROOT/lq/taskman/Makefile" \
     '$(RUST_TM_CRED_A): FORCE' \
+    '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
+require_before_contains "$ROOT/lq/taskman/Makefile" \
+    '$(RUST_TM_ELF_A): FORCE' \
     '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
 require_before_contains "$ROOT/lq/taskman/Makefile" \
     '$(RUST_TM_PSEUDODEV_A): FORCE' \

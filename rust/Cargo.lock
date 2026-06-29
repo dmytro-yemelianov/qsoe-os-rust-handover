@@ -105,6 +105,10 @@ name = "qsoe-tm-cred"
 version = "0.0.0"
 
 [[package]]
+name = "qsoe-tm-elf"
+version = "0.0.0"
+
+[[package]]
 name = "qsoe-tm-procfs"
 version = "0.0.0"
 

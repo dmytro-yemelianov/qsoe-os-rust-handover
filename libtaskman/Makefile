@@ -20,6 +20,7 @@ CC       := $(CROSS)gcc
 AR       := $(CROSS)ar
 QSOE_RUST_TM_CPIO ?= 0
 QSOE_RUST_TM_CRED ?= 0
+QSOE_RUST_TM_ELF ?= 0
 QSOE_RUST_TM_PROCFS ?= 0
 QSOE_RUST_TM_SCRIPT ?= 0
 QSOE_RUST_TM_SYSCFG ?= 0
@@ -56,6 +57,10 @@ ifneq ($(filter $(QSOE_RUST_TM_CRED),0 1),$(QSOE_RUST_TM_CRED))
 $(error QSOE_RUST_TM_CRED must be 0 or 1)
 endif
 
+ifneq ($(filter $(QSOE_RUST_TM_ELF),0 1),$(QSOE_RUST_TM_ELF))
+$(error QSOE_RUST_TM_ELF must be 0 or 1)
+endif
+
 ifneq ($(filter $(QSOE_RUST_TM_PROCFS),0 1),$(QSOE_RUST_TM_PROCFS))
 $(error QSOE_RUST_TM_PROCFS must be 0 or 1)
 endif
@@ -79,6 +84,9 @@ SRCS := $(filter-out src/cpio.c,$(SRCS))
 endif
 ifeq ($(QSOE_RUST_TM_CRED),1)
 SRCS := $(filter-out src/cred.c,$(SRCS))
+endif
+ifeq ($(QSOE_RUST_TM_ELF),1)
+SRCS := $(filter-out src/elf.c,$(SRCS))
 endif
 ifeq ($(QSOE_RUST_TM_PROCFS),1)
 SRCS := $(filter-out src/tm_procfs.c,$(SRCS))

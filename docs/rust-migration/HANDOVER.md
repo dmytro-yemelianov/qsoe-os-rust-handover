@@ -77,9 +77,10 @@ for #96, #97, and #103, PR #162 added the Rust opt-in `tm_cred` provider, and
 PR #163 added the Rust opt-in `tm_pseudodev` provider, PR #164 added the Rust
 opt-in `tm_sysfs` provider, PR #165 fixed the issue-backed roadmap dashboard's
 opt-in status display, PR #166 added the Rust opt-in `tm_cpio` provider, and
-PR #167 added the Rust opt-in `tm_script` provider, and PR #168 added the Rust
-opt-in `tm_syscfg` provider. The current `main` tip is
-`1a6b196afc2ff02705f51fe66ec44343e5e3ed8a`.
+PR #167 added the Rust opt-in `tm_script` provider, PR #168 added the Rust
+opt-in `tm_syscfg` provider, and PR #169 added the Rust opt-in `tm_rsrcdb`
+provider. The current `main` tip is
+`51b40459a75c6bcefcf3cfd578a2fe983d4356c1`.
 
 Current open follow-ups:
 
@@ -94,9 +95,9 @@ The #98 host-test gate for the portable `tm_procfs` model is satisfied by
 `make check-tm-procfs-model`. The #102 Rust provider gate is satisfied by
 `QSOE_RUST_TM_PROCFS=1`; C remains default and rollback.
 
-The current branch adds a Rust opt-in `tm_rsrcdb` provider behind
-`QSOE_RUST_TM_RSRCDB=1`. Local evidence passed through
-`make tm-rsrcdb-evidence`; C remains default and rollback.
+The current branch adds a Rust opt-in `tm_elf` provider behind
+`QSOE_RUST_TM_ELF=1`. Local evidence passed through `make tm-elf-evidence`;
+C remains default and rollback.
 
 ## Linux Machine Setup
 
@@ -327,7 +328,7 @@ The strict ELF audit showed:
   selector removes C `script.o` from `libtaskman.a` and links the soft-float
   `qsoe-tm-script` archive into NQ/LQ taskman. C remains default and rollback
   until script-spawn runtime coverage and a separate RC decision exist.
-- The current branch adds `tm_syscfg` behind `QSOE_RUST_TM_SYSCFG=1`. The
+- `tm_syscfg` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSCFG=1`. The
   selector removes C `syscfg.o` from `libtaskman.a` and links the soft-float
   `qsoe-tm-syscfg` archive into NQ/LQ taskman. C remains default and rollback
   until syscfg-backed platform-data runtime coverage and a separate RC decision
@@ -336,6 +337,15 @@ The strict ELF audit showed:
   selector removes C `tm_sysfs.o` from `libtaskman.a` and links the soft-float
   `qsoe-tm-sysfs` archive into NQ/LQ taskman. C remains default and rollback
   until a focused `/sys` runtime smoke and separate RC decision exist.
+- `tm_rsrcdb` has a Rust opt-in provider behind `QSOE_RUST_TM_RSRCDB=1`. The
+  selector removes LQ C `sys/rsrcdb.o` and links the soft-float
+  `qsoe-tm-rsrcdb` archive into LQ taskman. C remains default and rollback
+  until resource attach/query/detach runtime coverage and a separate RC
+  decision exist.
+- The current branch adds `tm_elf` behind `QSOE_RUST_TM_ELF=1`. The selector
+  removes C `elf.o` from `libtaskman.a` and links the soft-float
+  `qsoe-tm-elf` archive into NQ/LQ taskman. C remains default and rollback
+  until ELF-backed spawn runtime coverage and a separate RC decision exist.
 
 ## Current Decisions
 

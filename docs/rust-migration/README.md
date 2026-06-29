@@ -74,14 +74,16 @@ Read in this order:
    provider and evidence gate.
 39. `TASK_MANAGER_SYSFS.md`: Rust opt-in task-manager `/sys` provider and
    evidence gate.
-40. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+40. `TASK_MANAGER_ELF.md`: Rust opt-in task-manager ELF view parser provider
+   and evidence gate.
+41. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
-41. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
-42. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+42. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
+43. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-43. `PLAN.md`: phased migration plan from baseline validation through possible
+44. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-43. `TASKS.md`: executable backlog with acceptance criteria.
+45. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust
