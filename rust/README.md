@@ -402,6 +402,7 @@ without changing the normal taskman default:
 make check-tm-syscfg-model
 make rust-tm-syscfg-provider
 make tm-syscfg-evidence
+make tm-syscfg-runtime-smoke
 ```
 
 With the default `QSOE_RUST_TM_SYSCFG=0`, NQ and LQ taskman link the existing
@@ -411,6 +412,12 @@ Makefile selector omits C `syscfg.o`, builds `qsoe-tm-syscfg` for
 LQ's private FDT-backed `lq/taskman/sys/syscfg.c`, sysmap construction, boot
 platform-data policy, `/sys` serving, process tables, and seL4 invocation code
 remain C.
+
+`make tm-syscfg-runtime-smoke` boots QSOE/L with Rust `tm_syscfg` selected,
+verifies the C `syscfg.o` is absent from the selected `libtaskman.a`, and
+checks syscfg-backed runtime consumers through `/sys/board`, `/sys/cmdline`,
+and `/usr/bin/sysinfo`. This is a boot-consumer compatibility smoke; the LQ
+private runtime syscfg builder remains C.
 
 ## Task Manager Path Registry Selection
 

@@ -342,9 +342,10 @@ The strict ELF audit showed:
   separate RC decision exists.
 - `tm_syscfg` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSCFG=1`. The
   selector removes C `syscfg.o` from `libtaskman.a` and links through the
-  shared taskman Rust provider archive. C remains default and rollback until
-  syscfg-backed platform-data runtime coverage and a separate RC decision
-  exist.
+  shared taskman Rust provider archive. `make tm-syscfg-runtime-smoke` boots
+  LQ with Rust `tm_syscfg` selected and checks `/sys` plus `sysinfo`
+  consumers while LQ's private runtime syscfg builder remains C. C remains
+  default and rollback until a separate RC decision accepts that boundary.
 - `tm_sysmap` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSMAP=1`. The
   selector removes LQ C `sys/sysmap.o` and links through the shared taskman
   Rust provider archive. C remains default and rollback until mapped `PSYS`

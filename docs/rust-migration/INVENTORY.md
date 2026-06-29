@@ -61,7 +61,7 @@ Issue state, labels, and metadata are the source of truth for current progress.
 | `tm_script` | #143 | Rust opt-in provider with C rollback and focused runtime smoke; not a Rust-default RC. |
 | `tm_elf` | #144 | Rust opt-in provider with C rollback and focused dynamic ELF spawn smoke; not a Rust-default RC. |
 | `tm_fdt` | #146 | Rust opt-in LQ FDT parser provider with C rollback; not a Rust-default RC. |
-| `tm_syscfg` | #145 | Rust opt-in provider with C rollback; not a Rust-default RC. |
+| `tm_syscfg` | #145 | Rust opt-in provider with C rollback and focused `/sys`/`sysinfo` runtime smoke; not a Rust-default RC. |
 | `tm_sysmap` | #147 | Rust opt-in LQ sysmap page builder provider with C rollback; not a Rust-default RC. |
 | `tm_pathmgr` | #149 | Rust opt-in path registry provider with C rollback; not a Rust-default RC. |
 | `tm_rsrcdb` | #151 | Rust opt-in LQ resource DB provider with C rollback; not a Rust-default RC. |

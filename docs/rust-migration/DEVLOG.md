@@ -24,6 +24,38 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-29 23:20 CEST - tm_syscfg Runtime Smoke
+
+Scope:
+
+- Added `make tm-syscfg-runtime-smoke` and container CI wiring.
+- The smoke rebuilds QSOE/L with `QSOE_RUST_TM_SYSCFG=1` and mandatory
+  `QSOE_RUST_TM_PROCFS=1`.
+- It verifies the selected `libtaskman.a` omits C `syscfg.o`, verifies the
+  selected Rust provider archive exports `tm_syscfg_init`, waits for taskman's
+  `syscfg built from FDT` and `sysmap page built` boot markers, then checks
+  `/sys/board`, `/sys/cmdline`, and `/usr/bin/sysinfo` from sysinit.
+- Updated `tm_syscfg` status docs so the next gate is a separate Rust-default
+  RC decision that accepts the LQ private-runtime-syscfg boundary.
+
+Commands:
+
+- `bash -n scripts/tm-syscfg-runtime-smoke.sh scripts/tm-syscfg-evidence.sh scripts/boot-smoke.sh`
+- `make -n tm-syscfg-runtime-smoke container-tm-syscfg-runtime-smoke`
+- `make tm-syscfg-runtime-smoke`
+
+Result:
+
+- The local `make tm-syscfg-runtime-smoke` run passed.
+- The smoke proves a Rust-selected portable `tm_syscfg` taskman build still
+  boots and serves syscfg-backed consumers. LQ's private FDT-backed runtime
+  syscfg builder remains C by design.
+
+Follow-up:
+
+- Keep `tm_syscfg` Rust opt-in while deciding whether to open a separate
+  Rust-default RC window with that boundary accepted.
+
 ## 2026-06-29 22:55 CEST - tm_elf Runtime Smoke
 
 Scope:
@@ -740,8 +772,10 @@ Result:
 
 Follow-up:
 
-- Keep `tm_syscfg` Rust opt-in only until syscfg-backed platform-data runtime
-  coverage exists before any Rust-default RC decision.
+- Later `make tm-syscfg-runtime-smoke` added focused `/sys` and `sysinfo`
+  runtime coverage with Rust `tm_syscfg` selected. Keep `tm_syscfg` Rust
+  opt-in while deciding whether to open a separate Rust-default RC window with
+  the LQ private-runtime-syscfg boundary accepted.
 
 ## 2026-06-29 12:54 CEST - tm_script Rust Opt-In Provider
 

@@ -48,6 +48,7 @@ The top-level evidence target is:
 
 ```sh
 make tm-syscfg-evidence
+make tm-syscfg-runtime-smoke
 ```
 
 When Rust is selected for a taskman link, the selected provider is packaged in
@@ -65,6 +66,7 @@ cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-syscfg --features host-tes
 cargo clippy --manifest-path rust/Cargo.toml -p qsoe-tm-syscfg --features host-tests -- -D warnings
 make rust-tm-syscfg-provider
 make tm-syscfg-evidence
+make tm-syscfg-runtime-smoke
 ```
 
 `make tm-syscfg-evidence` verified:
@@ -80,11 +82,24 @@ make tm-syscfg-evidence
 - LQ Rust-selected `libtaskman.a` contains zero `syscfg.o`;
 - NQ and LQ taskman links complete in both C-default and Rust-selected modes.
 
-The final taskman ELFs do not currently prove runtime use of the portable
-syscfg provider: NQ does not call this portable helper today, and LQ serves
-runtime syscfg through its private global `lq/taskman/sys/syscfg.c`. That is
-intentional for this opt-in slice; the evidence proves ABI/link selection and
-archive rollback, not a Rust-default boot policy change.
+`make tm-syscfg-runtime-smoke` verified the Rust-selected taskman build in a
+booted LQ image. The smoke:
+
+- rebuilds QSOE/L with `QSOE_RUST_TM_SYSCFG=1` and mandatory
+  `QSOE_RUST_TM_PROCFS=1`;
+- verifies `libtaskman.a` no longer contains C `syscfg.o`;
+- verifies the selected Rust provider archive exports `tm_syscfg_init`;
+- waits for taskman's `syscfg built from FDT` and `sysmap page built` boot
+  markers;
+- reads `/sys/board` and `/sys/cmdline`, checking that cmdline carries
+  `mainfs=/dev/vblk0`;
+- runs `/usr/bin/sysinfo`, which reads `/sys` identity data and syscfg-derived
+  CPU/sysmap state.
+
+This runtime smoke proves that a Rust-selected portable `tm_syscfg` taskman
+build still boots and serves syscfg-backed consumers. It does not prove that
+LQ's private global `lq/taskman/sys/syscfg.c` was replaced; that private
+FDT-backed runtime builder remains C by design in this opt-in slice.
 
 ## C Rollback
 
@@ -94,6 +109,6 @@ C remains the default and rollback path:
 - `QSOE_RUST_TM_SYSCFG=1` excludes `syscfg.o` and links
   the shared taskman Rust provider archive.
 
-Do not promote this provider to a Rust-default RC until boot/runtime coverage
-proves syscfg-backed platform-data behavior, and do not retire C until #26 is
-satisfied in a separate removal PR.
+Do not promote this provider to a Rust-default RC until a separate RC decision
+accepts the LQ private-runtime-syscfg boundary, and do not retire C until #26
+is satisfied in a separate removal PR.
