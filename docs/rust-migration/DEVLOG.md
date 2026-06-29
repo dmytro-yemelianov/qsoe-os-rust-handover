@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-24 16:04 CEST.
+Last updated: 2026-06-29 09:17 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,37 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-29 09:17 CEST - Rust mkfs-qrv Triple-indirect Coverage
+
+Scope:
+
+- Added a bounded `qsoe-qrvfs` writer unit test that exercises the
+  triple-indirect allocation path without building a multi-gigabyte fixture.
+- Extended the writer test helper used for block verification so it can walk
+  triple-indirect index blocks.
+- Updated README, `HOST_TOOLS.md`, `STATUS.md`, and `INVENTORY.md` to record
+  bounded triple-indirect allocator coverage and leave the remaining writer
+  gate as a default-writer RC with C rollback.
+
+Commands:
+
+- `cargo fmt --manifest-path rust/Cargo.toml --all`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-qrvfs writer::tests::allocates_triple_indirect_blocks_without_dense_fixture`
+- `make rust-quality`
+- `make check-qrvfs-rust-writer-fixture`
+- `make check-qrvfs-rust-writer-production-root`
+- `git diff --check`
+
+Result:
+
+- The new unit test verifies the triple-indirect root, nested double and single
+  index blocks, final data-block mapping, and four-block allocation footprint.
+
+Follow-up:
+
+- Keep C `mkfs-qrv` as the default writer until a default-writer
+  release-candidate path with explicit C rollback is in place.
 
 ## 2026-06-28 22:32 CEST - Rust mkfs-qrv Live Image Smoke
 

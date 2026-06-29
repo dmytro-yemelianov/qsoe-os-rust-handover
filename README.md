@@ -25,10 +25,11 @@ removed just because a Rust version exists.
 - Rust-default release-candidate paths exist for `qrvfs-tree`, `slogger-rs`,
   `devb-virtio-rs`, `pipe-rs`, `test_msgpass-rs`, and `qsoe-tm-procfs`.
 - Rust `mkfs-qrv-rs` is still opt-in, but now has fixture, production-root,
-  target-initialization, and live virtio `/usr` smoke evidence.
+  target-initialization, bounded triple-indirect allocator, and live virtio
+  `/usr` smoke evidence.
 - No tracked C component is retired. C is still the rollback path everywhere.
-- The next host qrvfs writer gate is triple-indirect stress coverage, then a
-  default-writer release candidate with explicit C rollback.
+- The next host qrvfs writer gate is a default-writer release candidate with
+  explicit C rollback.
 
 Detailed planning lives under `docs/rust-migration/`. Start with:
 
@@ -50,7 +51,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | --- | --- | --- |
 | Baseline and tooling | Complete | Linux/container workflows, boot smokes, artifact audit, C indexing, clangd, clang-tidy wrapper, pinned Rust toolchain, cargo-deny, fuzz smoke, and coverage targets are in place. |
 | Rust ABI/FFI foundation | Complete | `qsoe-abi`, `qsoe-ffi`, and `qsoe-ressrv` compile for the QSOE target with layout tests and reviewed unsafe boundaries. |
-| Host qrvfs tools | Rust default RC for inspector; writer opt-in | Rust fixture checks compare against the existing C host tool; `make tree` selects Rust `qrvfs-tree` by default, and `make treeqrvfs-rc-rollback-smoke` preserves C rollback. `make check-qrvfs-rust-writer-fixture`, `make check-qrvfs-rust-writer-production-root`, and `make rust-mkfs-qrv-live-smoke` cover Rust `mkfs-qrv-rs` image writing; Rust target initialization has stale-file coverage. Production `mkfs-qrv` remains C. |
+| Host qrvfs tools | Rust default RC for inspector; writer opt-in | Rust fixture checks compare against the existing C host tool; `make tree` selects Rust `qrvfs-tree` by default, and `make treeqrvfs-rc-rollback-smoke` preserves C rollback. `make check-qrvfs-rust-writer-fixture`, `make check-qrvfs-rust-writer-production-root`, and `make rust-mkfs-qrv-live-smoke` cover Rust `mkfs-qrv-rs` image writing; Rust target initialization has stale-file coverage, and writer unit tests cover bounded triple-indirect allocator paths. Production `mkfs-qrv` remains C. |
 | `slogger` service | Rust default RC | `slogger-rs` links, boots, registers `/dev/slog`, has C-selected plus Rust-selected `/dev/slog` readback smokes, and has accepted #95 local-equivalent RC evidence for `slogger-rc-*` targets with C rollback. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
 | `devb-virtio` block driver | Rust default RC | Rust MMIO/virtqueue model, host queue tests, opt-in boot/file-read smokes, and `make virtio-rc-file-smoke` plus `make virtio-rc-rollback-smoke` cover the Rust-default file-read RC path with C rollback. Next gate: #26 retirement checklist and a separate removal PR before any C retirement decision. |
 | Shared parsers | Complete for current scope | CPIO, syscfg/sysmap, and ELF inspection crates exist with host tests and host/guest reuse coverage. |
@@ -72,8 +73,8 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 - `mkfs-qrv-rs` now has opt-in fixture and production-root writer gates with
   double-indirect file allocation, target-initialization coverage, and a
   Rust-written virtio `/usr` live smoke. Keep production `fsqrv-image`, NVMe,
-  and virtio image generation on C `mkfs-qrv` until triple-indirect stress and
-  a default-writer RC with rollback are covered.
+  and virtio image generation on C `mkfs-qrv` until a default-writer RC with
+  rollback is covered.
 - `pipe-rs` now has a Rust-default release-candidate path with explicit C
   rollback. Keep C retirement blocked until #26's checklist and a separate
   removal PR.

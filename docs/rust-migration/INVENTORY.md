@@ -65,7 +65,7 @@ be a separate removal PR after an RC window and rollback drill.
 
 | Bucket | Issues | Posture |
 | --- | --- | --- |
-| Host qrvfs writer | #136 | Continue opt-in Rust writer hardening. Next gate is triple-indirect stress coverage, then a default-writer RC with C rollback. |
+| Host qrvfs writer | #136 | Continue opt-in Rust writer hardening. Next gate is a default-writer RC with C rollback. |
 | Task-manager pure or diagnostic modules | #142-#153 | Candidate backlog. Prefer host-tested modules that avoid direct seL4 invocations, spawn, capability ownership, relocation writes, and loader admission. |
 | Spawn, capability, relocation, and loader paths | #154 | Deferred. These paths are load-bearing for process creation and teardown. |
 | Kernel Rust | #155 | Deferred. Current policy allows documentation and fixtures only. |
@@ -89,8 +89,8 @@ a scoped candidate and acceptance criteria.
 
 ## Next Recommended Issue Work
 
-1. Keep #136 as the active component work item until Rust `mkfs-qrv-rs` has
-   triple-indirect stress coverage and a default-writer RC with rollback.
+1. Keep #136 as the active component work item until Rust `mkfs-qrv-rs` has a
+   default-writer RC with rollback.
 2. Use #142-#153 for small task-manager pilots. Prefer `tm_log`, `tm_cred`, or
    another low-risk pure module before touching path manager or ELF-adjacent
    loader inputs.

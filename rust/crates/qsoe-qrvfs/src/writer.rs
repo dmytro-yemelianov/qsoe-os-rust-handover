@@ -747,6 +747,36 @@ mod tests {
     }
 
     #[test]
+    fn allocates_triple_indirect_blocks_without_dense_fixture() {
+        let mut writer = Writer::new(WriterConfig {
+            size_mb: 2,
+            ninodes: 64,
+        })
+        .expect("writer");
+        let mut inode = empty_file_inode();
+        let triple_relative_fbn = QRVFS_NINDIRECT2 + QRVFS_NINDIRECT + 7;
+        let fbn = QRVFS_NDIRECT + QRVFS_NINDIRECT + QRVFS_NINDIRECT2 + triple_relative_fbn;
+
+        let data_block = writer
+            .data_block_for(&mut inode, fbn)
+            .expect("triple-indirect data block");
+        let triple_root = inode.addrs[QRVFS_TRIPLE_IDX];
+        let double_root = read_index_block(&writer.image, triple_root, 1);
+        let single_root = read_index_block(&writer.image, double_root, 1);
+        let indexed_data_block = read_index_block(&writer.image, single_root, 7);
+
+        assert_eq!(inode.addrs[QRVFS_SINGLE_IDX], 0);
+        assert_eq!(inode.addrs[QRVFS_DOUBLE_IDX], 0);
+        assert_ne!(triple_root, 0);
+        assert_eq!(indexed_data_block, data_block);
+        assert_eq!(
+            logical_block_number_from_addrs(&writer.image, &inode.addrs, fbn),
+            data_block
+        );
+        assert_eq!(writer.free_block, writer.layout.datastart + 4);
+    }
+
+    #[test]
     fn writes_sparse_regular_target_over_stale_file() {
         let root = temp_fixture_dir();
         fs::create_dir_all(&root).expect("root dir");
@@ -793,18 +823,40 @@ mod tests {
     }
 
     fn logical_block_number(image: &[u8], inode: &crate::Inode, fbn: usize) -> u64 {
+        logical_block_number_from_addrs(image, &inode.addrs, fbn)
+    }
+
+    fn logical_block_number_from_addrs(
+        image: &[u8],
+        addrs: &[u64; QRVFS_NADDRS],
+        fbn: usize,
+    ) -> u64 {
         if fbn < QRVFS_NDIRECT {
-            return inode.addrs[fbn];
+            return addrs[fbn];
         }
 
         let fbn = fbn - QRVFS_NDIRECT;
         if fbn < QRVFS_NINDIRECT {
-            return read_index_block(image, inode.addrs[QRVFS_SINGLE_IDX], fbn);
+            return read_index_block(image, addrs[QRVFS_SINGLE_IDX], fbn);
         }
 
         let fbn = fbn - QRVFS_NINDIRECT;
-        let level1 = read_index_block(image, inode.addrs[QRVFS_DOUBLE_IDX], fbn / QRVFS_NINDIRECT);
-        read_index_block(image, level1, fbn % QRVFS_NINDIRECT)
+        if fbn < QRVFS_NINDIRECT2 {
+            return read_nested_index_block(image, addrs[QRVFS_DOUBLE_IDX], 2, fbn);
+        }
+
+        let fbn = fbn - QRVFS_NINDIRECT2;
+        read_nested_index_block(image, addrs[QRVFS_TRIPLE_IDX], 3, fbn)
+    }
+
+    fn read_nested_index_block(image: &[u8], root: u64, level: usize, fbn: usize) -> u64 {
+        if level == 1 {
+            return read_index_block(image, root, fbn);
+        }
+
+        let fanout = (0..(level - 1)).fold(1usize, |acc, _| acc * QRVFS_NINDIRECT);
+        let next = read_index_block(image, root, fbn / fanout);
+        read_nested_index_block(image, next, level - 1, fbn % fanout)
     }
 
     fn read_index_block(image: &[u8], bno: u64, idx: usize) -> u64 {
@@ -815,6 +867,21 @@ mod tests {
     fn block(image: &[u8], bno: u64) -> &[u8] {
         let offset = bno as usize * QRVFS_BSIZE;
         &image[offset..offset + QRVFS_BSIZE]
+    }
+
+    fn empty_file_inode() -> Dinode {
+        Dinode {
+            type_: QRVFS_T_FILE,
+            nlink: 1,
+            mode: 0o644,
+            uid: 0,
+            gid: 0,
+            size: 0,
+            atime: 0,
+            mtime: 0,
+            ctime: 0,
+            addrs: [0; QRVFS_NADDRS],
+        }
     }
 
     fn temp_fixture_dir() -> std::path::PathBuf {

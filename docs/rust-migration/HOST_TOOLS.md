@@ -135,7 +135,8 @@ It provides:
   metadata initialization matching the C writer's `BLKZEROOUT`/manual-zero
   fallback.
 - Directory and regular-file population from a host root.
-- Direct, single-indirect, and double-indirect file data allocation.
+- Direct, single-indirect, double-indirect, and bounded triple-indirect file
+  block allocation coverage.
 - Parser-backed Rust unit tests, including stale regular-file target
   replacement.
 - A fixture gate that inspects the Rust-written image with the C `treeqrvfs`
@@ -162,8 +163,9 @@ The live smoke succeeds when the boot log contains the guest marker
 This is not a production writer replacement. The C `mkfs-qrv` remains the
 default image writer for `fsqrv-image`, NVMe population, virtio image
 generation, and rollback. Set `QSOE_RUST_MKFS_QRV=1` to select Rust
-`mkfs-qrv-rs` for qrvfs image construction. The Rust writer still needs
-triple-indirect stress coverage before a default-writer release-candidate path.
+`mkfs-qrv-rs` for qrvfs image construction. The Rust writer still needs a
+default-writer release-candidate path with explicit C rollback before it can
+replace the default C writer.
 
 ## Rust qrvfs Inspection Baseline
 
