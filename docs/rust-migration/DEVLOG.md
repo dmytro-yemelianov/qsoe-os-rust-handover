@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-29 09:17 CEST.
+Last updated: 2026-06-29 09:26 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,40 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-29 09:26 CEST - mkfs-qrv Rust-Default RC Path
+
+Scope:
+
+- Added `scripts/mkfs-qrv-rc-live-smoke.sh`, which selects Rust
+  `mkfs-qrv-rs` by default and selects C rollback with
+  `MKFS_QRV_RC_ROLLBACK=1`.
+- Added `make mkfs-qrv-rc-live-smoke`, `make mkfs-qrv-rc-rollback-smoke`, and
+  container equivalents.
+- Added trusted CI steps for the Rust-default writer RC live smoke and C
+  rollback live smoke.
+- Added `MKFS_QRV_RC.md` and updated README, STATUS, HOST_TOOLS, and INVENTORY
+  docs.
+
+Commands:
+
+- `bash -n scripts/mkfs-qrv-rc-live-smoke.sh scripts/rust-mkfs-qrv-live-smoke.sh`
+- `make -n mkfs-qrv-rc-live-smoke mkfs-qrv-rc-rollback-smoke container-mkfs-qrv-rc-live-smoke container-mkfs-qrv-rc-rollback-smoke`
+- `make mkfs-qrv-rc-live-smoke`
+- `make mkfs-qrv-rc-rollback-smoke`
+- `git diff --check`
+
+Result:
+
+- The Rust-default RC smoke builds the normal virtio qrvfs image with
+  `mkfs-qrv-rs`, boots QSOE/L, mounts `/usr`, and reads `/usr/conf/passwd`.
+- The rollback smoke selects the existing C `mkfs-qrv` writer and validates the
+  same guest file-read path.
+
+Follow-up:
+
+- Keep C `mkfs-qrv` in tree until #26's retirement checklist and a separate
+  removal PR are satisfied.
 
 ## 2026-06-29 09:17 CEST - Rust mkfs-qrv Triple-indirect Coverage
 
@@ -95,8 +129,8 @@ Result:
 
 Follow-up:
 
-- Keep C `mkfs-qrv` as the default writer until triple-indirect stress coverage
-  and a default-writer release-candidate path with C rollback are in place.
+- Keep C `mkfs-qrv` available until a default-writer release-candidate path and
+  rollback evidence are in place.
 
 ## 2026-06-24 16:04 CEST - Pipe Rust-Default RC Path
 
