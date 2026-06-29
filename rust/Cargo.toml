@@ -12,6 +12,7 @@ members = [
     "crates/qsoe-sysview",
     "crates/qsoe-tm-cpio",
     "crates/qsoe-tm-cred",
+    "crates/qsoe-tm-elf",
     "crates/qsoe-tm-pseudodev",
     "crates/qsoe-tm-procfs",
     "crates/qsoe-tm-rsrcdb",

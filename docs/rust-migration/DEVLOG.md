@@ -24,6 +24,59 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-29 15:05 CEST - tm_elf Rust Opt-In Provider
+
+Scope:
+
+- Added `qsoe-tm-elf`, a no-std Rust staticlib exporting the existing portable
+  `tm_elf_parse` ABI.
+- Added `QSOE_RUST_TM_ELF=1` selection for NQ and LQ taskman. The selector
+  omits C `elf.o` from `libtaskman.a`, then links
+  `build/rust/tm-elf/libqsoe_tm_elf.a`.
+- Added a C host-model fixture, Rust host tests, provider build script,
+  evidence script, tracked NQ/LQ component patches, CI evidence step, and docs.
+- Preserved the current C parser behavior for ELF64 little-endian RISC-V
+  images, including zero-file-size load offsets, interpreter pointers into the
+  caller-owned blob, fixed 8-entry load capture, and wrapping virtual-end
+  arithmetic.
+- Kept C as the normal default and rollback implementation.
+
+Commands:
+
+- `make check-tm-elf-model`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-elf --features host-tests --lib`
+- `cargo clippy --manifest-path rust/Cargo.toml -p qsoe-tm-elf --features host-tests -- -D warnings`
+- `bash -n scripts/check-tm-elf-model.sh scripts/build-rust-tm-elf-provider.sh scripts/tm-elf-evidence.sh scripts/apply-component-overrides.sh`
+- `./scripts/apply-component-overrides.sh`
+- `make -n check-tm-elf-model rust-tm-elf-provider tm-elf-evidence container-rust-tm-elf-provider container-tm-elf-evidence`
+- Clean throwaway checkout `make prepare` plus idempotent
+  `./scripts/apply-component-overrides.sh` with the new component files copied
+  in.
+- `make rust-tm-elf-provider`
+- `make tm-elf-evidence`
+- `make container-tm-elf-evidence`
+
+Result:
+
+- The first clean patch replay caught malformed LQ top-level and LQ
+  `taskman/Makefile` component-patch hunks. Those hunks were regenerated and
+  the clean replay now passes.
+- The C host fixture and Rust host tests pass for ABI layout, normal ELF parse,
+  interpreter validation, malformed headers, too many `PT_LOAD` entries,
+  zero-file-size load behavior, and wrapped segment-end rejection.
+- The provider archive exports `tm_elf_parse` and all archive members report
+  RVC soft-float ABI.
+- NQ and LQ C-default taskman archives include one `elf.o` member.
+  Rust-selected archives include zero `elf.o` members and link
+  `libqsoe_tm_elf.a`.
+- The container-equivalent `tm_elf` evidence target passes and captures the
+  same C-default/Rust-selected archive and linked-taskman evidence.
+
+Follow-up:
+
+- Keep `tm_elf` Rust opt-in only until loader/runtime coverage proves
+  ELF-backed spawn behavior before any Rust-default RC decision.
+
 ## 2026-06-29 CEST - tm_rsrcdb Rust Opt-In Provider
 
 Scope:
