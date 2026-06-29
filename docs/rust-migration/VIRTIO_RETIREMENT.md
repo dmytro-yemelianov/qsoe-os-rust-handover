@@ -45,6 +45,7 @@ Retirement validation for this PR:
 - `QSOE_RUST_VIRTIO=0 make virtio-artifact`
 - `QSOE_VIRTIO_RC_ROLLBACK=1 scripts/virtio-rc-file-smoke.sh`
 - `make rust-virtio-link-smoke`
+- `make check-elf-reloc-fixture`
 - `make virtio-artifact`
 - `make slogger-artifact pipe-artifact virtio-artifact && make -C quser cpio`
 - CPIO inspection confirms `/sbin/devb-virtio` contains

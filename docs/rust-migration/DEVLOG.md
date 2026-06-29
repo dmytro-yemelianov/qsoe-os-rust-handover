@@ -36,6 +36,8 @@ Scope:
 - Added tracked NQ/LQ component patches so fresh CPIO builds call top-level
   `make virtio-artifact` and pass `SBIN_VIRTIO_ELF` into `quser`.
 - Removed the C `devb-virtio` source from the `quser` component override.
+- Removed the retired C `devb-virtio` ELF from the `qsoe-elf` relocation
+  fixture list.
 - Updated README/status/inventory/retirement docs and added
   `VIRTIO_RETIREMENT.md`.
 
@@ -49,6 +51,7 @@ Commands:
 - `QSOE_RUST_VIRTIO=0 make virtio-artifact`
 - `QSOE_VIRTIO_RC_ROLLBACK=1 scripts/virtio-rc-file-smoke.sh`
 - `make rust-virtio-link-smoke`
+- `make check-elf-reloc-fixture`
 - `make virtio-artifact`
 - `make rust-check`
 - `make slogger-artifact pipe-artifact virtio-artifact && make -C quser cpio`
@@ -71,6 +74,8 @@ Result:
   retirement messages.
 - `qsoe-devb-virtio-rs` links and passes strict user ELF audit with no TLS or
   unwind sections.
+- The required relocation fixture test no longer reads the retired C
+  `quser/build/dev/virtio/devb-virtio.elf` path.
 - Direct `quser` CPIO packaging succeeds when the selected Rust `slogger`,
   `pipe`, and `devb-virtio` artifacts are present.
 - CPIO inspection confirms `/sbin/devb-virtio` contains the Rust
