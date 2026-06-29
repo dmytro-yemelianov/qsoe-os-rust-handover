@@ -42,19 +42,16 @@ When Rust is selected, `libtaskman/Makefile` excludes `script.o` from
 `libtaskman.a`, and the NQ/LQ taskman links add:
 
 ```text
-build/rust/tm-script/libqsoe_tm_script.a
+build/rust/tm-providers/libqsoe_tm_providers.a
 ```
 
 The archive is built for `riscv64imac-unknown-none-elf` so it matches
 taskman's soft-float ABI.
 
-Current taskman Rust providers are mutually exclusive. Do not set more than one
-of `QSOE_RUST_TM_CPIO=1`, `QSOE_RUST_TM_CRED=1`,
-`QSOE_RUST_TM_PROCFS=1`, `QSOE_RUST_TM_PSEUDODEV=1`,
-`QSOE_RUST_TM_SCRIPT=1`, and `QSOE_RUST_TM_SYSFS=1` in the same build. Each
-provider is currently a separate no-std Rust staticlib with its own panic
-handler; a future shared taskman Rust archive should package multiple providers
-together.
+Multiple taskman Rust providers may be selected together. The shared
+`qsoe-tm-providers` archive packages the selected provider crates behind one
+no-std panic handler. Legacy targets such as `make rust-tm-script-provider`
+still produce the historical single-provider output path for focused evidence.
 
 ## Evidence
 

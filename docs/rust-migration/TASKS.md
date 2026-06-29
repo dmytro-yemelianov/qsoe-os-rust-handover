@@ -255,6 +255,11 @@ small reviewable change unless it explicitly says otherwise.
 - [x] Add targeted boot coverage.
   - Acceptance: smoke tests exercise the selected path before Rust changes land.
 
+- [x] Add shared task-manager Rust provider archive.
+  - Acceptance: at least two selected taskman Rust providers link through one
+    archive with one panic handler, final NQ/LQ taskman ELF audits pass, and a
+    runtime smoke exercises the multi-provider image.
+
 ## Phase 10: Kernel Reassessment
 
 - [x] Write kernel Rust decision record.

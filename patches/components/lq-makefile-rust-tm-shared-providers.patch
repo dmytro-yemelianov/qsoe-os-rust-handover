@@ -1,0 +1,13 @@
+diff --git a/Makefile b/Makefile
+--- a/Makefile
++++ b/Makefile
+@@ -52,9 +52,6 @@ QSOE_RUST_TM_SYSMAP ?= 0
+ QSOE_RUST_TM_SYSFS ?= 0
+ 
+ TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_ELF) $(QSOE_RUST_TM_FDT) $(QSOE_RUST_TM_PATHMGR) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_RSRCDB) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSMAP) $(QSOE_RUST_TM_SYSFS)))
+-ifneq ($(filter 2 3 4 5 6 7 8 9 10 11 12,$(TM_RUST_PROVIDER_COUNT)),)
+-$(error select at most one taskman Rust provider until they share one staticlib)
+-endif
+ 
+ QEMU    := qemu-system-riscv64
+ 

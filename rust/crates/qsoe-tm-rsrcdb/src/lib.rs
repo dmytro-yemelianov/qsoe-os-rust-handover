@@ -3,9 +3,6 @@
 use core::cell::UnsafeCell;
 use core::ffi::{c_char, c_int, c_uint, c_ulong, c_void};
 
-#[cfg(not(any(test, feature = "host-tests")))]
-use core::panic::PanicInfo;
-
 const EINVAL: c_int = 21;
 const ENOMEM: c_int = 12;
 const ENOSPC: c_int = 26;
@@ -629,14 +626,6 @@ struct GlobalSyscfg(UnsafeCell<HostSyscfg>);
 
 #[cfg(any(test, feature = "host-tests"))]
 unsafe impl Sync for GlobalSyscfg {}
-
-#[cfg(not(any(test, feature = "host-tests")))]
-#[panic_handler]
-fn panic(_info: &PanicInfo<'_>) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
-}
 
 fn db_mut() -> *mut ResourceDb {
     DB.0.get()

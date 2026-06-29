@@ -2,9 +2,6 @@
 
 use core::ffi::{c_char, c_int, c_uint, c_void};
 
-#[cfg(not(any(test, feature = "host-tests")))]
-use core::panic::PanicInfo;
-
 const TM_FDT_MAGIC: u32 = 0xd00dfeed;
 
 const FDT_BEGIN_NODE: u32 = 1;
@@ -17,14 +14,6 @@ const HEADER_TOTALSIZE: usize = 4;
 const HEADER_OFF_DT_STRUCT: usize = 8;
 const HEADER_OFF_DT_STRINGS: usize = 12;
 const HEADER_LAST_COMP_VERSION: usize = 24;
-
-#[cfg(not(any(test, feature = "host-tests")))]
-#[panic_handler]
-fn panic(_info: &PanicInfo<'_>) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
-}
 
 fn align4(value: c_uint) -> c_uint {
     value.wrapping_add(3) & !3

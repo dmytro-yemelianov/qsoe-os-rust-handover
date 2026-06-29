@@ -35,9 +35,6 @@ QSOE_RUST_TREEQRVFS ?= 1
 QSOE_RUST_MKFS_QRV ?= 0
 
 TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_ELF) $(QSOE_RUST_TM_FDT) $(QSOE_RUST_TM_PATHMGR) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_RSRCDB) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSMAP) $(QSOE_RUST_TM_SYSFS)))
-ifneq ($(filter 2 3 4 5 6 7 8 9 10 11 12,$(TM_RUST_PROVIDER_COUNT)),)
-$(error select at most one taskman Rust provider until they share one staticlib)
-endif
 
 SELECTED_SLOGGER_ELF ?= build/rust/selected/sbin/slogger.elf
 SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
@@ -68,8 +65,8 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         slogger-artifact virtio-artifact test-msgpass-artifact pipe-artifact \
         rust-tm-cpio-provider rust-tm-cred-provider rust-tm-elf-provider rust-tm-fdt-provider rust-tm-pathmgr-provider rust-tm-procfs-provider \
         rust-tm-rsrcdb-provider rust-tm-script-provider rust-tm-syscfg-provider rust-tm-sysmap-provider rust-tm-sysfs-provider \
-        rust-tm-pseudodev-provider \
-        tm-cpio-evidence tm-cred-evidence tm-elf-evidence tm-fdt-evidence tm-pathmgr-evidence tm-procfs-evidence tm-rsrcdb-evidence tm-script-evidence \
+        rust-tm-pseudodev-provider rust-tm-providers \
+        tm-cpio-evidence tm-cred-evidence tm-elf-evidence tm-fdt-evidence tm-pathmgr-evidence tm-procfs-evidence tm-providers-evidence tm-rsrcdb-evidence tm-script-evidence \
         tm-syscfg-evidence tm-sysmap-evidence tm-sysfs-evidence tm-pseudodev-evidence \
         rust-slogger-boot-smoke \
         rust-virtio-boot-smoke rust-virtio-file-smoke \
@@ -93,8 +90,8 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-tm-cpio-provider container-rust-tm-cred-provider \
         container-rust-tm-elf-provider container-rust-tm-fdt-provider container-rust-tm-pathmgr-provider container-rust-tm-procfs-provider container-rust-tm-rsrcdb-provider container-rust-tm-script-provider \
         container-rust-tm-syscfg-provider container-rust-tm-sysmap-provider container-rust-tm-sysfs-provider \
-        container-rust-tm-pseudodev-provider \
-        container-tm-cpio-evidence container-tm-cred-evidence container-tm-elf-evidence container-tm-fdt-evidence container-tm-pathmgr-evidence container-tm-procfs-evidence \
+        container-rust-tm-pseudodev-provider container-rust-tm-providers \
+        container-tm-cpio-evidence container-tm-cred-evidence container-tm-elf-evidence container-tm-fdt-evidence container-tm-pathmgr-evidence container-tm-procfs-evidence container-tm-providers-evidence \
         container-tm-rsrcdb-evidence container-tm-script-evidence container-tm-syscfg-evidence \
         container-tm-sysmap-evidence container-tm-sysfs-evidence container-tm-pseudodev-evidence \
         container-rust-virtio-boot-smoke \
@@ -418,40 +415,55 @@ pipe-artifact:
 	    scripts/select-pipe-artifact.sh
 
 rust-tm-cpio-provider:
-	@scripts/build-rust-tm-cpio-provider.sh
+	@QSOE_RUST_TM_CPIO=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-cpio/libqsoe_tm_cpio.a
 
 rust-tm-cred-provider:
-	@scripts/build-rust-tm-cred-provider.sh
+	@QSOE_RUST_TM_CRED=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-cred/libqsoe_tm_cred.a
 
 rust-tm-elf-provider:
-	@scripts/build-rust-tm-elf-provider.sh
+	@QSOE_RUST_TM_ELF=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-elf/libqsoe_tm_elf.a
 
 rust-tm-fdt-provider:
-	@scripts/build-rust-tm-fdt-provider.sh
+	@QSOE_RUST_TM_FDT=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-fdt/libqsoe_tm_fdt.a
 
 rust-tm-pathmgr-provider:
-	@scripts/build-rust-tm-pathmgr-provider.sh
+	@QSOE_RUST_TM_PATHMGR=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-pathmgr/libqsoe_tm_pathmgr.a
 
 rust-tm-procfs-provider:
-	@scripts/build-rust-tm-procfs-provider.sh
+	@QSOE_RUST_TM_PROCFS=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-procfs/libqsoe_tm_procfs.a
 
 rust-tm-rsrcdb-provider:
-	@scripts/build-rust-tm-rsrcdb-provider.sh
+	@QSOE_RUST_TM_RSRCDB=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-rsrcdb/libqsoe_tm_rsrcdb.a
 
 rust-tm-script-provider:
-	@scripts/build-rust-tm-script-provider.sh
+	@QSOE_RUST_TM_SCRIPT=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-script/libqsoe_tm_script.a
 
 rust-tm-syscfg-provider:
-	@scripts/build-rust-tm-syscfg-provider.sh
+	@QSOE_RUST_TM_SYSCFG=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-syscfg/libqsoe_tm_syscfg.a
 
 rust-tm-sysmap-provider:
-	@scripts/build-rust-tm-sysmap-provider.sh
+	@QSOE_RUST_TM_SYSMAP=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-sysmap/libqsoe_tm_sysmap.a
 
 rust-tm-sysfs-provider:
-	@scripts/build-rust-tm-sysfs-provider.sh
+	@QSOE_RUST_TM_SYSFS=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-sysfs/libqsoe_tm_sysfs.a
 
 rust-tm-pseudodev-provider:
-	@scripts/build-rust-tm-pseudodev-provider.sh
+	@QSOE_RUST_TM_PSEUDODEV=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-pseudodev/libqsoe_tm_pseudodev.a
+
+rust-tm-providers:
+	@scripts/build-rust-tm-providers.sh
 
 tm-cpio-evidence:
 	@scripts/tm-cpio-evidence.sh
@@ -470,6 +482,9 @@ tm-pathmgr-evidence:
 
 tm-procfs-evidence:
 	@scripts/tm-procfs-evidence.sh
+
+tm-providers-evidence:
+	@scripts/tm-providers-evidence.sh
 
 tm-rsrcdb-evidence:
 	@scripts/tm-rsrcdb-evidence.sh
@@ -653,6 +668,9 @@ container-rust-tm-sysmap-provider:
 container-rust-tm-sysfs-provider:
 	@scripts/container-toolchain.sh run make rust-tm-sysfs-provider
 
+container-rust-tm-providers:
+	@scripts/container-toolchain.sh run make rust-tm-providers
+
 container-rust-tm-pseudodev-provider:
 	@scripts/container-toolchain.sh run make rust-tm-pseudodev-provider
 
@@ -673,6 +691,9 @@ container-tm-pathmgr-evidence:
 
 container-tm-procfs-evidence:
 	@scripts/container-toolchain.sh run make tm-procfs-evidence
+
+container-tm-providers-evidence:
+	@scripts/container-toolchain.sh run make tm-providers-evidence
 
 container-tm-rsrcdb-evidence:
 	@scripts/container-toolchain.sh run make tm-rsrcdb-evidence

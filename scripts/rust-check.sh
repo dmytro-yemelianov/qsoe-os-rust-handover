@@ -41,6 +41,8 @@ cargo test --manifest-path "$MANIFEST" -p qsoe-tm-script --features host-tests
 cargo test --manifest-path "$MANIFEST" -p qsoe-tm-syscfg --features host-tests
 cargo test --manifest-path "$MANIFEST" -p qsoe-tm-sysmap --features host-tests
 cargo test --manifest-path "$MANIFEST" -p qsoe-tm-sysfs --features host-tests
+cargo check --manifest-path "$MANIFEST" -p qsoe-tm-providers \
+    --no-default-features --features "tm-cpio tm-procfs"
 cargo test --manifest-path "$MANIFEST" -p qsoe-virtio
 cargo test --manifest-path "$MANIFEST" -p qsoe-service-example-rs --features host-tests
 

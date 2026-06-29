@@ -54,9 +54,10 @@ The top-level evidence target is:
 make tm-fdt-evidence
 ```
 
-Current taskman Rust providers are mutually exclusive. Do not set more than one
-`QSOE_RUST_TM_*` taskman provider selector until the providers are packaged into
-one shared staticlib.
+Multiple taskman Rust providers may be selected together. The shared
+`qsoe-tm-providers` archive packages the selected provider crates behind one
+no-std panic handler. Legacy targets such as `make rust-tm-fdt-provider`
+still produce the historical single-provider output path for focused evidence.
 
 ## Evidence
 
@@ -85,7 +86,7 @@ make container-tm-fdt-evidence
 - Rust provider archive exports all nine `tm_fdt_*` ABI symbols;
 - LQ C-default taskman links with C `sys/fdt.o`;
 - LQ Rust-selected taskman omits `sys/fdt.o` and links
-  `build/rust/tm-fdt/libqsoe_tm_fdt.a`;
+  the shared taskman Rust provider archive;
 - linked taskman ELFs pass the evidence script's ELF flag and section audit.
 - the container-equivalent `tm_fdt` evidence target passes with the same
   C-default/Rust-selected link checks.
@@ -100,7 +101,7 @@ C remains the default and rollback path:
 
 - `QSOE_RUST_TM_FDT=0` keeps `lq/taskman/sys/fdt.c`;
 - `QSOE_RUST_TM_FDT=1` excludes `sys/fdt.o` from LQ taskman and links
-  `build/rust/tm-fdt/libqsoe_tm_fdt.a`.
+  the shared taskman Rust provider archive.
 
 Do not promote this provider to a Rust-default RC until runtime boot coverage
 proves the FDT-backed `/chosen`, syscfg, PCI, memory, and command-line paths

@@ -2,9 +2,6 @@
 
 use core::ffi::{c_char, c_int, c_ulong};
 
-#[cfg(not(any(test, feature = "host-tests")))]
-use core::panic::PanicInfo;
-
 pub const TM_PROCFS_NAME_MAX: usize = 32;
 pub const TM_PROCFS_INFO_MAX: u32 = 160;
 pub const TM_PROCFS_DT_DIR: c_int = 4;
@@ -35,14 +32,6 @@ pub type TmProcfsNextFn = unsafe extern "C" fn(c_int, *mut TmProcfsProc) -> c_in
 
 static mut S_GET: Option<TmProcfsGetFn> = None;
 static mut S_NEXT: Option<TmProcfsNextFn> = None;
-
-#[cfg(not(any(test, feature = "host-tests")))]
-#[panic_handler]
-fn panic(_info: &PanicInfo<'_>) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
-}
 
 #[no_mangle]
 pub extern "C" fn tm_procfs_init(get: Option<TmProcfsGetFn>, next: Option<TmProcfsNextFn>) {

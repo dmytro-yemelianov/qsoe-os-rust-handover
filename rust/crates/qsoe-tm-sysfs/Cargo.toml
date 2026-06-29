@@ -8,7 +8,7 @@ publish.workspace = true
 [lib]
 name = "qsoe_tm_sysfs"
 path = "src/lib.rs"
-crate-type = ["rlib", "staticlib"]
+crate-type = ["rlib"]
 
 [features]
 host-tests = []

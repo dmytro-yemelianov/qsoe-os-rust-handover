@@ -48,6 +48,12 @@ Subsequent bounded providers now exist for `tm_cpio`, `tm_cred`, `tm_elf`,
 `tm_elf` is intentionally not a default candidate yet: it is a read-only
 parser, but its output feeds spawn, relocation, and loader admission.
 
+Multiple task-manager Rust providers can now be selected together. NQ/LQ
+taskman links one shared `qsoe-tm-providers` static archive when any
+`QSOE_RUST_TM_*` selector is enabled; the individual provider crates remain
+`rlib` crates, and the shared archive owns the single no-std panic handler.
+See `TASK_MANAGER_PROVIDERS.md` for the selector and evidence model.
+
 ## Spawn-Critical Paths
 
 These paths are not early Rust candidates. They launch `/sbin/init`, load
@@ -121,4 +127,5 @@ For now, a task-manager Rust pilot must:
 - have host fixtures before any guest image wiring;
 - avoid new direct seL4 invocation code;
 - avoid spawn, capability, relocation, and loader paths;
+- keep selected Rust providers packaged through one taskman Rust archive;
 - keep boot smoke as the minimum image-level regression gate.

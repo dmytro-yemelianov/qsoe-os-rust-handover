@@ -2,9 +2,6 @@
 
 use core::ffi::{c_int, c_uint, c_void};
 
-#[cfg(not(any(test, feature = "host-tests")))]
-use core::panic::PanicInfo;
-
 const TM_SYSMAP_PAGE_BYTES: usize = 4096;
 const QSOE_SYSMAP_MAGIC: u32 = 0x5053_5953;
 const QSOE_SYSMAP_VERSION: u16 = 1;
@@ -38,14 +35,6 @@ unsafe extern "C" {
     fn tm_syscfg_find(tag_id: c_uint, out_ptr: *mut *const c_void, out_len: *mut c_uint) -> c_int;
     fn tm_syscfg_find_u64(tag_id: c_uint, out: *mut u64) -> c_int;
     fn tm_syscfg_find_u32(tag_id: c_uint, out: *mut u32) -> c_int;
-}
-
-#[cfg(not(any(test, feature = "host-tests")))]
-#[panic_handler]
-fn panic(_info: &PanicInfo<'_>) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
 }
 
 unsafe fn page_ptr() -> *mut u8 {

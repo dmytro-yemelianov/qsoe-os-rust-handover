@@ -17,6 +17,7 @@ members = [
     "crates/qsoe-tm-pathmgr",
     "crates/qsoe-tm-pseudodev",
     "crates/qsoe-tm-procfs",
+    "crates/qsoe-tm-providers",
     "crates/qsoe-tm-rsrcdb",
     "crates/qsoe-tm-script",
     "crates/qsoe-tm-syscfg",

@@ -56,9 +56,10 @@ The top-level evidence target is:
 make tm-rsrcdb-evidence
 ```
 
-Current taskman Rust providers are mutually exclusive. Do not set more than one
-`QSOE_RUST_TM_*` taskman provider selector until the providers are packaged into
-one shared staticlib.
+Multiple taskman Rust providers may be selected together. The shared
+`qsoe-tm-providers` archive packages the selected provider crates behind one
+no-std panic handler. Legacy targets such as `make rust-tm-rsrcdb-provider`
+still produce the historical single-provider output path for focused evidence.
 
 ## Evidence
 
@@ -81,7 +82,7 @@ make tm-rsrcdb-evidence
 - Rust provider archive exports all `tm_rsrc_*` symbols;
 - LQ C-default dry-run and final taskman link include C `sys/rsrcdb.o`;
 - LQ Rust-selected dry-run and final taskman link omit C `sys/rsrcdb.o` and
-  link `build/rust/tm-rsrcdb/libqsoe_tm_rsrcdb.a`.
+  link the shared taskman Rust provider archive.
 
 The C and Rust fixtures also assert the real `rsrc_request_t` ABI size is 56
 bytes on RV64-style layouts. Taskman's dispatcher currently replies enough
@@ -94,7 +95,7 @@ C remains the default and rollback path:
 
 - `QSOE_RUST_TM_RSRCDB=0` keeps `lq/taskman/sys/rsrcdb.c`;
 - `QSOE_RUST_TM_RSRCDB=1` excludes `sys/rsrcdb.o` and links
-  `build/rust/tm-rsrcdb/libqsoe_tm_rsrcdb.a`.
+  the shared taskman Rust provider archive.
 
 Do not promote this provider to a Rust-default RC until runtime coverage proves
 resource attach/query/detach behavior through `rsrcdbmgr_*` callers, and do not

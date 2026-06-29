@@ -2,9 +2,6 @@
 
 use core::ffi::{c_char, c_int, c_uint, c_void};
 
-#[cfg(not(any(test, feature = "host-tests")))]
-use core::panic::PanicInfo;
-
 const NEWC_MAGIC: &[u8; 6] = b"070701";
 const HEADER_LEN: usize = 110;
 const FIELD_MODE: usize = 14;
@@ -37,14 +34,6 @@ struct Entry {
     data_offset: usize,
     filesize: u32,
     mode: u32,
-}
-
-#[cfg(not(any(test, feature = "host-tests")))]
-#[panic_handler]
-fn panic(_info: &PanicInfo<'_>) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
 }
 
 const fn align_4(value: usize) -> usize {

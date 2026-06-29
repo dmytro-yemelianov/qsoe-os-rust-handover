@@ -49,18 +49,19 @@ QSOE_RUST_TM_PATHMGR=1  -> Rust `qsoe-tm-pathmgr` staticlib is linked instead
 ```
 
 When Rust is selected, `libtaskman/Makefile` excludes `pathmgr.o` from
-`libtaskman.a`, and the NQ/LQ taskman links add:
+`libtaskman.a`, and the NQ/LQ taskman links add the shared provider archive:
 
 ```text
-build/rust/tm-pathmgr/libqsoe_tm_pathmgr.a
+build/rust/tm-providers/libqsoe_tm_providers.a
 ```
 
 The archive is built for `riscv64imac-unknown-none-elf` so it matches
 taskman's soft-float ABI.
 
-Current taskman Rust providers are mutually exclusive. Do not set more than one
-`QSOE_RUST_TM_*` taskman provider selector until the providers are packaged into
-one shared staticlib.
+Multiple taskman Rust providers may be selected together. The shared
+`qsoe-tm-providers` archive packages the selected provider crates behind one
+no-std panic handler. Legacy targets such as `make rust-tm-pathmgr-provider`
+still produce the historical single-provider output path for focused evidence.
 
 ## Evidence
 

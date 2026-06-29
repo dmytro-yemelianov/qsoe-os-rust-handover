@@ -240,6 +240,7 @@ Possible scope:
 - Accounting tables.
 - Bounded collections.
 - Diagnostic formatting.
+- Shared Rust archive packaging for multiple selected providers.
 
 Deferred scope:
 
@@ -253,6 +254,8 @@ Exit criteria:
 - A design review proves the module boundary does not affect boot-critical
   behavior.
 - There is a direct rollback path.
+- Multiple selected task-manager Rust providers link through one archive with
+  one panic handler.
 - Existing boot smoke and in-guest tests cover the affected path.
 
 ## Phase 10: Kernel Reassessment

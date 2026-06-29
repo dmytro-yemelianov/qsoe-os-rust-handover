@@ -2,9 +2,6 @@
 
 use core::ffi::{c_char, c_int, c_uint};
 
-#[cfg(not(any(test, feature = "host-tests")))]
-use core::panic::PanicInfo;
-
 const SYSFS_CMDLINE_BUFSZ: usize = 258;
 const SYSFS_BOARD_BUFSZ: usize = 130;
 const SYSFS_VERSION_BUFSZ: usize = 64;
@@ -30,14 +27,6 @@ static mut S_BUILDDATE_LEN: c_uint = 0;
 static mut S_CMDLINE_LEN: c_uint = 0;
 static mut S_OSNAME_LEN: c_uint = 0;
 static mut S_VERSION_LEN: c_uint = 0;
-
-#[cfg(not(any(test, feature = "host-tests")))]
-#[panic_handler]
-fn panic(_info: &PanicInfo<'_>) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
-}
 
 unsafe fn snap<const N: usize>(dst: *mut c_char, len_out: *mut c_uint, src: *const c_char) {
     let mut n = 0usize;

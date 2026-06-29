@@ -2,9 +2,6 @@
 
 use core::ffi::{c_int, c_long, c_uint, c_ulong};
 
-#[cfg(not(any(test, feature = "host-tests")))]
-use core::panic::PanicInfo;
-
 const EINVAL: c_int = 21;
 
 const TM_S_IFCHR: c_uint = 0o020000;
@@ -103,14 +100,6 @@ struct QsoeTcbPrefix {
 
 #[cfg(any(test, feature = "host-tests"))]
 static mut HOST_IPCBUF: QsoeIpcbuf = QsoeIpcbuf::zeroed();
-
-#[cfg(not(any(test, feature = "host-tests")))]
-#[panic_handler]
-fn panic(_info: &PanicInfo<'_>) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
-}
 
 #[cfg(any(test, feature = "host-tests"))]
 unsafe fn ipc_payload_ptr() -> *mut u8 {

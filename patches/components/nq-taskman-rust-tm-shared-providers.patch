@@ -1,0 +1,93 @@
+diff --git a/taskman/Makefile b/taskman/Makefile
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -28,9 +28,6 @@ QSOE_RUST_TM_SYSCFG ?= 0
+ QSOE_RUST_TM_SYSFS ?= 0
+ 
+ TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_ELF) $(QSOE_RUST_TM_PATHMGR) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSFS)))
+-ifneq ($(filter 2 3 4 5 6 7 8,$(TM_RUST_PROVIDER_COUNT)),)
+-$(error select at most one taskman Rust provider until they share one staticlib)
+-endif
+ 
+ GCC_INCLUDE := $(shell $(CC) -print-file-name=include)
+ 
+@@ -65,6 +62,7 @@ LIBTASKMAN_DIR := ../../libtaskman
+ LIBTASKMAN_BUILD := $(abspath ../build/libtaskman)
+ LIBTASKMAN_A := $(LIBTASKMAN_BUILD)/libtaskman.a
+ REPO_ROOT := $(abspath ../..)
++RUST_TM_PROVIDERS_A := $(REPO_ROOT)/build/rust/tm-providers/libqsoe_tm_providers.a
+ RUST_TM_CPIO_A := $(REPO_ROOT)/build/rust/tm-cpio/libqsoe_tm_cpio.a
+ RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a
+ RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a
+@@ -75,29 +73,8 @@ RUST_TM_SYSCFG_A := $(REPO_ROOT)/build/rust/tm-syscfg/libqsoe_tm_syscfg.a
+ RUST_TM_SYSFS_A := $(REPO_ROOT)/build/rust/tm-sysfs/libqsoe_tm_sysfs.a
+ 
+ TASKMAN_RUST_LIBS :=
+-ifeq ($(QSOE_RUST_TM_CPIO),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_CPIO_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_CRED),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_CRED_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_ELF),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_ELF_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_PATHMGR),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_PATHMGR_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_PROCFS),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_PROCFS_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_SCRIPT),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_SCRIPT_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_SYSCFG),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_SYSCFG_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_SYSFS),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_SYSFS_A)
++ifneq ($(TM_RUST_PROVIDER_COUNT),0)
++TASKMAN_RUST_LIBS += $(RUST_TM_PROVIDERS_A)
+ endif
+ 
+ .PHONY: all clean libtaskman
+@@ -121,29 +96,16 @@ $(LIBTASKMAN_A): FORCE
+ 	    QSOE_RUST_TM_SYSCFG=$(QSOE_RUST_TM_SYSCFG) \
+ 	    QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)
+ 
+-$(RUST_TM_CPIO_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-cpio-provider.sh $@
+-
+-$(RUST_TM_CRED_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-cred-provider.sh $@
+-
+-$(RUST_TM_ELF_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-elf-provider.sh $@
+-
+-$(RUST_TM_PATHMGR_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-pathmgr-provider.sh $@
+-
+-$(RUST_TM_PROCFS_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-procfs-provider.sh $@
+-
+-$(RUST_TM_SCRIPT_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-script-provider.sh $@
+-
+-$(RUST_TM_SYSCFG_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-syscfg-provider.sh $@
+-
+-$(RUST_TM_SYSFS_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-sysfs-provider.sh $@
++$(RUST_TM_PROVIDERS_A): FORCE
++	@QSOE_RUST_TM_CPIO=$(QSOE_RUST_TM_CPIO) \
++	    QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED) \
++	    QSOE_RUST_TM_ELF=$(QSOE_RUST_TM_ELF) \
++	    QSOE_RUST_TM_PATHMGR=$(QSOE_RUST_TM_PATHMGR) \
++	    QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS) \
++	    QSOE_RUST_TM_SCRIPT=$(QSOE_RUST_TM_SCRIPT) \
++	    QSOE_RUST_TM_SYSCFG=$(QSOE_RUST_TM_SYSCFG) \
++	    QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS) \
++	    $(REPO_ROOT)/scripts/build-rust-tm-providers.sh $@
+ 
+ FORCE:
+ 

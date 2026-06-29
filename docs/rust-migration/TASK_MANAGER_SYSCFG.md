@@ -50,6 +50,11 @@ The top-level evidence target is:
 make tm-syscfg-evidence
 ```
 
+When Rust is selected for a taskman link, the selected provider is packaged in
+the shared `build/rust/tm-providers/libqsoe_tm_providers.a` archive. Legacy
+targets such as `make rust-tm-syscfg-provider` still produce the historical
+single-provider output path for focused evidence.
+
 ## Evidence
 
 Local validation on 2026-06-29:
@@ -87,7 +92,7 @@ C remains the default and rollback path:
 
 - `QSOE_RUST_TM_SYSCFG=0` keeps `libtaskman/src/syscfg.c`;
 - `QSOE_RUST_TM_SYSCFG=1` excludes `syscfg.o` and links
-  `build/rust/tm-syscfg/libqsoe_tm_syscfg.a`.
+  the shared taskman Rust provider archive.
 
 Do not promote this provider to a Rust-default RC until boot/runtime coverage
 proves syscfg-backed platform-data behavior, and do not retire C until #26 is

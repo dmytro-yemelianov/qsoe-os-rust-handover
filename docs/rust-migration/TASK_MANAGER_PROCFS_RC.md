@@ -18,6 +18,8 @@ Release or build: `qsoe-tm-procfs-rc1`, introduced by the
 - New RC default implementation: Rust `qsoe-tm-procfs`
 - Rust artifact or crate: `rust/crates/qsoe-tm-procfs`, linked as
   `build/rust/tm-procfs/libqsoe_tm_procfs.a`
+- Current taskman Rust link model: selected providers are packaged through the
+  shared `build/rust/tm-providers/libqsoe_tm_providers.a` archive
 - C implementation status: rollback-only for the RC image path; still present
   in tree and still used by non-RC normal builds
 - User-visible behavior changes: none expected for `/proc`, `/proc/<pid>`, or

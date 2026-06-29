@@ -9,6 +9,8 @@ OUT=${1:-"$ROOT/build/rust/tm-elf/libqsoe_tm_elf.a"}
 MANIFEST="$ROOT/rust/Cargo.toml"
 RUST_TARGET=${RUST_TARGET:-riscv64imac-unknown-none-elf}
 
+QSOE_RUST_TM_ELF=1 exec "$ROOT/scripts/build-rust-tm-providers.sh" "$OUT"
+
 . "$ROOT/scripts/rust-env.sh"
 qsoe_cargo_set_target_dir "$ROOT" taskman-rust
 

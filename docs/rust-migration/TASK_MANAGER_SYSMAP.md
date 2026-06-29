@@ -53,9 +53,10 @@ The top-level evidence target is:
 make tm-sysmap-evidence
 ```
 
-Current taskman Rust providers are mutually exclusive. Do not set more than one
-`QSOE_RUST_TM_*` taskman provider selector until the providers are packaged into
-one shared staticlib.
+Multiple taskman Rust providers may be selected together. The shared
+`qsoe-tm-providers` archive packages the selected provider crates behind one
+no-std panic handler. Legacy targets such as `make rust-tm-sysmap-provider`
+still produce the historical single-provider output path for focused evidence.
 
 ## Evidence
 
@@ -82,7 +83,7 @@ make tm-sysmap-evidence
 - Rust provider archive exports `tm_sysmap_build` and `tm_sysmap_get`;
 - LQ C-default taskman links with C `sys/sysmap.o`;
 - LQ Rust-selected taskman omits `sys/sysmap.o` and links
-  `build/rust/tm-sysmap/libqsoe_tm_sysmap.a`;
+  the shared taskman Rust provider archive;
 - linked taskman ELFs pass the evidence script's ELF flag and section audit.
 
 This evidence proves ABI compatibility, archive selection, rollback, and linked
@@ -95,7 +96,7 @@ C remains the default and rollback path:
 
 - `QSOE_RUST_TM_SYSMAP=0` keeps `lq/taskman/sys/sysmap.c`;
 - `QSOE_RUST_TM_SYSMAP=1` excludes `sys/sysmap.o` from LQ taskman and links
-  `build/rust/tm-sysmap/libqsoe_tm_sysmap.a`.
+  the shared taskman Rust provider archive.
 
 Do not promote this provider to a Rust-default RC until runtime boot coverage
 proves the sysmap page consumed by user processes, and do not retire C until

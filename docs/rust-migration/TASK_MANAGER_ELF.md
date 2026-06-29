@@ -64,9 +64,10 @@ The top-level evidence target is:
 make tm-elf-evidence
 ```
 
-Current taskman Rust providers are mutually exclusive. Do not set more than one
-`QSOE_RUST_TM_*` taskman provider selector until the providers are packaged into
-one shared staticlib.
+Multiple taskman Rust providers may be selected together. The shared
+`qsoe-tm-providers` archive packages the selected provider crates behind one
+no-std panic handler. Legacy targets such as `make rust-tm-elf-provider`
+still produce the historical single-provider output path for focused evidence.
 
 ## Evidence
 
@@ -107,7 +108,7 @@ C remains the default and rollback path:
 
 - `QSOE_RUST_TM_ELF=0` keeps `libtaskman/src/elf.c`;
 - `QSOE_RUST_TM_ELF=1` excludes `elf.o` and links
-  `build/rust/tm-elf/libqsoe_tm_elf.a`.
+  the shared taskman Rust provider archive.
 
 Do not promote this provider to a Rust-default RC until loader/runtime coverage
 proves ELF-backed spawn behavior, and do not retire C until #26 is satisfied in

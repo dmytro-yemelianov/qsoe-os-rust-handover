@@ -2,9 +2,6 @@
 
 use core::ffi::{c_char, c_int, c_uint, c_ulonglong};
 
-#[cfg(not(any(test, feature = "host-tests")))]
-use core::panic::PanicInfo;
-
 const PATHMGR_NODES: usize = 64;
 const PATHMGR_NAME_MAX: usize = 30;
 const PATHMGR_TARGET_MAX: usize = 128;
@@ -85,14 +82,6 @@ unsafe extern "C" {
         filename: *const c_char,
         info: *mut TmCpioFileInfo,
     ) -> c_int;
-}
-
-#[cfg(not(any(test, feature = "host-tests")))]
-#[panic_handler]
-fn panic(_info: &PanicInfo<'_>) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
 }
 
 unsafe fn node_ptr(idx: i16) -> *mut Node {

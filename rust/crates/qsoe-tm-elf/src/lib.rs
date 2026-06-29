@@ -2,9 +2,6 @@
 
 use core::ffi::{c_char, c_int, c_uint, c_void};
 
-#[cfg(not(any(test, feature = "host-tests")))]
-use core::panic::PanicInfo;
-
 const EI_CLASS: u64 = 4;
 const EI_DATA: u64 = 5;
 const ELFCLASS64: u8 = 2;
@@ -68,14 +65,6 @@ impl Default for TmElfView {
             phdr_entsize: 0,
             phdr_count: 0,
         }
-    }
-}
-
-#[cfg(not(any(test, feature = "host-tests")))]
-#[panic_handler]
-fn panic(_info: &PanicInfo<'_>) -> ! {
-    loop {
-        core::hint::spin_loop();
     }
 }
 

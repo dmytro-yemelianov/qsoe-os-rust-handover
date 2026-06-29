@@ -84,6 +84,7 @@ be separate removal PRs after their own RC evidence.
 | Kernel Rust | #155 | Deferred. Current policy allows documentation and fixtures only. |
 | C retirement gate | #26 | Exercised by retiring the C `test_msgpass` helper plus C `slogger`, `pipe`, and `devb-virtio` production paths after their Rust-default RC evidence. Future removals must repeat the same checklist. |
 | OS-wide inventory | #156 | Satisfied by this document once merged. |
+| Shared task-manager Rust archive | #179 | In progress on the current branch: selected taskman Rust providers link through one `qsoe-tm-providers` archive with one panic handler. |
 
 ## Areas Not Yet Split Into Per-component Issues
 

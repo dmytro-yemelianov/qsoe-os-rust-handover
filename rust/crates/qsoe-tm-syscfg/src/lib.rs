@@ -2,9 +2,6 @@
 
 use core::ffi::{c_char, c_int, c_uint, c_void};
 
-#[cfg(not(any(test, feature = "host-tests")))]
-use core::panic::PanicInfo;
-
 const TM_SYSCFG_TAG_END: u16 = 0;
 const TAG_HEADER_LEN: usize = 4;
 
@@ -15,14 +12,6 @@ pub struct TmSyscfgState {
     pub cap: c_uint,
     pub len: c_uint,
     pub ready: c_int,
-}
-
-#[cfg(not(any(test, feature = "host-tests")))]
-#[panic_handler]
-fn panic(_info: &PanicInfo<'_>) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
 }
 
 fn checked_record_end(offset: usize, payload_len: usize) -> Option<usize> {

@@ -200,6 +200,7 @@ echo "tm-rsrcdb-evidence.sh: verifying LQ C-default link plan"
 capture_lq_taskman_plan lq-c-default 0
 require_plan_contains lq-c-default '/sys/rsrcdb.o'
 require_plan_omits lq-c-default 'libqsoe_tm_rsrcdb.a'
+require_plan_omits lq-c-default 'libqsoe_tm_providers.a'
 
 echo "tm-rsrcdb-evidence.sh: verifying LQ C-default taskman link"
 build_lq_taskman lq-c-default 0
@@ -207,7 +208,8 @@ build_lq_taskman lq-c-default 0
 echo "tm-rsrcdb-evidence.sh: verifying LQ Rust-selected link plan"
 capture_lq_taskman_plan lq-rust-selected 1
 require_plan_omits lq-rust-selected '/sys/rsrcdb.o'
-require_plan_contains lq-rust-selected 'libqsoe_tm_rsrcdb.a'
+require_plan_omits lq-rust-selected 'libqsoe_tm_rsrcdb.a'
+require_plan_contains lq-rust-selected 'libqsoe_tm_providers.a'
 
 echo "tm-rsrcdb-evidence.sh: verifying LQ Rust-selected taskman link"
 build_lq_taskman lq-rust-selected 1

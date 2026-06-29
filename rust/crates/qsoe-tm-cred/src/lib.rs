@@ -2,9 +2,6 @@
 
 use core::ffi::{c_char, c_int, c_uint};
 
-#[cfg(not(any(test, feature = "host-tests")))]
-use core::panic::PanicInfo;
-
 pub const TM_CWD_MAX: usize = 256;
 pub const TM_CRED_KEEP: c_uint = 0xffff_ffff;
 
@@ -44,14 +41,6 @@ pub struct TmCredState {
     pub cwd: [c_char; TM_CWD_MAX],
     pub umask: c_uint,
     pub cred: TmCredInfo,
-}
-
-#[cfg(not(any(test, feature = "host-tests")))]
-#[panic_handler]
-fn panic(_info: &PanicInfo<'_>) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
 }
 
 /// Initialise a `tm_cred_state_t` record.

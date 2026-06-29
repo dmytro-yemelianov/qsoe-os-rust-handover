@@ -121,6 +121,24 @@ name = "qsoe-tm-procfs"
 version = "0.0.0"
 
 [[package]]
+name = "qsoe-tm-providers"
+version = "0.0.0"
+dependencies = [
+ "qsoe-tm-cpio",
+ "qsoe-tm-cred",
+ "qsoe-tm-elf",
+ "qsoe-tm-fdt",
+ "qsoe-tm-pathmgr",
+ "qsoe-tm-procfs",
+ "qsoe-tm-pseudodev",
+ "qsoe-tm-rsrcdb",
+ "qsoe-tm-script",
+ "qsoe-tm-syscfg",
+ "qsoe-tm-sysfs",
+ "qsoe-tm-sysmap",
+]
+
+[[package]]
 name = "qsoe-tm-pseudodev"
 version = "0.0.0"
 

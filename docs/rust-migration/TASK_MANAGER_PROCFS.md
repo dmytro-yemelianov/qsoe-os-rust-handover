@@ -70,16 +70,14 @@ QSOE_RUST_TM_PROCFS=0  -> C `libtaskman/src/tm_procfs.c` remains default
 QSOE_RUST_TM_PROCFS=1  -> Rust `qsoe-tm-procfs` staticlib is linked instead
 ```
 
-The selector removes `tm_procfs.o` from `libtaskman.a` when Rust is selected,
-then links `libqsoe_tm_procfs.a` into NQ and LQ taskman. The Rust archive is
-built for `riscv64imac-unknown-none-elf` so it matches taskman's soft-float
-ABI.
+The selector removes `tm_procfs.o` from `libtaskman.a` when Rust is selected.
+NQ/LQ taskman now link the selected provider through the shared
+`qsoe-tm-providers` archive, built for `riscv64imac-unknown-none-elf` so it
+matches taskman's soft-float ABI.
 
-Current taskman Rust providers are mutually exclusive. Do not set more than one
-of `QSOE_RUST_TM_PROCFS=1`, `QSOE_RUST_TM_CRED=1`, and
-`QSOE_RUST_TM_PSEUDODEV=1`, or `QSOE_RUST_TM_SYSFS=1` in the same build until a
-shared taskman Rust archive packages multiple providers behind one panic
-handler.
+Multiple `QSOE_RUST_TM_*` selectors may be enabled together. The shared archive
+owns the single no-std panic handler; individual provider crates remain `rlib`
+crates that export the existing C ABI.
 
 ## Evidence
 

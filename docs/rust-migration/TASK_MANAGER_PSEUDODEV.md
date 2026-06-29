@@ -55,18 +55,16 @@ build/taskman/sys/devzero.o
 and adds:
 
 ```text
-build/rust/tm-pseudodev/libqsoe_tm_pseudodev.a
+build/rust/tm-providers/libqsoe_tm_providers.a
 ```
 
 The archive is built for `riscv64imac-unknown-none-elf` so it matches
 taskman's soft-float ABI.
 
-Current taskman Rust providers are mutually exclusive. Do not set more than
-one of `QSOE_RUST_TM_PROCFS=1`, `QSOE_RUST_TM_CRED=1`, and
-`QSOE_RUST_TM_PSEUDODEV=1`, or `QSOE_RUST_TM_SYSFS=1` in the same build. Each
-provider is currently a separate no-std Rust staticlib with its own panic
-handler; a future shared taskman Rust archive should package multiple providers
-together.
+Multiple taskman Rust providers may be selected together. The shared
+`qsoe-tm-providers` archive packages the selected provider crates behind one
+no-std panic handler. Legacy targets such as `make rust-tm-pseudodev-provider`
+still produce the historical single-provider output path for focused evidence.
 
 ## Evidence
 
@@ -88,8 +86,8 @@ It runs the Rust host tests, builds and audits the Rust staticlib, checks the
 six exported symbols, verifies all archive members are RVC soft-float, verifies
 the LQ C-default dry-run link plan includes `devnull.o` and `devzero.o`, and
 verifies the LQ Rust-selected dry-run link plan omits those objects and links
-`libqsoe_tm_pseudodev.a`. It also links LQ taskman in both C-default and
-Rust-selected modes and audits the resulting ELF.
+the shared taskman Rust provider archive. It also links LQ taskman in both
+C-default and Rust-selected modes and audits the resulting ELF.
 
 ## Current State
 

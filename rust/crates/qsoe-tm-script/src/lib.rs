@@ -2,17 +2,6 @@
 
 use core::ffi::{c_char, c_int, c_uint};
 
-#[cfg(not(any(test, feature = "host-tests")))]
-use core::panic::PanicInfo;
-
-#[cfg(not(any(test, feature = "host-tests")))]
-#[panic_handler]
-fn panic(_info: &PanicInfo<'_>) -> ! {
-    loop {
-        core::hint::spin_loop();
-    }
-}
-
 unsafe fn write_nul(dst: *mut c_char, offset: usize) {
     *dst.add(offset) = 0;
 }

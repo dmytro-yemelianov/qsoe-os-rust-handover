@@ -163,6 +163,9 @@ apply_patch_if_possible_or_present nq nq-taskman-rust-tm-elf.patch \
 apply_patch_if_possible_or_present nq nq-taskman-rust-tm-pathmgr.patch \
     "$ROOT/nq/taskman/Makefile" \
     'RUST_TM_PATHMGR_A := $(REPO_ROOT)/build/rust/tm-pathmgr/libqsoe_tm_pathmgr.a'
+apply_patch_if_possible_or_present nq nq-taskman-rust-tm-shared-providers.patch \
+    "$ROOT/nq/taskman/Makefile" \
+    'RUST_TM_PROVIDERS_A := $(REPO_ROOT)/build/rust/tm-providers/libqsoe_tm_providers.a'
 apply_patch_if_possible_or_present nq nq-makefile-rust-slogger-retired.patch \
     "$ROOT/nq/Makefile" \
     'SELECTED_SLOGGER_ELF ?= $(abspath ../build/rust/selected/sbin/slogger.elf)'
@@ -214,6 +217,7 @@ apply_patch_if_possible_or_present lq lq-makefile-rust-tm-sysmap.patch \
 apply_patch_if_possible_or_present lq lq-makefile-rust-tm-pathmgr.patch \
     "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_PATHMGR ?= 0'
+apply_patch_if_possible lq lq-makefile-rust-tm-shared-providers.patch
 apply_patch_if_possible_or_present lq lq-makefile-rust-slogger-retired.patch \
     "$ROOT/lq/Makefile" \
     'SELECTED_SLOGGER_ELF ?= $(abspath $(TOP)/..)/build/rust/selected/sbin/slogger.elf'
@@ -262,6 +266,9 @@ apply_patch_if_possible_or_present lq lq-taskman-rust-tm-sysmap.patch \
 apply_patch_if_possible_or_present lq lq-taskman-rust-tm-pathmgr.patch \
     "$ROOT/lq/taskman/Makefile" \
     'RUST_TM_PATHMGR_A := $(REPO_ROOT)/build/rust/tm-pathmgr/libqsoe_tm_pathmgr.a'
+apply_patch_if_possible_or_present lq lq-taskman-rust-tm-shared-providers.patch \
+    "$ROOT/lq/taskman/Makefile" \
+    'RUST_TM_PROVIDERS_A := $(REPO_ROOT)/build/rust/tm-providers/libqsoe_tm_providers.a'
 apply_patch_if_possible lq lq-msgpass-mcs-teardown-and-bulk-copy.patch
 apply_patch_if_possible_or_present quser quser-retire-test-msgpass-c.patch \
     "$ROOT/quser/Makefile" \
@@ -293,14 +300,10 @@ require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_PATHMGR_A := $(REPO_ROOT)/buil
 require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_SCRIPT_A := $(REPO_ROOT)/build/rust/tm-script/libqsoe_tm_script.a'
 require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_SYSCFG_A := $(REPO_ROOT)/build/rust/tm-syscfg/libqsoe_tm_syscfg.a'
 require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_SYSFS_A := $(REPO_ROOT)/build/rust/tm-sysfs/libqsoe_tm_sysfs.a'
-require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_CPIO_A): FORCE'
-require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_PROCFS_A): FORCE'
-require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_CRED_A): FORCE'
-require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_ELF_A): FORCE'
-require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_PATHMGR_A): FORCE'
-require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_SCRIPT_A): FORCE'
-require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_SYSCFG_A): FORCE'
-require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_SYSFS_A): FORCE'
+require_line "$ROOT/nq/taskman/Makefile" 'RUST_TM_PROVIDERS_A := $(REPO_ROOT)/build/rust/tm-providers/libqsoe_tm_providers.a'
+require_line "$ROOT/nq/taskman/Makefile" 'TASKMAN_RUST_LIBS += $(RUST_TM_PROVIDERS_A)'
+require_line "$ROOT/nq/taskman/Makefile" '$(RUST_TM_PROVIDERS_A): FORCE'
+require_line "$ROOT/nq/taskman/Makefile" '$(REPO_ROOT)/scripts/build-rust-tm-providers.sh $@'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO=$(QSOE_RUST_TM_CPIO)'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED)'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_ELF=$(QSOE_RUST_TM_ELF)'
@@ -331,24 +334,9 @@ require_adjacent_contains "$ROOT/nq/taskman/Makefile" \
     'QSOE_RUST_TM_SYSCFG=$(QSOE_RUST_TM_SYSCFG)' \
     'QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)'
 require_before_contains "$ROOT/nq/taskman/Makefile" \
-    '$(RUST_TM_SYSFS_A): FORCE' \
+    '$(RUST_TM_PROVIDERS_A): FORCE' \
     'FORCE:'
-require_before_contains "$ROOT/nq/taskman/Makefile" \
-    '$(RUST_TM_CPIO_A): FORCE' \
-    'FORCE:'
-require_before_contains "$ROOT/nq/taskman/Makefile" \
-    '$(RUST_TM_ELF_A): FORCE' \
-    'FORCE:'
-require_before_contains "$ROOT/nq/taskman/Makefile" \
-    '$(RUST_TM_SCRIPT_A): FORCE' \
-    'FORCE:'
-require_before_contains "$ROOT/nq/taskman/Makefile" \
-    '$(RUST_TM_SYSCFG_A): FORCE' \
-    'FORCE:'
-require_before_contains "$ROOT/nq/taskman/Makefile" \
-    '$(RUST_TM_PATHMGR_A): FORCE' \
-    'FORCE:'
-require_line "$ROOT/nq/taskman/Makefile" 'select at most one taskman Rust provider until they share one staticlib'
+require_absent "$ROOT/nq/taskman/Makefile" 'select at most one taskman Rust provider until they share one staticlib'
 require_line "$ROOT/nq/taskman/Makefile" '$(BUILD)/taskman.elf: $(OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS) taskman.ld'
 require_line "$ROOT/nq/Makefile" 'SELECTED_SLOGGER_ELF ?= $(abspath ../build/rust/selected/sbin/slogger.elf)'
 require_line "$ROOT/nq/Makefile" 'SELECTED_PIPE_ELF ?= $(abspath ../build/rust/selected/sbin/pipe.elf)'
@@ -426,7 +414,7 @@ require_adjacent_contains "$ROOT/lq/Makefile" \
 require_adjacent_contains "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_SYSMAP=$(QSOE_RUST_TM_SYSMAP)' \
     'QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)'
-require_line "$ROOT/lq/Makefile" 'select at most one taskman Rust provider until they share one staticlib'
+require_absent "$ROOT/lq/Makefile" 'select at most one taskman Rust provider until they share one staticlib'
 require_line "$ROOT/lq/Makefile" '$(LIBTASKMAN_A): FORCE'
 require_line "$ROOT/lq/Makefile" 'FORCE:'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
@@ -453,18 +441,10 @@ require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_SCRIPT_A := $(REPO_ROOT)/build
 require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_SYSCFG_A := $(REPO_ROOT)/build/rust/tm-syscfg/libqsoe_tm_syscfg.a'
 require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_SYSMAP_A := $(REPO_ROOT)/build/rust/tm-sysmap/libqsoe_tm_sysmap.a'
 require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_SYSFS_A := $(REPO_ROOT)/build/rust/tm-sysfs/libqsoe_tm_sysfs.a'
-require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_CPIO_A): FORCE'
-require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_PROCFS_A): FORCE'
-require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_CRED_A): FORCE'
-require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_ELF_A): FORCE'
-require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_FDT_A): FORCE'
-require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_PATHMGR_A): FORCE'
-require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_PSEUDODEV_A): FORCE'
-require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_RSRCDB_A): FORCE'
-require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_SCRIPT_A): FORCE'
-require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_SYSCFG_A): FORCE'
-require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_SYSMAP_A): FORCE'
-require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_SYSFS_A): FORCE'
+require_line "$ROOT/lq/taskman/Makefile" 'RUST_TM_PROVIDERS_A := $(REPO_ROOT)/build/rust/tm-providers/libqsoe_tm_providers.a'
+require_line "$ROOT/lq/taskman/Makefile" 'TASKMAN_RUST_LIBS += $(RUST_TM_PROVIDERS_A)'
+require_line "$ROOT/lq/taskman/Makefile" '$(RUST_TM_PROVIDERS_A): FORCE'
+require_line "$ROOT/lq/taskman/Makefile" '$(REPO_ROOT)/scripts/build-rust-tm-providers.sh $@'
 require_line "$ROOT/lq/taskman/Makefile" 'TASKMAN_PSEUDODEV_OBJS += $(OBJDIR)/sys/devnull.o'
 require_line "$ROOT/lq/taskman/Makefile" 'TASKMAN_PSEUDODEV_OBJS += $(OBJDIR)/sys/devzero.o'
 require_line "$ROOT/lq/taskman/Makefile" '$(TASKMAN_PSEUDODEV_OBJS)'
@@ -474,40 +454,10 @@ require_line "$ROOT/lq/taskman/Makefile" 'TASKMAN_FDT_OBJS += $(OBJDIR)/sys/fdt.
 require_line "$ROOT/lq/taskman/Makefile" '$(TASKMAN_FDT_OBJS)'
 require_line "$ROOT/lq/taskman/Makefile" 'TASKMAN_SYSMAP_OBJS += $(OBJDIR)/sys/sysmap.o'
 require_line "$ROOT/lq/taskman/Makefile" '$(TASKMAN_SYSMAP_OBJS)'
-require_line "$ROOT/lq/taskman/Makefile" 'select at most one taskman Rust provider until they share one staticlib'
+require_absent "$ROOT/lq/taskman/Makefile" 'select at most one taskman Rust provider until they share one staticlib'
 require_line "$ROOT/lq/taskman/Makefile" 'FORCE:'
 require_before_contains "$ROOT/lq/taskman/Makefile" \
-    '$(RUST_TM_CPIO_A): FORCE' \
-    '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
-require_before_contains "$ROOT/lq/taskman/Makefile" \
-    '$(RUST_TM_CRED_A): FORCE' \
-    '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
-require_before_contains "$ROOT/lq/taskman/Makefile" \
-    '$(RUST_TM_ELF_A): FORCE' \
-    '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
-require_before_contains "$ROOT/lq/taskman/Makefile" \
-    '$(RUST_TM_FDT_A): FORCE' \
-    '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
-require_before_contains "$ROOT/lq/taskman/Makefile" \
-    '$(RUST_TM_PATHMGR_A): FORCE' \
-    '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
-require_before_contains "$ROOT/lq/taskman/Makefile" \
-    '$(RUST_TM_PSEUDODEV_A): FORCE' \
-    '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
-require_before_contains "$ROOT/lq/taskman/Makefile" \
-    '$(RUST_TM_RSRCDB_A): FORCE' \
-    '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
-require_before_contains "$ROOT/lq/taskman/Makefile" \
-    '$(RUST_TM_SCRIPT_A): FORCE' \
-    '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
-require_before_contains "$ROOT/lq/taskman/Makefile" \
-    '$(RUST_TM_SYSCFG_A): FORCE' \
-    '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
-require_before_contains "$ROOT/lq/taskman/Makefile" \
-    '$(RUST_TM_SYSMAP_A): FORCE' \
-    '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
-require_before_contains "$ROOT/lq/taskman/Makefile" \
-    '$(RUST_TM_SYSFS_A): FORCE' \
+    '$(RUST_TM_PROVIDERS_A): FORCE' \
     '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
 require_line "$ROOT/lq/taskman/Makefile" '$(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)'
 require_line "$ROOT/lq/libc/qsoe/msg.c" 'if (label == QSOE_MSG_BULK_LABEL) {'

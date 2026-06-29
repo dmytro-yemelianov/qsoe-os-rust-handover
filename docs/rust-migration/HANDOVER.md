@@ -22,7 +22,7 @@ origin git@github.com:dmytro-yemelianov/qsoe-os-rust-handover.git
 Current main tip:
 
 ```text
-6868954014d81c8c9c7a3e5a744e75cb105f459e
+8b0df722de62718287407f9593a95cfdaa8c50d4
 ```
 
 The local tree adds:
@@ -83,15 +83,15 @@ opt-in status display, PR #166 added the Rust opt-in `tm_cpio` provider, PR
 `tm_fdt` provider, PR #173 added the Rust opt-in `tm_sysmap` provider, PR #174
 added the Rust opt-in `tm_pathmgr` provider, PR #175 retired the C
 `test_msgpass` helper, and PR #176 styled retired roadmap state in the
-dashboard. PR #177 retired the C `slogger` service, and PR #178 retired the C
-`pipe` service. The current `main` tip is
-`6868954014d81c8c9c7a3e5a744e75cb105f459e`.
+dashboard. PR #177 retired the C `slogger` service, PR #178 retired the C
+`pipe` service, and PR #180 retired the C `devb-virtio` block driver. The
+current `main` tip is `8b0df722de62718287407f9593a95cfdaa8c50d4`.
 
 Current open follow-ups:
 
-- #138: `devb-virtio` block driver. The current branch exercises the next
-  #26-style removal by retiring the C `/sbin/devb-virtio` driver after the
-  Rust-default file-read RC and rollback evidence.
+- #179: shared task-manager Rust provider archive. The current branch packages
+  selected taskman Rust providers through one `qsoe-tm-providers` static
+  archive with one panic handler, then proves `tm_cpio + tm_procfs` together.
 
 The #96 Rust pipe data-path gate, #97 Rust `test_msgpass` gate, and #103
 `tm_procfs` opt-in gate are satisfied by trusted `main` CI run `28102250069` at
@@ -101,10 +101,10 @@ The #98 host-test gate for the portable `tm_procfs` model is satisfied by
 `make check-tm-procfs-model`. The #102 Rust provider gate is satisfied by
 `QSOE_RUST_TM_PROCFS=1`; C remains default and rollback.
 
-The current branch retires the C `devb-virtio` driver. NQ/LQ image paths now
-stage Rust `devb-virtio-rs` at `/sbin/devb-virtio`, the tracked `quser`
-override removes `dev/virtio`, and the old C rollback flags fail fast. C
-remains default and rollback for all non-retired migration candidates.
+The current branch adds the shared taskman Rust provider archive. NQ/LQ taskman
+still keep C as default and rollback for every non-retired provider, but when
+any `QSOE_RUST_TM_*` selector is enabled the selected Rust providers link
+through one shared archive instead of one staticlib per provider.
 
 ## Linux Machine Setup
 
@@ -231,6 +231,7 @@ make check-qrvfs-rust-fixture
 make check-elf-reloc-fixture
 make check-tm-procfs-model
 make rust-tm-procfs-provider
+make tm-providers-evidence
 make rust-tm-cred-provider
 make tm-cred-evidence
 make rust-tm-pseudodev-provider
@@ -313,63 +314,61 @@ The strict ELF audit showed:
   removes the C service from tracked `quser` source/image paths and rejects old
   rollback flags.
 - `tm_procfs` now has a Rust opt-in provider behind `QSOE_RUST_TM_PROCFS=1`.
-  The selector removes C `tm_procfs.o` from `libtaskman.a`, links the
-  soft-float `qsoe-tm-procfs` archive into NQ/LQ taskman. `make
-  tm-procfs-evidence` audits the selected artifacts and runs both C-default and
-  Rust-selected `/proc` smokes; CI includes `container-tm-procfs-evidence` on
-  the configured `[self-hosted, X64]` runner for trusted PRs and pushes.
-  Trusted `main` run `28102250069` passed the evidence step and uploaded both
-  C-default/Rust-selected procfs logs plus archive membership and readelf
-  summaries. C remains default and rollback.
+  The selector removes C `tm_procfs.o` from `libtaskman.a` and, on the current
+  branch, links the selected provider through the shared `qsoe-tm-providers`
+  archive. `make tm-procfs-evidence` audits the selected artifacts and runs
+  both C-default and Rust-selected `/proc` smokes; CI includes
+  `container-tm-procfs-evidence` on the configured `[self-hosted, X64]` runner
+  for trusted PRs and pushes. Trusted `main` run `28102250069` passed the
+  evidence step and uploaded both C-default/Rust-selected procfs logs plus
+  archive membership and readelf summaries. C remains default and rollback.
 - `tm_cred` has a Rust opt-in provider behind `QSOE_RUST_TM_CRED=1`. It is
   merged on `main` through PR #162 with `make tm-cred-evidence` and
   `make container-source-build` evidence. C remains default and rollback until
   a credential-specific runtime smoke and separate RC decision exist.
 - `tm_pseudodev` has a Rust opt-in provider behind
   `QSOE_RUST_TM_PSEUDODEV=1`. The selector replaces only LQ `sys/devnull.o`
-  and `sys/devzero.o` with the Rust staticlib. C remains default and rollback
-  until a focused `/dev/null` and `/dev/zero` runtime smoke and separate RC
-  decision exist.
+  and `sys/devzero.o` with the selected Rust provider archive. C remains
+  default and rollback until a focused `/dev/null` and `/dev/zero` runtime
+  smoke and separate RC decision exist.
 - `tm_cpio` has a Rust opt-in provider behind `QSOE_RUST_TM_CPIO=1`. The
-  selector removes C `cpio.o` from `libtaskman.a` and links the soft-float
-  `qsoe-tm-cpio` archive into NQ/LQ taskman. C remains default and rollback
-  until CPIO-backed spawn/file-access runtime coverage and a separate RC
-  decision exist.
+  selector removes C `cpio.o` from `libtaskman.a` and links through the shared
+  taskman Rust provider archive. C remains default and rollback until
+  CPIO-backed spawn/file-access runtime coverage and a separate RC decision
+  exist.
 - `tm_script` has a Rust opt-in provider behind `QSOE_RUST_TM_SCRIPT=1`. The
-  selector removes C `script.o` from `libtaskman.a` and links the soft-float
-  `qsoe-tm-script` archive into NQ/LQ taskman. C remains default and rollback
-  until script-spawn runtime coverage and a separate RC decision exist.
+  selector removes C `script.o` from `libtaskman.a` and links through the
+  shared taskman Rust provider archive. C remains default and rollback until
+  script-spawn runtime coverage and a separate RC decision exist.
 - `tm_syscfg` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSCFG=1`. The
-  selector removes C `syscfg.o` from `libtaskman.a` and links the soft-float
-  `qsoe-tm-syscfg` archive into NQ/LQ taskman. C remains default and rollback
-  until syscfg-backed platform-data runtime coverage and a separate RC decision
+  selector removes C `syscfg.o` from `libtaskman.a` and links through the
+  shared taskman Rust provider archive. C remains default and rollback until
+  syscfg-backed platform-data runtime coverage and a separate RC decision
   exist.
 - `tm_sysmap` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSMAP=1`. The
-  selector removes LQ C `sys/sysmap.o` and links the soft-float
-  `qsoe-tm-sysmap` archive into LQ taskman. C remains default and rollback
-  until mapped `PSYS` page runtime coverage and a separate RC decision exist.
+  selector removes LQ C `sys/sysmap.o` and links through the shared taskman
+  Rust provider archive. C remains default and rollback until mapped `PSYS`
+  page runtime coverage and a separate RC decision exist.
 - `tm_pathmgr` has a Rust opt-in provider behind `QSOE_RUST_TM_PATHMGR=1`. The
-  selector removes C `pathmgr.o` from `libtaskman.a` and links the soft-float
-  `qsoe-tm-pathmgr` archive into NQ/LQ taskman. C remains default and rollback
-  until open/device-registration runtime coverage and a separate RC decision
-  exist.
+  selector removes C `pathmgr.o` from `libtaskman.a` and links through the
+  shared taskman Rust provider archive. C remains default and rollback until
+  open/device-registration runtime coverage and a separate RC decision exist.
 - `tm_sysfs` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSFS=1`. The
-  selector removes C `tm_sysfs.o` from `libtaskman.a` and links the soft-float
-  `qsoe-tm-sysfs` archive into NQ/LQ taskman. C remains default and rollback
-  until a focused `/sys` runtime smoke and separate RC decision exist.
+  selector removes C `tm_sysfs.o` from `libtaskman.a` and links through the
+  shared taskman Rust provider archive. C remains default and rollback until a
+  focused `/sys` runtime smoke and separate RC decision exist.
 - `tm_rsrcdb` has a Rust opt-in provider behind `QSOE_RUST_TM_RSRCDB=1`. The
-  selector removes LQ C `sys/rsrcdb.o` and links the soft-float
-  `qsoe-tm-rsrcdb` archive into LQ taskman. C remains default and rollback
-  until resource attach/query/detach runtime coverage and a separate RC
-  decision exist.
+  selector removes LQ C `sys/rsrcdb.o` and links through the shared taskman
+  Rust provider archive. C remains default and rollback until resource
+  attach/query/detach runtime coverage and a separate RC decision exist.
 - `tm_elf` has a Rust opt-in provider behind `QSOE_RUST_TM_ELF=1`. The selector
-  removes C `elf.o` from `libtaskman.a` and links the soft-float
-  `qsoe-tm-elf` archive into NQ/LQ taskman. C remains default and rollback
-  until ELF-backed spawn runtime coverage and a separate RC decision exist.
-- `tm_fdt` has a Rust opt-in provider behind `QSOE_RUST_TM_FDT=1`. The
-  selector removes LQ C `sys/fdt.o` and links the soft-float `qsoe-tm-fdt`
-  archive into LQ taskman. C remains default and rollback until boot/syscfg
+  removes C `elf.o` from `libtaskman.a` and links through the shared taskman
+  Rust provider archive. C remains default and rollback until ELF-backed spawn
   runtime coverage and a separate RC decision exist.
+- `tm_fdt` has a Rust opt-in provider behind `QSOE_RUST_TM_FDT=1`. The
+  selector removes LQ C `sys/fdt.o` and links through the shared taskman Rust
+  provider archive. C remains default and rollback until boot/syscfg runtime
+  coverage and a separate RC decision exist.
 
 ## Current Decisions
 
@@ -383,13 +382,11 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 
 ## Next Recommended Work
 
-1. Finish the `slogger` retirement PR, then update #137 to `status:retired`
-   and close it after CI passes.
-2. Keep the pipe Rust-default RC path and C rollback data-path smoke green
-   before considering any #26 retirement work.
-3. If desired, open a separate Rust-default `tm_procfs` selection design/PR
-   with C rollback. #103's opt-in evidence is complete.
-4. Keep the hosted runner and CodeRabbit account healthy for new PRs, but the
-   old #42/#60 external states no longer block `main`.
-5. Do not start any further C retirement until the release-candidate gate in
+1. Finish PR #179 for the shared task-manager Rust provider archive, then
+   update #179 to `status:complete`.
+2. Use the shared archive to resume #141 `tm_procfs` C retirement only after
+   the #26 removal checklist is explicitly satisfied.
+3. Keep the hosted runner healthy for new PRs; CodeRabbit usage-credit failures
+   are non-blocking until the account is replenished.
+4. Do not start any further C retirement until the release-candidate gate in
    `RETIREMENT.md` is satisfied; see #26.

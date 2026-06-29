@@ -1,0 +1,121 @@
+diff --git a/taskman/Makefile b/taskman/Makefile
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -53,9 +53,6 @@ QSOE_RUST_TM_SYSMAP ?= 0
+ QSOE_RUST_TM_SYSFS ?= 0
+ 
+ TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_ELF) $(QSOE_RUST_TM_FDT) $(QSOE_RUST_TM_PATHMGR) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_RSRCDB) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSMAP) $(QSOE_RUST_TM_SYSFS)))
+-ifneq ($(filter 2 3 4 5 6 7 8 9 10 11 12,$(TM_RUST_PROVIDER_COUNT)),)
+-$(error select at most one taskman Rust provider until they share one staticlib)
+-endif
+ 
+ TASKMAN_DIR := $(TOP)/taskman
+ # Public QSOE/libc headers (sys/qsoe.h, qsoe/tm_msgs.h, ...) live in
+@@ -95,6 +92,7 @@ LIBCPIO     := $(TOP)/../common
+ LIBTASKMAN_INC ?= $(abspath $(TOP)/..)/libtaskman/include
+ LIBTASKMAN_A   ?= $(BUILD)/libtaskman/libtaskman.a
+ REPO_ROOT := $(abspath $(TOP)/..)
++RUST_TM_PROVIDERS_A := $(REPO_ROOT)/build/rust/tm-providers/libqsoe_tm_providers.a
+ RUST_TM_CPIO_A := $(REPO_ROOT)/build/rust/tm-cpio/libqsoe_tm_cpio.a
+ RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a
+ RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a
+@@ -110,41 +108,8 @@ RUST_TM_SYSMAP_A := $(REPO_ROOT)/build/rust/tm-sysmap/libqsoe_tm_sysmap.a
+ RUST_TM_SYSFS_A := $(REPO_ROOT)/build/rust/tm-sysfs/libqsoe_tm_sysfs.a
+ 
+ TASKMAN_RUST_LIBS :=
+-ifeq ($(QSOE_RUST_TM_CPIO),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_CPIO_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_CRED),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_CRED_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_ELF),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_ELF_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_FDT),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_FDT_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_PATHMGR),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_PATHMGR_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_PROCFS),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_PROCFS_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_PSEUDODEV),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_PSEUDODEV_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_RSRCDB),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_RSRCDB_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_SCRIPT),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_SCRIPT_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_SYSCFG),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_SYSCFG_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_SYSMAP),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_SYSMAP_A)
+-endif
+-ifeq ($(QSOE_RUST_TM_SYSFS),1)
+-TASKMAN_RUST_LIBS += $(RUST_TM_SYSFS_A)
++ifneq ($(TM_RUST_PROVIDER_COUNT),0)
++TASKMAN_RUST_LIBS += $(RUST_TM_PROVIDERS_A)
+ endif
+ 
+ TASKMAN_PSEUDODEV_OBJS :=
+@@ -320,41 +283,20 @@ TASKMAN_OBJS := \
+ # matching module cleanly.
+ FORCE:
+ 
+-$(RUST_TM_CPIO_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-cpio-provider.sh $@
+-
+-$(RUST_TM_PROCFS_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-procfs-provider.sh $@
+-
+-$(RUST_TM_CRED_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-cred-provider.sh $@
+-
+-$(RUST_TM_ELF_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-elf-provider.sh $@
+-
+-$(RUST_TM_FDT_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-fdt-provider.sh $@
+-
+-$(RUST_TM_PATHMGR_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-pathmgr-provider.sh $@
+-
+-$(RUST_TM_PSEUDODEV_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-pseudodev-provider.sh $@
+-
+-$(RUST_TM_RSRCDB_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-rsrcdb-provider.sh $@
+-
+-$(RUST_TM_SCRIPT_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-script-provider.sh $@
+-
+-$(RUST_TM_SYSCFG_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-syscfg-provider.sh $@
+-
+-$(RUST_TM_SYSMAP_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-sysmap-provider.sh $@
+-
+-$(RUST_TM_SYSFS_A): FORCE
+-	@$(REPO_ROOT)/scripts/build-rust-tm-sysfs-provider.sh $@
++$(RUST_TM_PROVIDERS_A): FORCE
++	@QSOE_RUST_TM_CPIO=$(QSOE_RUST_TM_CPIO) \
++	    QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED) \
++	    QSOE_RUST_TM_ELF=$(QSOE_RUST_TM_ELF) \
++	    QSOE_RUST_TM_FDT=$(QSOE_RUST_TM_FDT) \
++	    QSOE_RUST_TM_PATHMGR=$(QSOE_RUST_TM_PATHMGR) \
++	    QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS) \
++	    QSOE_RUST_TM_PSEUDODEV=$(QSOE_RUST_TM_PSEUDODEV) \
++	    QSOE_RUST_TM_RSRCDB=$(QSOE_RUST_TM_RSRCDB) \
++	    QSOE_RUST_TM_SCRIPT=$(QSOE_RUST_TM_SCRIPT) \
++	    QSOE_RUST_TM_SYSCFG=$(QSOE_RUST_TM_SYSCFG) \
++	    QSOE_RUST_TM_SYSMAP=$(QSOE_RUST_TM_SYSMAP) \
++	    QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS) \
++	    $(REPO_ROOT)/scripts/build-rust-tm-providers.sh $@
+ 
+ $(TASKMAN_ELF): $(TASKMAN_OBJS) $(LIBTASKMAN_A) $(TASKMAN_RUST_LIBS)
+ 	@mkdir -p $(@D)

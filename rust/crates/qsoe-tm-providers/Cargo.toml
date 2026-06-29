@@ -1,0 +1,40 @@
+[package]
+name = "qsoe-tm-providers"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+name = "qsoe_tm_providers"
+path = "src/lib.rs"
+crate-type = ["staticlib"]
+
+[features]
+default = []
+tm-cpio = ["dep:qsoe-tm-cpio"]
+tm-cred = ["dep:qsoe-tm-cred"]
+tm-elf = ["dep:qsoe-tm-elf"]
+tm-fdt = ["dep:qsoe-tm-fdt"]
+tm-pathmgr = ["dep:qsoe-tm-pathmgr"]
+tm-procfs = ["dep:qsoe-tm-procfs"]
+tm-pseudodev = ["dep:qsoe-tm-pseudodev"]
+tm-rsrcdb = ["dep:qsoe-tm-rsrcdb"]
+tm-script = ["dep:qsoe-tm-script"]
+tm-syscfg = ["dep:qsoe-tm-syscfg"]
+tm-sysfs = ["dep:qsoe-tm-sysfs"]
+tm-sysmap = ["dep:qsoe-tm-sysmap"]
+
+[dependencies]
+qsoe-tm-cpio = { path = "../qsoe-tm-cpio", optional = true, default-features = false }
+qsoe-tm-cred = { path = "../qsoe-tm-cred", optional = true, default-features = false }
+qsoe-tm-elf = { path = "../qsoe-tm-elf", optional = true, default-features = false }
+qsoe-tm-fdt = { path = "../qsoe-tm-fdt", optional = true, default-features = false }
+qsoe-tm-pathmgr = { path = "../qsoe-tm-pathmgr", optional = true, default-features = false }
+qsoe-tm-procfs = { path = "../qsoe-tm-procfs", optional = true, default-features = false }
+qsoe-tm-pseudodev = { path = "../qsoe-tm-pseudodev", optional = true, default-features = false }
+qsoe-tm-rsrcdb = { path = "../qsoe-tm-rsrcdb", optional = true, default-features = false }
+qsoe-tm-script = { path = "../qsoe-tm-script", optional = true, default-features = false }
+qsoe-tm-syscfg = { path = "../qsoe-tm-syscfg", optional = true, default-features = false }
+qsoe-tm-sysfs = { path = "../qsoe-tm-sysfs", optional = true, default-features = false }
+qsoe-tm-sysmap = { path = "../qsoe-tm-sysmap", optional = true, default-features = false }

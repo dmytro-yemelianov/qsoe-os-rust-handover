@@ -24,6 +24,63 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-29 21:08 CEST - Shared Taskman Rust Provider Archive
+
+Scope:
+
+- Added `qsoe-tm-providers`, a no-std staticlib wrapper that packages selected
+  task-manager Rust providers behind one panic handler.
+- Changed individual `qsoe-tm-*` provider crates to build as `rlib` provider
+  crates instead of independent staticlibs with their own panic handlers.
+- Added `scripts/build-rust-tm-providers.sh` and kept legacy
+  `rust-tm-*-provider` targets delegating to it for focused evidence.
+- Updated NQ/LQ taskman link plumbing and tracked component overrides so any
+  enabled `QSOE_RUST_TM_*` selector links one shared provider archive.
+- Added `make tm-providers-evidence`, selecting `tm_cpio + tm_procfs` together.
+- Updated roadmap, status, task-manager, and handover docs for the shared
+  archive model.
+
+Commands:
+
+- `cargo check --manifest-path rust/Cargo.toml -p qsoe-tm-providers --no-default-features --features "tm-cpio tm-procfs"`
+- `QSOE_RUST_TM_CPIO=1 QSOE_RUST_TM_PROCFS=1 scripts/build-rust-tm-providers.sh`
+- `make -C nq/taskman --no-print-directory QSOE_RUST_TM_PROCFS=1 QSOE_RUST_TM_CPIO=1`
+- `make -C lq --no-print-directory QSOE_RUST_TM_PROCFS=1 QSOE_RUST_TM_CPIO=1 taskman`
+- `./scripts/apply-component-overrides.sh`
+- `bash -n scripts/build-rust-tm-providers.sh scripts/build-rust-tm-cpio-provider.sh scripts/build-rust-tm-cred-provider.sh scripts/build-rust-tm-elf-provider.sh scripts/build-rust-tm-fdt-provider.sh scripts/build-rust-tm-pathmgr-provider.sh scripts/build-rust-tm-procfs-provider.sh scripts/build-rust-tm-pseudodev-provider.sh scripts/build-rust-tm-rsrcdb-provider.sh scripts/build-rust-tm-script-provider.sh scripts/build-rust-tm-syscfg-provider.sh scripts/build-rust-tm-sysfs-provider.sh scripts/build-rust-tm-sysmap-provider.sh scripts/apply-component-overrides.sh scripts/rust-check.sh scripts/tm-providers-evidence.sh`
+- `make rust-tm-procfs-provider`
+- `make rust-tm-cpio-provider`
+- `QSOE_RUST_TM_CPIO=1 QSOE_RUST_TM_PROCFS=1 make rust-tm-providers`
+- `make rust-check`
+- `make tm-providers-evidence`
+- `git diff --check`
+- `patch -d nq --reverse --silent --dry-run -p1 < patches/components/nq-taskman-rust-tm-shared-providers.patch`
+- `patch -d lq --reverse --silent --dry-run -p1 < patches/components/lq-makefile-rust-tm-shared-providers.patch`
+- `patch -d lq --reverse --silent --dry-run -p1 < patches/components/lq-taskman-rust-tm-shared-providers.patch`
+
+Result:
+
+- A single shared archive can package multiple selected taskman Rust providers
+  without duplicate panic-handler symbols.
+- Legacy single-provider build targets still work and preserve historical
+  output paths for focused evidence scripts.
+- NQ and LQ taskman link successfully with both `tm_cpio` and `tm_procfs`
+  selected.
+- The shared archive exports the expected `tm_cpio_*`, `tm_procfs_*`, and
+  `qsoe_tm_providers_archive_anchor` symbols and has only one
+  `rust_begin_unwind` symbol.
+- `make tm-providers-evidence` verified selected C objects are absent from
+  NQ/LQ `libtaskman.a`, final taskman ELFs pass soft-float/no-TLS/no-unwind
+  audits, and the dual-provider `/proc` smoke reaches the expected milestones.
+- `make rust-check`, shell syntax checks, whitespace checks, and component
+  patch reverse dry-runs pass.
+
+Follow-up:
+
+- Merge the shared archive PR, then update #179 to `status:complete`.
+- Resume #141 `tm_procfs` retirement work only after the #26 checklist is
+  satisfied for that C removal.
+
 ## 2026-06-29 20:01 CEST - Retired C devb-virtio Driver
 
 Scope:
