@@ -65,7 +65,7 @@ be a separate removal PR after an RC window and rollback drill.
 
 | Bucket | Issues | Posture |
 | --- | --- | --- |
-| Host qrvfs writer | #136 | Rust-default RC complete once `MKFS_QRV_RC.md` evidence is merged. Keep C rollback until #26. |
+| Host qrvfs tools | #136 | Complete for current scope: `qrvfs-tree` and `mkfs-qrv-rs` have Rust-default RC paths. Keep C rollback until #26. |
 | Task-manager pure or diagnostic modules | #142-#153 | Candidate backlog. Prefer host-tested modules that avoid direct seL4 invocations, spawn, capability ownership, relocation writes, and loader admission. |
 | Spawn, capability, relocation, and loader paths | #154 | Deferred. These paths are load-bearing for process creation and teardown. |
 | Kernel Rust | #155 | Deferred. Current policy allows documentation and fixtures only. |
@@ -89,9 +89,7 @@ a scoped candidate and acceptance criteria.
 
 ## Next Recommended Issue Work
 
-1. Keep #136 open only until its issue metadata records the `mkfs-qrv-rs`
-   Rust-default RC evidence.
-2. Use #142-#153 for small task-manager pilots. Prefer `tm_log`, `tm_cred`, or
+1. Use #142-#153 for small task-manager pilots. Prefer `tm_log`, `tm_cred`, or
    another low-risk pure module before touching path manager or ELF-adjacent
    loader inputs.
-3. Keep #154, #155, and #26 policy-blocked until their stated gates change.
+2. Keep #154, #155, and #26 policy-blocked until their stated gates change.
