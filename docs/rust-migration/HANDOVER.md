@@ -363,8 +363,9 @@ The strict ELF audit showed:
   attach/query/detach runtime coverage and a separate RC decision exist.
 - `tm_elf` has a Rust opt-in provider behind `QSOE_RUST_TM_ELF=1`. The selector
   removes C `elf.o` from `libtaskman.a` and links through the shared taskman
-  Rust provider archive. C remains default and rollback until ELF-backed spawn
-  runtime coverage and a separate RC decision exist.
+  Rust provider archive. `make tm-elf-runtime-smoke` covers dynamic
+  ELF-backed `/usr/bin/sysinfo` spawn with Rust `tm_elf` selected. C remains
+  default and rollback until a separate RC decision exists.
 - `tm_fdt` has a Rust opt-in provider behind `QSOE_RUST_TM_FDT=1`. The
   selector removes LQ C `sys/fdt.o` and links through the shared taskman Rust
   provider archive. C remains default and rollback until boot/syscfg runtime

@@ -24,6 +24,37 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-29 22:55 CEST - tm_elf Runtime Smoke
+
+Scope:
+
+- Added `make tm-elf-runtime-smoke` and container CI wiring.
+- The smoke rebuilds QSOE/L with `QSOE_RUST_TM_ELF=1` and mandatory
+  `QSOE_RUST_TM_PROCFS=1`.
+- It injects a temporary sysinit fragment that runs `/usr/bin/sysinfo`,
+  verifies the staged `sysinfo` binary is a dynamic ELF, and waits for a
+  successful dynamic-spawn marker.
+- Updated `tm_elf` status docs so the next gate is a separate Rust-default RC
+  decision rather than missing basic loader/runtime coverage.
+
+Commands:
+
+- `bash -n scripts/tm-elf-runtime-smoke.sh scripts/tm-elf-evidence.sh scripts/boot-smoke.sh`
+- `make -n tm-elf-runtime-smoke container-tm-elf-runtime-smoke`
+- `make tm-elf-runtime-smoke`
+
+Result:
+
+- The local `make tm-elf-runtime-smoke` run passed.
+- The smoke proves the Rust-selected ELF parser is exercised through dynamic
+  `/usr/bin/sysinfo` spawn while segment mapping, dynamic linker admission,
+  relocation, process tables, and seL4 invocation code remain C.
+
+Follow-up:
+
+- Keep `tm_elf` Rust opt-in while deciding whether to open a separate
+  Rust-default RC window.
+
 ## 2026-06-29 22:40 CEST - tm_script Runtime Smoke
 
 Scope:
@@ -617,8 +648,9 @@ Result:
 
 Follow-up:
 
-- Keep `tm_elf` Rust opt-in only until loader/runtime coverage proves
-  ELF-backed spawn behavior before any Rust-default RC decision.
+- Later `make tm-elf-runtime-smoke` added focused dynamic ELF spawn coverage.
+  Keep `tm_elf` Rust opt-in while deciding whether to open a separate
+  Rust-default RC window.
 
 ## 2026-06-29 CEST - tm_rsrcdb Rust Opt-In Provider
 
