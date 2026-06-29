@@ -1,6 +1,6 @@
 # QSOE Migration Handover
 
-Last updated: 2026-06-29 12:54 CEST.
+Last updated: 2026-06-29 13:25 CEST.
 
 This handover captures the current QSOE Rust migration and workflow work so it
 can move from the macOS/container setup to a native Linux development machine.
@@ -22,7 +22,7 @@ origin git@github.com:dmytro-yemelianov/qsoe-os-rust-handover.git
 Current main tip:
 
 ```text
-4367b24557f0ccadc519de6ce2501c095490cf75
+16b9f9d41c7d641cdd5f36423855abc839288820
 ```
 
 The local tree adds:
@@ -76,8 +76,9 @@ serial marker checks in the Rust smokes, PR #109 recorded trusted CI evidence
 for #96, #97, and #103, PR #162 added the Rust opt-in `tm_cred` provider, and
 PR #163 added the Rust opt-in `tm_pseudodev` provider, PR #164 added the Rust
 opt-in `tm_sysfs` provider, PR #165 fixed the issue-backed roadmap dashboard's
-opt-in status display, and PR #166 added the Rust opt-in `tm_cpio` provider.
-The current `main` tip is `4367b24557f0ccadc519de6ce2501c095490cf75`.
+opt-in status display, PR #166 added the Rust opt-in `tm_cpio` provider, and
+PR #167 added the Rust opt-in `tm_script` provider. The current `main` tip is
+`16b9f9d41c7d641cdd5f36423855abc839288820`.
 
 Current open follow-ups:
 
@@ -92,9 +93,9 @@ The #98 host-test gate for the portable `tm_procfs` model is satisfied by
 `make check-tm-procfs-model`. The #102 Rust provider gate is satisfied by
 `QSOE_RUST_TM_PROCFS=1`; C remains default and rollback.
 
-The current tree adds a Rust opt-in `tm_script` provider behind
-`QSOE_RUST_TM_SCRIPT=1`. Evidence passed through `make tm-script-evidence`; C
-remains default and rollback.
+The current branch adds a Rust opt-in `tm_syscfg` provider behind
+`QSOE_RUST_TM_SYSCFG=1`. Local evidence passed through
+`make tm-syscfg-evidence`; C remains default and rollback.
 
 ## Linux Machine Setup
 
@@ -316,6 +317,20 @@ The strict ELF audit showed:
   and `sys/devzero.o` with the Rust staticlib. C remains default and rollback
   until a focused `/dev/null` and `/dev/zero` runtime smoke and separate RC
   decision exist.
+- `tm_cpio` has a Rust opt-in provider behind `QSOE_RUST_TM_CPIO=1`. The
+  selector removes C `cpio.o` from `libtaskman.a` and links the soft-float
+  `qsoe-tm-cpio` archive into NQ/LQ taskman. C remains default and rollback
+  until CPIO-backed spawn/file-access runtime coverage and a separate RC
+  decision exist.
+- `tm_script` has a Rust opt-in provider behind `QSOE_RUST_TM_SCRIPT=1`. The
+  selector removes C `script.o` from `libtaskman.a` and links the soft-float
+  `qsoe-tm-script` archive into NQ/LQ taskman. C remains default and rollback
+  until script-spawn runtime coverage and a separate RC decision exist.
+- The current branch adds `tm_syscfg` behind `QSOE_RUST_TM_SYSCFG=1`. The
+  selector removes C `syscfg.o` from `libtaskman.a` and links the soft-float
+  `qsoe-tm-syscfg` archive into NQ/LQ taskman. C remains default and rollback
+  until syscfg-backed platform-data runtime coverage and a separate RC decision
+  exist.
 - `tm_sysfs` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSFS=1`. The
   selector removes C `tm_sysfs.o` from `libtaskman.a` and links the soft-float
   `qsoe-tm-sysfs` archive into NQ/LQ taskman. C remains default and rollback

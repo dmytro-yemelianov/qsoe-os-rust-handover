@@ -117,6 +117,10 @@ name = "qsoe-tm-script"
 version = "0.0.0"
 
 [[package]]
+name = "qsoe-tm-syscfg"
+version = "0.0.0"
+
+[[package]]
 name = "qsoe-tm-sysfs"
 version = "0.0.0"
 

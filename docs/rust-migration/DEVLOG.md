@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-29 12:54 CEST.
+Last updated: 2026-06-29 13:25 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,53 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-29 13:25 CEST - tm_syscfg Rust Opt-In Provider
+
+Scope:
+
+- Added `qsoe-tm-syscfg`, a no-std Rust staticlib exporting the existing
+  portable `tm_syscfg.h` ABI.
+- Added `QSOE_RUST_TM_SYSCFG=1` selection for NQ and LQ taskman. The selector
+  omits C `syscfg.o` from `libtaskman.a`, then links
+  `build/rust/tm-syscfg/libqsoe_tm_syscfg.a`.
+- Added a C host-model fixture, Rust host tests, provider build script,
+  evidence script, tracked NQ/LQ component patches, CI evidence step, and docs.
+- Preserved the C TLV behavior for little-endian payloads, empty ASCIZ skip,
+  END finalization, typed length checks, null raw payload copy suppression, and
+  current malformed matching-tag length reporting.
+- Kept C as the normal default and rollback implementation.
+
+Commands:
+
+- `make check-tm-syscfg-model`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-syscfg --features host-tests`
+- `cargo clippy --manifest-path rust/Cargo.toml -p qsoe-tm-syscfg --features host-tests -- -D warnings`
+- `bash -n scripts/check-tm-syscfg-model.sh scripts/build-rust-tm-syscfg-provider.sh scripts/tm-syscfg-evidence.sh scripts/apply-component-overrides.sh`
+- `./scripts/apply-component-overrides.sh`
+- `make -n check-tm-syscfg-model rust-tm-syscfg-provider tm-syscfg-evidence container-rust-tm-syscfg-provider container-tm-syscfg-evidence`
+- `make rust-tm-syscfg-provider`
+- `make tm-syscfg-evidence`
+
+Result:
+
+- The C host fixture and Rust host tests pass for TLV emit/find/get,
+  finalization, empty ASCIZ skip, bounds handling, no emit after finalize, raw
+  null payload behavior, malformed matching-tag length reporting, and typed
+  length rejection.
+- The provider archive exports all `tm_syscfg_*` symbols and all archive
+  members report RVC soft-float ABI.
+- NQ and LQ C-default taskman archives include one `syscfg.o` member.
+  Rust-selected archives include zero `syscfg.o` members and link
+  `libqsoe_tm_syscfg.a`.
+- The final taskman ELFs link in both modes. Runtime use is not claimed yet:
+  NQ does not currently call the portable helper, and LQ uses its private
+  global FDT-backed syscfg builder.
+
+Follow-up:
+
+- Keep `tm_syscfg` Rust opt-in only until syscfg-backed platform-data runtime
+  coverage exists before any Rust-default RC decision.
 
 ## 2026-06-29 12:54 CEST - tm_script Rust Opt-In Provider
 

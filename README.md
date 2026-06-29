@@ -26,8 +26,9 @@ removed just because a Rust version exists.
   `slogger-rs`, `devb-virtio-rs`, `pipe-rs`, `test_msgpass-rs`, and
   `qsoe-tm-procfs`.
 - Rust opt-in task-manager providers exist for `qsoe-tm-cpio`,
-  `qsoe-tm-cred`, `qsoe-tm-pseudodev`, `qsoe-tm-script`, and
-  `qsoe-tm-sysfs`; C remains the normal taskman default for each.
+  `qsoe-tm-cred`, `qsoe-tm-pseudodev`, `qsoe-tm-script`,
+  `qsoe-tm-syscfg`, and `qsoe-tm-sysfs`; C remains the normal taskman
+  default for each.
 - Rust `mkfs-qrv-rs` has fixture, production-root, target-initialization,
   bounded triple-indirect allocator, live virtio `/usr`, and C rollback smoke
   evidence.
@@ -66,6 +67,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | `tm_cred` task-manager provider | Rust opt-in | `qsoe-tm-cred` exports the existing `tm_cred.h` ABI behind `QSOE_RUST_TM_CRED=1`; `make tm-cred-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. Next gate: add a credential-specific runtime smoke before any Rust-default RC decision. |
 | `tm_pseudodev` task-manager provider | Rust opt-in | `qsoe-tm-pseudodev` exports the existing LQ `/dev/null` and `/dev/zero` ABI behind `QSOE_RUST_TM_PSEUDODEV=1`; `make tm-pseudodev-evidence` runs Rust host tests, audits the soft-float staticlib, and verifies LQ C-default/Rust-selected taskman links. Next gate: add a focused `/dev/null` and `/dev/zero` runtime smoke before any Rust-default RC decision. |
 | `tm_script` task-manager provider | Rust opt-in | `qsoe-tm-script` exports the existing `tm_script.h` ABI behind `QSOE_RUST_TM_SCRIPT=1`; `make tm-script-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. Next gate: add script-spawn runtime coverage before any Rust-default RC decision. |
+| `tm_syscfg` task-manager provider | Rust opt-in | `qsoe-tm-syscfg` exports the existing `tm_syscfg.h` ABI behind `QSOE_RUST_TM_SYSCFG=1`; `make tm-syscfg-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. Next gate: add boot/runtime coverage for syscfg-backed platform data before any Rust-default RC decision. |
 | `tm_sysfs` task-manager provider | Rust opt-in | `qsoe-tm-sysfs` exports the existing `tm_sysfs.h` ABI behind `QSOE_RUST_TM_SYSFS=1`; `make tm-sysfs-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. Next gate: add a focused `/sys` runtime smoke before any Rust-default RC decision. |
 | Kernel Rust | Deferred | Current decision rejects near-term Rust in `nq` kernel code; only fixture/audit candidates are documented. |
 | C retirement | Blocked by policy | No C implementation is currently approved for removal; #26's checklist and a separate removal PR are still required for every component. |
@@ -96,9 +98,9 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 - `tm_procfs` now has a Rust-default release-candidate path with explicit C
   rollback through the `/proc` smoke. Keep C retirement blocked until #26's
   checklist and a separate removal PR.
-- `tm_cpio`, `tm_cred`, `tm_pseudodev`, `tm_script`, and `tm_sysfs` are Rust
-  opt-in task-manager providers only. Keep them C-default until runtime smoke
-  coverage and a separate RC decision exist.
+- `tm_cpio`, `tm_cred`, `tm_pseudodev`, `tm_script`, `tm_syscfg`, and
+  `tm_sysfs` are Rust opt-in task-manager providers only. Keep them C-default
+  until runtime smoke coverage and a separate RC decision exist.
 
 ## Useful Commands
 
@@ -140,6 +142,9 @@ make tm-pseudodev-evidence
 make check-tm-script-model
 make rust-tm-script-provider
 make tm-script-evidence
+make check-tm-syscfg-model
+make rust-tm-syscfg-provider
+make tm-syscfg-evidence
 make check-tm-sysfs-model
 make rust-tm-sysfs-provider
 make tm-sysfs-evidence

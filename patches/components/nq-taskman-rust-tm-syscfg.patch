@@ -1,0 +1,52 @@
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -23,10 +23,11 @@
+ QSOE_RUST_TM_PROCFS ?= 0
+ QSOE_RUST_TM_CRED ?= 0
+ QSOE_RUST_TM_SCRIPT ?= 0
++QSOE_RUST_TM_SYSCFG ?= 0
+ QSOE_RUST_TM_SYSFS ?= 0
+ 
+-TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSFS)))
+-ifneq ($(filter 2 3 4 5,$(TM_RUST_PROVIDER_COUNT)),)
++TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSFS)))
++ifneq ($(filter 2 3 4 5 6,$(TM_RUST_PROVIDER_COUNT)),)
+ $(error select at most one taskman Rust provider until they share one staticlib)
+ endif
+ 
+@@ -66,6 +67,7 @@
+ RUST_TM_PROCFS_A := $(REPO_ROOT)/build/rust/tm-procfs/libqsoe_tm_procfs.a
+ RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a
+ RUST_TM_SCRIPT_A := $(REPO_ROOT)/build/rust/tm-script/libqsoe_tm_script.a
++RUST_TM_SYSCFG_A := $(REPO_ROOT)/build/rust/tm-syscfg/libqsoe_tm_syscfg.a
+ RUST_TM_SYSFS_A := $(REPO_ROOT)/build/rust/tm-sysfs/libqsoe_tm_sysfs.a
+ 
+ TASKMAN_RUST_LIBS :=
+@@ -81,6 +83,9 @@
+ ifeq ($(QSOE_RUST_TM_SCRIPT),1)
+ TASKMAN_RUST_LIBS += $(RUST_TM_SCRIPT_A)
+ endif
++ifeq ($(QSOE_RUST_TM_SYSCFG),1)
++TASKMAN_RUST_LIBS += $(RUST_TM_SYSCFG_A)
++endif
+ ifeq ($(QSOE_RUST_TM_SYSFS),1)
+ TASKMAN_RUST_LIBS += $(RUST_TM_SYSFS_A)
+ endif
+@@ -100,6 +105,7 @@
+ 	    QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED) \
+ 	    QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS) \
+ 	    QSOE_RUST_TM_SCRIPT=$(QSOE_RUST_TM_SCRIPT) \
++	    QSOE_RUST_TM_SYSCFG=$(QSOE_RUST_TM_SYSCFG) \
+ 	    QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)
+ 
+ $(RUST_TM_CPIO_A): FORCE
+@@ -114,6 +120,9 @@
+ $(RUST_TM_SCRIPT_A): FORCE
+ 	@$(REPO_ROOT)/scripts/build-rust-tm-script-provider.sh $@
+ 
++$(RUST_TM_SYSCFG_A): FORCE
++	@$(REPO_ROOT)/scripts/build-rust-tm-syscfg-provider.sh $@
++
+ $(RUST_TM_SYSFS_A): FORCE
+ 	@$(REPO_ROOT)/scripts/build-rust-tm-sysfs-provider.sh $@
+ 

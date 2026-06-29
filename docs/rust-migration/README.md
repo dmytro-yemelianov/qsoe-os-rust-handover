@@ -64,20 +64,22 @@ Read in this order:
    and evidence gate.
 34. `TASK_MANAGER_SCRIPT.md`: Rust opt-in task-manager shebang parser provider
    and evidence gate.
-35. `TASK_MANAGER_CRED.md`: Rust opt-in task-manager credential policy
+35. `TASK_MANAGER_SYSCFG.md`: Rust opt-in task-manager syscfg TLV provider
+   and evidence gate.
+36. `TASK_MANAGER_CRED.md`: Rust opt-in task-manager credential policy
    provider and evidence gate.
-36. `TASK_MANAGER_PSEUDODEV.md`: Rust opt-in LQ task-manager `/dev/null` and
+37. `TASK_MANAGER_PSEUDODEV.md`: Rust opt-in LQ task-manager `/dev/null` and
    `/dev/zero` provider and evidence gate.
-37. `TASK_MANAGER_SYSFS.md`: Rust opt-in task-manager `/sys` provider and
+38. `TASK_MANAGER_SYSFS.md`: Rust opt-in task-manager `/sys` provider and
    evidence gate.
-38. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+39. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
-39. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
-40. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+40. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
+41. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-41. `PLAN.md`: phased migration plan from baseline validation through possible
+42. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-42. `TASKS.md`: executable backlog with acceptance criteria.
+43. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust

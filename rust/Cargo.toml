@@ -15,6 +15,7 @@ members = [
     "crates/qsoe-tm-pseudodev",
     "crates/qsoe-tm-procfs",
     "crates/qsoe-tm-script",
+    "crates/qsoe-tm-syscfg",
     "crates/qsoe-tm-sysfs",
     "crates/qsoe-virtio",
     "bins/minimal-rs",
