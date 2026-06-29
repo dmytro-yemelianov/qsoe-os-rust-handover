@@ -43,17 +43,17 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--rust-slogger",
         action="store_true",
-        help="build and boot an opt-in LQ image with slogger-rs selected",
+        help="build and boot an LQ image with the retired Rust slogger selected",
     )
     parser.add_argument(
         "--slogger-rc",
         action="store_true",
-        help="build and boot the slogger Rust-default release-candidate image",
+        help="build and boot the retired Rust slogger image",
     )
     parser.add_argument(
         "--slogger-rc-rollback",
         action="store_true",
-        help="build and boot the slogger release-candidate C rollback image",
+        help="unsupported after C slogger retirement",
     )
     return parser.parse_args()
 
@@ -95,49 +95,6 @@ def run_command(argv: list[str], env: dict[str, str] | None = None) -> None:
         raise SystemExit(exc.returncode) from exc
 
 
-def prepare_c_slogger_image() -> None:
-    workdir = ROOT / "build" / "slog-readback"
-    c_cpio = workdir / "modpkg-lq-c-slogger.cpio"
-    lq_libc = ROOT / "lq" / "build" / "libc" / "libc.so"
-    lq_rtld = ROOT / "lq" / "build" / "rtld" / "ld-qsoe.so.1"
-
-    workdir.mkdir(parents=True, exist_ok=True)
-    run_command(
-        [
-            MAKE,
-            "-C",
-            str(ROOT / "lq"),
-            "libc",
-            "rtld",
-            "libtaskman",
-            "--no-print-directory",
-        ]
-    )
-    run_command(
-        [
-            MAKE,
-            "-C",
-            str(ROOT / "quser"),
-            "cpio",
-            "--no-print-directory",
-            f"MODPKG_CPIO={c_cpio}",
-            f"LIBC_SO={lq_libc}",
-            f"RTLD_SO={lq_rtld}",
-            f"DYNLIBC_SO={lq_libc}",
-        ]
-    )
-    c_cpio.touch()
-    run_command(
-        [
-            MAKE,
-            "-C",
-            str(ROOT / "lq"),
-            f"MODPKG_CPIO={c_cpio}",
-            "--no-print-directory",
-        ]
-    )
-
-
 def prepare_rust_slogger_image() -> None:
     run_command(
         [str(ROOT / "scripts" / "rust-slogger-boot-smoke.sh"), "--prepare-only"]
@@ -159,21 +116,20 @@ def main() -> int:
         print("slog-readback-smoke.py: timeout must be positive", file=sys.stderr)
         return 2
 
+    if args.slogger_rc_rollback:
+        print("slog-readback-smoke.py: C slogger rollback is retired", file=sys.stderr)
+        return 2
+
     slogger_modes: dict[str, tuple[str, str, Callable[[], None]]] = {
         "rust_slogger": (
-            "rust-slogger",
+            "rust-slogger-retired",
             r"\[slogger-rs\] alive",
             prepare_rust_slogger_image,
         ),
         "slogger_rc": (
-            "slogger-rc-rust-default",
+            "slogger-rust-retired",
             r"\[slogger-rs\] alive",
             lambda: prepare_slogger_rc_image(rollback=False),
-        ),
-        "slogger_rc_rollback": (
-            "slogger-rc-c-rollback",
-            r"\[slogger\] alive",
-            lambda: prepare_slogger_rc_image(rollback=True),
         ),
     }
     selected_modes = [
@@ -187,7 +143,11 @@ def main() -> int:
         return 2
 
     log = args.log
-    default_mode = ("c-slogger", r"\[slogger\] alive", prepare_c_slogger_image)
+    default_mode = (
+        "rust-slogger-retired",
+        r"\[slogger-rs\] alive",
+        prepare_rust_slogger_image,
+    )
     slogger_mode, startup_pattern, prepare_image = (
         slogger_modes[selected_modes[0]] if selected_modes else default_mode
     )

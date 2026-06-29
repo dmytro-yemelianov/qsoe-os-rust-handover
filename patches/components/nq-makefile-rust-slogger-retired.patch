@@ -1,0 +1,30 @@
+diff --git a/Makefile b/Makefile
+index 539e4af..481d6b1 100644
+--- a/Makefile
++++ b/Makefile
+@@ -101,6 +101,7 @@ LIBC_SO     = build/libc/libc.so
+ QSH_ELF     = ../quser/build/qsh/qsh.elf
+ RTLD_SO     = build/rtld/ld-qsoe.so.1
+ MODPKG      = build/modpkg.cpio
++SELECTED_SLOGGER_ELF ?= $(abspath ../build/rust/selected/sbin/slogger.elf)
+ 
+ # Distinct object suffixes so `foo.c` and `foo.S` don't both
+ # produce `foo.o` and clash at link time.
+@@ -233,12 +234,16 @@ FORCE:
+ # unconditionally) -- without it, a quser-only source change never
+ # reaches the archive because none of OUR prerequisites moved.
+ $(MODPKG): $(TASKMAN_BIN) $(LIBC_SO) $(QSH_ELF) $(RTLD_SO) FORCE
++	+@$(MAKE) -C .. slogger-artifact \
++	    LIBC_SO=$(abspath $(LIBC_SO)) \
++	    SELECTED_SLOGGER_ELF=$(SELECTED_SLOGGER_ELF)
+ 	+@$(MAKE) -C ../quser cpio \
+ 	    MODPKG_CPIO=$(abspath $(MODPKG)) \
+ 	    LIBC_SO=$(abspath $(LIBC_SO)) \
+ 	    RTLD_SO=$(abspath $(RTLD_SO)) \
+ 	    DYNLIBC_SO=$(abspath $(LIBC_SO)) \
+-	    EXTRA_ROOT_FILES="$(abspath $(TASKMAN_BIN))"
++	    EXTRA_ROOT_FILES="$(abspath $(TASKMAN_BIN))" \
++	    SBIN_SLOG_ELF=$(SELECTED_SLOGGER_ELF)
+ 
+ $(KERNEL): $(OBJS) $(LDSCRIPT)
+ 	@echo "  LINK  $@"

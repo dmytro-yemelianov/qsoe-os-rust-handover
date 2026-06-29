@@ -22,7 +22,7 @@ origin git@github.com:dmytro-yemelianov/qsoe-os-rust-handover.git
 Current main tip:
 
 ```text
-335adb91b6f97ff0959495000da0816c11ef3b65
+fd493ac8a7c4a37ab5e9c5b76295936eb534cb6e
 ```
 
 The local tree adds:
@@ -80,15 +80,17 @@ opt-in status display, PR #166 added the Rust opt-in `tm_cpio` provider, PR
 #167 added the Rust opt-in `tm_script` provider, PR #168 added the Rust opt-in
 `tm_syscfg` provider, PR #169 added the Rust opt-in `tm_rsrcdb` provider, PR
 #170 added the Rust opt-in `tm_elf` provider, PR #171 added the Rust opt-in
-`tm_fdt` provider, PR #173 added the Rust opt-in `tm_sysmap` provider, and PR
-#174 added the Rust opt-in `tm_pathmgr` provider. The current `main` tip is
-`335adb91b6f97ff0959495000da0816c11ef3b65`.
+`tm_fdt` provider, PR #173 added the Rust opt-in `tm_sysmap` provider, PR #174
+added the Rust opt-in `tm_pathmgr` provider, PR #175 retired the C
+`test_msgpass` helper, and PR #176 styled retired roadmap state in the
+dashboard. The current `main` tip is
+`fd493ac8a7c4a37ab5e9c5b76295936eb534cb6e`.
 
 Current open follow-ups:
 
-- #26: first C retirement checklist. The current branch exercises it by
-  retiring the C `test_msgpass` helper after the Rust-default RC and rollback
-  evidence.
+- #137: `slogger` service. The current branch exercises the next #26-style
+  removal by retiring the C `/sbin/slogger` service after the Rust-default RC
+  and rollback evidence.
 
 The #96 Rust pipe data-path gate, #97 Rust `test_msgpass` gate, and #103
 `tm_procfs` opt-in gate are satisfied by trusted `main` CI run `28102250069` at
@@ -98,10 +100,10 @@ The #98 host-test gate for the portable `tm_procfs` model is satisfied by
 `make check-tm-procfs-model`. The #102 Rust provider gate is satisfied by
 `QSOE_RUST_TM_PROCFS=1`; C remains default and rollback.
 
-The current branch retires the C `test_msgpass` helper. The qrvfs test image
-now stages Rust `test_msgpass-rs` at `/usr/bin/test_msgpass`, the tracked
-`quser` override removes `test/msgpass`, and the old C rollback flags fail
-fast. C remains default and rollback for all non-retired migration candidates.
+The current branch retires the C `slogger` service. NQ/LQ image paths now stage
+Rust `slogger-rs` at `/sbin/slogger`, the tracked `quser` override removes
+`sbin/slogger`, and the old C rollback flags fail fast. C remains default and
+rollback for all non-retired migration candidates.
 
 ## Linux Machine Setup
 
@@ -282,17 +284,17 @@ The strict ELF audit showed:
   recorded as baseline noise, not automatic regressions.
 - Debian Trixie QEMU `10.0.8` is acceptable for QSOE/L PLIC/virtio boot smoke.
 - QSOE/N AIA MSI/MSI-X experiments still need QEMU `11.0.1+`.
-- The first Rust userland pilots remain `no_std`, `panic=abort`, no TLS, no
-  unwind, and out of the default image.
+- The current Rust userland artifacts remain `no_std`, `panic=abort`, no TLS,
+  and no unwind. Retired `test_msgpass` and `slogger` are now Rust-only image
+  paths; non-retired pilots keep C rollback.
 - Non-retired C implementations remain the rollback path until a Rust service
   has host tests, fixture parity, ELF audit, boot evidence, documented
   differences, and a separate retirement PR.
-- `slogger` has C-selected and Rust-selected `/dev/slog` readback baselines.
-  It also has a Rust-default RC path with `make slogger-rc-readback-smoke` and
-  a C rollback drill with `make slogger-rc-rollback-smoke`. CI includes both
-  container RC readback smokes for trusted PRs and pushes. #95's
-  local-equivalent RC evidence window is accepted; C retirement is still
-  blocked by #26.
+- `slogger` has moved from opt-in to Rust-default RC to first C production
+  service retirement. The current branch removes the C service from tracked
+  `quser` source/image paths, stages Rust `slogger-rs` as `/sbin/slogger` for
+  NQ/LQ images, and rejects the old rollback flags. The historical C-selected
+  and Rust-selected readback baselines remain documented in `SLOGGER_RC.md`.
 - `test_msgpass` has moved from opt-in to Rust-default RC to first C helper
   retirement. CI includes `container-rust-test-msgpass-smoke` for trusted PRs
   and pushes. Trusted `main` run `28102250069` passed the smoke and uploaded
@@ -379,15 +381,13 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 
 ## Next Recommended Work
 
-1. Keep C `slogger` retirement blocked until #26's retirement checklist is
-   satisfied and a separate removal PR is reviewed.
-2. Keep the new pipe Rust-default RC path and C rollback data-path smoke green
+1. Finish the `slogger` retirement PR, then update #137 to `status:retired`
+   and close it after CI passes.
+2. Keep the pipe Rust-default RC path and C rollback data-path smoke green
    before considering any #26 retirement work.
-3. If desired, open a separate Rust-default `test_msgpass` test-image decision
-   PR with C rollback. #97's hosted-runner evidence is complete.
-4. If desired, open a separate Rust-default `tm_procfs` selection design/PR
+3. If desired, open a separate Rust-default `tm_procfs` selection design/PR
    with C rollback. #103's opt-in evidence is complete.
-5. Keep the hosted runner and CodeRabbit account healthy for new PRs, but the
+4. Keep the hosted runner and CodeRabbit account healthy for new PRs, but the
    old #42/#60 external states no longer block `main`.
-6. Do not start C retirement until the release-candidate gate in
+5. Do not start any further C retirement until the release-candidate gate in
    `RETIREMENT.md` is satisfied; see #26.

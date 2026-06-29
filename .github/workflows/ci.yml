@@ -52,13 +52,9 @@ jobs:
       - name: Boot smoke LQ image
         run: scripts/container-toolchain.sh run scripts/boot-smoke.sh -k lq -t 120
 
-      - name: Run slogger Rust-default RC readback smoke
+      - name: Run Rust slogger readback smoke
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-slogger-rc-readback-smoke
-
-      - name: Run slogger C rollback readback smoke
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        run: make container-slogger-rc-rollback-smoke
 
       - name: Run Rust test_msgpass smoke
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository

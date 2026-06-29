@@ -113,6 +113,9 @@ Exit criteria:
 
 Objective: replace one small service without changing external behavior.
 
+Status: complete. `slogger-rs` passed opt-in and Rust-default RC evidence, then
+the C `/sbin/slogger` service was retired in a separate removal PR.
+
 Work:
 
 - Specify current `slogger` behavior from `quser/sbin/slogger/main.c`.
@@ -120,16 +123,16 @@ Work:
   `/dev/slog` enough.
 - Implement `slogger-rs` using `qsoe-ffi` and `qsoe-ressrv`.
 - Keep ring-buffer semantics equivalent.
-- Add build flag `USE_RUST_SLOGGER=1` or a similarly narrow switch.
+- Add a narrow Rust selector for RC evidence.
 - Build both C and Rust versions.
 - Boot images with each version and compare logs.
 
 Exit criteria:
 
-- C `slogger` remains the default.
+- Rust `slogger-rs` is staged as `/sbin/slogger`.
 - Rust `slogger-rs` boots to login and accepts log messages.
 - Artifact audit passes.
-- Rollback requires only changing the build flag.
+- C rollback was available through the RC window and is now retired.
 
 ## Phase 5: Promote Resource-Server Patterns
 

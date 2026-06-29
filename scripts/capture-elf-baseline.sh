@@ -10,7 +10,6 @@ raw_dir=
 files=()
 
 default_files=(
-    quser/build/sbin/slogger/slogger.elf
     quser/build/dev/virtio/devb-virtio.elf
     quser/build/fs/qrv/fs-qrv.elf
     quser/build/qsh/qsh.elf
@@ -27,7 +26,7 @@ Prints a Markdown summary table for representative QSOE C userland ELF files.
 With --raw-dir, also writes full audit-elf.sh output for each artifact.
 
 If no ELF files are provided, a migration-focused default set is used:
-  slogger, devb-virtio, fs-qrv, qsh, login, syncspace, suite.
+  devb-virtio, fs-qrv, qsh, login, syncspace, suite.
 EOF
 }
 

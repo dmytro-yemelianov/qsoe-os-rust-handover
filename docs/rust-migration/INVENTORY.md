@@ -1,6 +1,6 @@
 # OS-wide C Inventory
 
-Captured: 2026-06-29 15:05 CEST.
+Captured: 2026-06-29 18:45 CEST.
 
 This inventory gives the migration tracker an OS-wide baseline. It is not a
 claim that every C file is an independently translatable component. It separates
@@ -27,10 +27,10 @@ excluded unless `QSOE_INDEX_SEL4=1` is set.
 | `libtaskman` | 23 | 3,013 | Best source of host-testable task-manager modules. `tm_procfs` is Rust-default RC; `tm_cpio`, `tm_cred`, `tm_elf`, `tm_pathmgr`, `tm_script`, `tm_syscfg`, and `tm_sysfs` are Rust opt-in; remaining candidates are tracked in #153. |
 | `lq` | 90 | 17,853 | seL4 task manager, LQ libc wrappers, process, capability, path, memory, syscall, and boot glue. Pure/diagnostic slices only are candidates; LQ FDT, sysmap, pseudo-devices, and resource DB accounting are Rust opt-in. |
 | `nq` | 125 | 25,053 | Kernel, NQ libc, and NQ taskman surface. Near-term linked Rust is deferred by policy; fixture-only candidates are tracked in #155. |
-| `quser` | 126 | 41,265 | Userland services, drivers, resource-server support, shell, tests, and utilities. `test_msgpass` is the first retired C helper; several services have Rust pilots; many remain C. |
-| **Total** | **815** | **131,404** | QSOE-owned C/asm/linker surface in this checkout, excluding generated build outputs and vendor seL4. |
+| `quser` | 125 | 41,041 | Userland services, drivers, resource-server support, shell, tests, and utilities. `test_msgpass` is the first retired C helper and `slogger` is the first retired C production service; several services have Rust pilots; many remain C. |
+| **Total** | **814** | **131,180** | QSOE-owned C/asm/linker surface in this checkout, excluding generated build outputs and vendor seL4. |
 
-By file type: `522` C files, `281` headers, `10` assembly files, and `2` linker
+By file type: `521` C files, `281` headers, `10` assembly files, and `2` linker
 scripts.
 
 ## Issue-backed Migration Ledger
@@ -52,7 +52,7 @@ Issue state, labels, and metadata are the source of truth for current progress.
 | Component | Issue | Current state |
 | --- | --- | --- |
 | Host qrvfs tools | #136 | Rust-default RC for `qrvfs-tree` and `mkfs-qrv-rs`; C remains rollback and no C implementation is retired. |
-| `slogger` | #137 | Rust-default RC with C rollback. |
+| `slogger` | #137 | Retired C service; Rust `slogger-rs` is always staged as `/sbin/slogger` in NQ/LQ images. |
 | `devb-virtio` | #138 | Rust-default RC with C rollback. |
 | `pipe` | #139 | Rust-default RC with C rollback. |
 | `test_msgpass` | #140 | Retired C helper; Rust `test_msgpass-rs` is always staged as `/usr/bin/test_msgpass` in test images. |
@@ -70,8 +70,9 @@ Issue state, labels, and metadata are the source of truth for current progress.
 | `tm_sysfs` | #148 | Rust opt-in provider with C rollback; not a Rust-default RC. |
 
 `test_msgpass` is the first tracked C implementation retired after an RC window
-and rollback drill. Future retirements remain governed by #26 and must be
-separate removal PRs after their own RC evidence.
+and rollback drill. `slogger` is the first retired production service. Future
+retirements remain governed by #26 and must be separate removal PRs after their
+own RC evidence.
 
 ## Remaining Candidate Buckets
 
@@ -81,7 +82,7 @@ separate removal PRs after their own RC evidence.
 | Task-manager pure or diagnostic modules | #153 | Candidate backlog. Prefer host-tested modules that avoid direct seL4 invocations, spawn, capability ownership, relocation writes, and loader admission. |
 | Spawn, capability, relocation, and loader paths | #154 | Deferred. These paths are load-bearing for process creation and teardown. |
 | Kernel Rust | #155 | Deferred. Current policy allows documentation and fixtures only. |
-| First C retirement | #26 | Exercised by retiring the C `test_msgpass` helper after its Rust-default RC evidence. Future removals must repeat the same checklist. |
+| C retirement gate | #26 | Exercised by retiring the C `test_msgpass` helper and C `slogger` service after their Rust-default RC evidence. Future removals must repeat the same checklist. |
 | OS-wide inventory | #156 | Satisfied by this document once merged. |
 
 ## Areas Not Yet Split Into Per-component Issues

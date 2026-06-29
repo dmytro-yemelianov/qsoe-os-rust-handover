@@ -3,11 +3,13 @@
 Captured: 2026-06-29 CEST.
 
 This document turns the Phase 8 retirement rule into an explicit gate. The
-first removal candidate is the in-guest test helper `test_msgpass`, which had a
-Rust-default release-candidate path and C rollback drill before this retirement
-PR removed the C helper. All remaining Rust pilots stay either opt-in or
-Rust-default RC paths, and each non-retired C implementation remains the
-rollback path until the release-candidate evidence below exists.
+first removal was the in-guest test helper `test_msgpass`, which had a
+Rust-default release-candidate path and C rollback drill before its retirement
+PR removed the C helper. The second removal is the production `/sbin/slogger`
+service after its own Rust-default release-candidate evidence. All remaining
+Rust pilots stay either opt-in or Rust-default RC paths, and each non-retired C
+implementation remains the rollback path until the release-candidate evidence
+below exists.
 
 ## State Model
 
@@ -47,16 +49,18 @@ it must include evidence for all of these items:
 
 The live status matrix is `STATUS.md`. It records C default, Rust opt-in, Rust
 default, and retired status for every tracked migration component. At this
-capture, `test_msgpass` is the first tracked component in `Retired` status. It
-is intentionally a test helper, not a production service. Production services
-and task-manager providers still require their own separate removal PRs after
-RC evidence and rollback drills.
+capture, `test_msgpass` and `slogger` are the tracked components in `Retired`
+status. `test_msgpass` is the first retired helper; `slogger` is the first
+retired production service. Remaining production services and task-manager
+providers still require their own separate removal PRs after RC evidence and
+rollback drills.
 
 ## Retired Components
 
 | Component | Retirement note | Prior RC evidence | Current rollback |
 | --- | --- | --- | --- |
 | `test_msgpass` | `TEST_MSGPASS_RETIREMENT.md` | `TEST_MSGPASS_RC.md`, `make test-msgpass-rc-smoke`, previous `make test-msgpass-rc-rollback-smoke` evidence | No C rollback target remains; the retired helper is Rust-only in test images. |
+| `slogger` | `SLOGGER_RETIREMENT.md` | `SLOGGER_RC.md`, `make slogger-rc-readback-smoke`, previous `make slogger-rc-rollback-smoke` evidence | No C rollback target remains; Rust `slogger-rs` is staged as `/sbin/slogger` in NQ/LQ images. |
 
 ## Removal PR Checklist
 

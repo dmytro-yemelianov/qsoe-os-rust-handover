@@ -236,6 +236,15 @@ pub extern "C" fn tm_sysfs_entry_name(idx: c_uint) -> *const c_char {
 mod tests {
     use super::*;
     use core::{ffi::CStr, slice};
+    use std::sync::{Mutex, MutexGuard};
+
+    static SYSFS_TEST_LOCK: Mutex<()> = Mutex::new(());
+
+    fn sysfs_test_lock() -> MutexGuard<'static, ()> {
+        SYSFS_TEST_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
 
     fn cstr(bytes: &'static [u8]) -> *const c_char {
         bytes.as_ptr() as *const c_char
@@ -258,6 +267,7 @@ mod tests {
 
     #[test]
     fn snapshots_content_with_newline_and_empty_fallback() {
+        let _guard = sysfs_test_lock();
         unsafe {
             tm_sysfs_init(
                 cstr(b"QSOE/L\0"),
@@ -277,6 +287,7 @@ mod tests {
 
     #[test]
     fn truncates_to_leave_newline_and_nul() {
+        let _guard = sysfs_test_lock();
         let long_board = [b'a'; SYSFS_BOARD_BUFSZ + 10];
         let mut nul_terminated = [0u8; SYSFS_BOARD_BUFSZ + 11];
         nul_terminated[..long_board.len()].copy_from_slice(&long_board);

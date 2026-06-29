@@ -53,13 +53,12 @@ Rust `slogger-rs`:
 - The `/dev/slog` registration point is unchanged.
 - Virtio disk startup, qrvfs mount, and login timing milestones remained
   observable in both boots.
-- The Rust path has an opt-in smoke through `make rust-slogger-boot-smoke` and
-  a Rust-default RC path through `make slogger-rc-readback-smoke`; the C service
-  remains available as rollback.
+- The Rust path has a boot smoke through `make rust-slogger-boot-smoke` and a
+  readback smoke through `make slogger-rc-readback-smoke`; after retirement,
+  the C service is no longer available as rollback.
 
 ## Follow-Up
 
 - Decide whether `slogger-rs` should grow tiny integer formatting for pid/chid
   parity before broader boot-image use.
-- Keep `/dev/slog` readback smoke and the C rollback drill in the gate before
-  any C retirement decision.
+- Keep `/dev/slog` readback smoke green for the Rust-only service path.

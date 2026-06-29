@@ -15,7 +15,7 @@
 # Copyright (c) 2026 Yuri Zaporozhets <yuriz@qsoe.net>
 # SPDX-License-Identifier: Apache-2.0
 
-QSOE_RUST_SLOGGER ?= 0
+QSOE_RUST_SLOGGER ?= 1
 QSOE_RUST_VIRTIO ?= 0
 QSOE_RUST_TEST_MSGPASS ?= 1
 QSOE_RUST_PIPE ?= 0
@@ -56,7 +56,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         check-tm-script-model check-tm-syscfg-model check-tm-sysmap-model check-tm-sysfs-model \
         slog-readback-smoke \
         rust-slog-readback-smoke slogger-rc-boot-smoke \
-        slogger-rc-readback-smoke slogger-rc-rollback-smoke \
+        slogger-rc-readback-smoke \
         index-c index-c-files index-c-tags index-c-cscope index-c-global \
         index-c-static index-c-compile-db tidy-c \
         elf-baseline audit-artifacts \
@@ -102,7 +102,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-mkfs-qrv-live-smoke \
         container-mkfs-qrv-rc-live-smoke container-mkfs-qrv-rc-rollback-smoke \
         container-rust-slog-readback-smoke container-slogger-rc-boot-smoke \
-        container-slogger-rc-readback-smoke container-slogger-rc-rollback-smoke \
+        container-slogger-rc-readback-smoke \
         container-rust-test-msgpass-smoke container-test-msgpass-rc-smoke \
         container-rust-virtio-file-smoke container-pipe-smoke \
         container-rust-pipe-smoke container-rust-pipe-data-smoke \
@@ -321,9 +321,6 @@ slogger-rc-boot-smoke:
 
 slogger-rc-readback-smoke:
 	@scripts/slog-readback-smoke.py --slogger-rc
-
-slogger-rc-rollback-smoke:
-	@scripts/slog-readback-smoke.py --slogger-rc-rollback
 
 index-c: index-c-static
 
@@ -733,9 +730,6 @@ container-slogger-rc-boot-smoke:
 
 container-slogger-rc-readback-smoke:
 	@scripts/container-toolchain.sh run make slogger-rc-readback-smoke
-
-container-slogger-rc-rollback-smoke:
-	@scripts/container-toolchain.sh run make slogger-rc-rollback-smoke
 
 container-rust-test-msgpass-smoke:
 	@scripts/container-toolchain.sh run make rust-test-msgpass-smoke

@@ -70,16 +70,15 @@ The smoke target preserves the current QSOE userland contract:
 
 The script audits the linked ELF when a compatible `readelf` tool is available.
 
-The first Rust service pilot can be linked without selecting it for the boot
-image:
+The first Rust service pilot can be linked and audited directly:
 
 ```sh
 make rust-slogger-link-smoke
 ```
 
 It builds `qsoe-slogger-rs` as a no-std staticlib and links it through the same
-QSOE userland CRT/libc path. The C `slogger` remains the default service until
-the explicit build flag and boot smoke steps land.
+QSOE userland CRT/libc path. The C `slogger` service is retired; normal image
+packaging now stages this Rust artifact as `/sbin/slogger`.
 
 The shared direct-service bootstrap example can be linked with:
 
@@ -102,22 +101,20 @@ cargo test --manifest-path rust/Cargo.toml -p qsoe-minimal-rs --features host-te
 
 ## Slogger Selection
 
-The tracked handover tree does not edit the ignored `quser/` component
-Makefiles directly. Instead, it exposes a stable selected artifact for later
-CPIO/image packaging:
+The tracked handover tree uses component override patches to retire the C
+`quser/sbin/slogger` source and make NQ/LQ CPIO packaging consume a stable
+Rust artifact:
 
 ```sh
 make slogger-artifact
-QSOE_RUST_SLOGGER=1 make slogger-artifact
 ```
 
-With the default `QSOE_RUST_SLOGGER=0`, the target stages the existing C
-`quser/build/sbin/slogger/slogger.elf`. With `QSOE_RUST_SLOGGER=1`, it first
-links `qsoe-slogger-rs` through the QSOE userland path. Both modes write the
-selected binary to `build/rust/selected/sbin/slogger.elf`.
+The target links `qsoe-slogger-rs` through the QSOE userland path and writes
+the selected binary to `build/rust/selected/sbin/slogger.elf`. Setting
+`QSOE_RUST_SLOGGER=0` is rejected because the C service has been removed from
+the tracked `quser` component override.
 
-The opt-in LQ boot smoke uses that selected artifact without changing the C
-default:
+The LQ boot and readback smokes use that selected artifact:
 
 ```sh
 make rust-slogger-boot-smoke
@@ -132,18 +129,16 @@ The readback smoke uses the same Rust-selected image path, boots without the
 virtio disk so QSOE/L enters the rescue shell, runs `/bin/sloginfo`, and
 verifies that boot-time `pci-server` messages are readable through `/dev/slog`.
 
-The release-candidate path makes Rust the default for the RC image while
-keeping an explicit C rollback drill:
+The compatibility RC target now exercises the same Rust-only image path:
 
 ```sh
 make slogger-rc-readback-smoke
-make slogger-rc-rollback-smoke
 ```
 
-`make slogger-rc-readback-smoke` prepares an image with `slogger-rs` selected
-by default. `make slogger-rc-rollback-smoke` sets
-`QSOE_SLOGGER_RC_ROLLBACK=1` and verifies the same readback behavior with the C
-artifact restored.
+`make slogger-rc-readback-smoke` prepares an image with `slogger-rs` staged as
+`/sbin/slogger`. `QSOE_SLOGGER_RC_ROLLBACK=1` is rejected after retirement; the
+historical rollback drill is documented in
+`docs/rust-migration/SLOGGER_RC.md`.
 
 ## Virtio Driver Selection
 

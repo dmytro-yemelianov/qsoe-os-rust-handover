@@ -562,10 +562,6 @@ mod tests {
     fn identifies_relocation_types_used_by_existing_qsoe_binaries() {
         let fixtures: &[(&str, &[(u32, usize)])] = &[
             (
-                "quser/build/sbin/slogger/slogger.elf",
-                &[(riscv::R_RISCV_64, 1), (riscv::R_RISCV_JUMP_SLOT, 10)],
-            ),
-            (
                 "quser/build/dev/virtio/devb-virtio.elf",
                 &[(riscv::R_RISCV_64, 1), (riscv::R_RISCV_JUMP_SLOT, 19)],
             ),

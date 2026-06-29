@@ -3,8 +3,9 @@
 Captured: 2026-06-24 14:20 CEST.
 
 This note records the first `slogger` Rust-default release-candidate path. It
-does not retire the C implementation. Normal source builds still preserve the C
-daemon, and the RC image path keeps a one-command C rollback drill.
+did not retire the C implementation at the time. It is now historical evidence:
+the C service was retired later, and the current Rust-only image path is
+documented in `SLOGGER_RETIREMENT.md`.
 
 ## Rust Migration: `slogger`
 
@@ -72,16 +73,20 @@ and verifies a boot-time `pci-server:` slog entry is readable through
 
 ## Known Limitations
 
-- No C source is removed by this RC.
+- No C source was removed by this RC. The later retirement is documented in
+  `SLOGGER_RETIREMENT.md`.
 - The RC covers QSOE/L QEMU readback behavior, not a full hardware release.
 - The Rust startup text remains shorter than the C startup text as documented
   in `SLOGGER_BOOT_COMPARE.md`.
-- C retirement remains blocked by #26 until the retirement checklist is
-  reviewed; this RC evidence does not remove or disable the C implementation.
+- C retirement is no longer blocked for `slogger`; this RC evidence was used by
+  the later retirement PR. Other components still need their own #26 checklist
+  exercise before C removal.
 
 ## Review Notes
 
 - Unsafe review: no new Rust unsafe code in this RC target wiring.
 - Data or on-disk format migration: none.
-- Operator impact: use `make slogger-rc-readback-smoke` to validate the Rust
-  default RC path and `make slogger-rc-rollback-smoke` to validate rollback.
+- Historical operator impact at RC time: `make slogger-rc-readback-smoke`
+  validated the Rust default RC path and `make slogger-rc-rollback-smoke`
+  validated rollback. After retirement, use `make slogger-rc-readback-smoke`
+  only; rollback is intentionally rejected.
