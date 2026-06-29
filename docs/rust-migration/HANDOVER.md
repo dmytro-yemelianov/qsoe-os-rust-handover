@@ -323,8 +323,10 @@ The strict ELF audit showed:
   for trusted PRs and pushes.
 - `tm_cred` has a Rust opt-in provider behind `QSOE_RUST_TM_CRED=1`. It is
   merged on `main` through PR #162 with `make tm-cred-evidence` and
-  `make container-source-build` evidence. C remains default and rollback until
-  a credential-specific runtime smoke and separate RC decision exist.
+  `make container-source-build` evidence, and now has `make tm-cred-runtime-smoke`
+  coverage for live uid/gid mutation, cwd, umask, permission rejection, and
+  spawn inheritance. C remains default and rollback until a separate RC decision
+  exists.
 - `tm_pseudodev` has a Rust opt-in provider behind
   `QSOE_RUST_TM_PSEUDODEV=1`. The selector replaces only LQ `sys/devnull.o`
   and `sys/devzero.o` with the selected Rust provider archive. C remains

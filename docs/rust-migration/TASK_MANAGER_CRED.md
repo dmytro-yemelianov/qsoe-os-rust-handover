@@ -90,9 +90,23 @@ links both NQ and LQ taskman in C rollback and Rust-selected modes. The gate
 also verifies `cred.o` is present for `QSOE_RUST_TM_CRED=0` and absent for
 `QSOE_RUST_TM_CRED=1`.
 
+The focused runtime gate is:
+
+```sh
+make tm-cred-runtime-smoke
+```
+
+It boots QSOE/L with `QSOE_RUST_TM_CRED=1` and `QSOE_RUST_TM_PROCFS=1`, verifies
+the selected `libtaskman.a` omits C `cred.o`, verifies the Rust provider archive
+exports the `tm_cred_*` ABI, stages `/usr/bin/cred_probe` only into the smoke
+qrvfs image, and runs it from sysinit. The helper checks initial root ids, umask
+exchange, cwd round-trip through `/usr/conf`, held-id uid/gid transitions,
+non-root `setuid(0)` rejection, and inherited ids/cwd/umask in a spawned child.
+
 ## Current State
 
-`tm_cred` is Rust opt-in only. It is not a Rust-default release candidate and
-has no C retirement approval. Keep `libtaskman/src/cred.c` as the rollback
-implementation until the global retirement checklist and a separate removal PR
-are satisfied.
+`tm_cred` is Rust opt-in only. It now has focused runtime smoke coverage, but it
+is not a Rust-default release candidate and has no C retirement approval. Keep
+`libtaskman/src/cred.c` as the rollback implementation until a separate
+Rust-default RC decision, the global retirement checklist, and a separate
+removal PR are satisfied.

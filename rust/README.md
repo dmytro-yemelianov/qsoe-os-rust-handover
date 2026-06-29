@@ -484,6 +484,7 @@ without changing the normal taskman default:
 make check-tm-cred-model
 make rust-tm-cred-provider
 make tm-cred-evidence
+make tm-cred-runtime-smoke
 ```
 
 With the default `QSOE_RUST_TM_CRED=0`, NQ and LQ taskman link the existing
@@ -491,6 +492,11 @@ C `cred.o`. With `QSOE_RUST_TM_CRED=1`, the component Makefile selector omits
 C `cred.o`, builds `qsoe-tm-cred` for `riscv64imac-unknown-none-elf`, and
 links `libqsoe_tm_cred.a` into taskman. Process-table ownership, IPC decoding,
 filesystem-backed path validation, and seL4 invocation code remain C.
+
+`make tm-cred-runtime-smoke` boots QSOE/L with Rust `tm_cred` selected, verifies
+the selected `libtaskman.a` omits C `cred.o`, and runs `/usr/bin/cred_probe`
+from sysinit. The helper exercises live uid/gid mutation, held-id transitions,
+non-root `EPERM` rejection, cwd and umask state, and child spawn inheritance.
 
 ## Task Manager Pseudo-device Selection
 

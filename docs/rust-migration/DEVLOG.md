@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-29 CEST.
+Last updated: 2026-06-30 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,46 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-30 00:37 CEST - tm_cred Runtime Smoke
+
+Scope:
+
+- Added `make tm-cred-runtime-smoke` and container CI wiring.
+- Added `/usr/bin/cred_probe`, a qrvfs-staged smoke helper that exercises
+  taskman-backed `getuid`/`geteuid`/`getgid`/`getegid`, `setregid`, `setgid`,
+  `setreuid`, `seteuid`, `setuid`, `umask`, `chdir`, `getcwd`, and child spawn
+  inheritance.
+- The smoke rebuilds QSOE/L with `QSOE_RUST_TM_CRED=1` and mandatory
+  `QSOE_RUST_TM_PROCFS=1`, verifies the selected `libtaskman.a` omits C
+  `cred.o`, and verifies the Rust provider archive exports the `tm_cred_*` ABI.
+- The helper is staged only through the smoke-specific `FSQRV_BINS`, keeping the
+  production qrvfs root unchanged.
+
+Commands:
+
+- `bash -n scripts/tm-cred-runtime-smoke.sh scripts/apply-component-overrides.sh scripts/boot-smoke.sh`
+- `make -n tm-cred-runtime-smoke container-tm-cred-runtime-smoke`
+- `./scripts/apply-component-overrides.sh`
+- `patch -d quser --reverse --dry-run -p1 < patches/components/quser-cred-probe.patch`
+- `make tm-cred-runtime-smoke`
+- `make tm-cred-evidence`
+- `make check-qrvfs-rust-writer-production-root`
+- `git diff --check`
+
+Result:
+
+- `make tm-cred-runtime-smoke` passes locally with markers for initial root ids,
+  umask exchange, cwd round-trip, uid/gid mutation, non-root permission
+  rejection, child inherited state, spawn inheritance, and final probe success.
+- `make tm-cred-evidence` continues to pass, including C/Rust host tests,
+  provider archive audit, and NQ/LQ C-default/Rust-selected link checks.
+- The runtime smoke closes the credential-specific next gate for #150, but
+  `tm_cred` remains Rust opt-in pending a separate Rust-default RC decision.
+
+Follow-up:
+
+- Publish the PR, wait for trusted CI, merge, and update #150.
 
 ## 2026-06-29 23:51 CEST - tm_pathmgr Runtime Smoke
 

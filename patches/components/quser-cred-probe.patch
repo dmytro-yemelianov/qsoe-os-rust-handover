@@ -1,0 +1,236 @@
+diff --git a/Makefile b/Makefile
+index 8571d14..25c8ed6 100644
+--- a/Makefile
++++ b/Makefile
+@@ -34,6 +34,7 @@ COMPONENTS := libpci \
+               dev/sersifive \
+               dev/nvme \
+               fs/qrv \
++              test/cred_probe \
+               test/pathmgr_probe \
+               test/syncspace \
+               test/suite
+diff --git a/test/cred_probe/Makefile b/test/cred_probe/Makefile
+new file mode 100644
+index 0000000..9562c5d
+--- /dev/null
++++ b/test/cred_probe/Makefile
+@@ -0,0 +1,11 @@
++# quser/test/cred_probe/Makefile -- credential runtime probe.
++#
++# Copyright (c) 2026 Yuri Zaporozhets <yuriz@qsoe.net>
++# SPDX-License-Identifier: Apache-2.0
++
++include ../../common.mk
++
++PROGRAM := cred_probe
++SRCS    := main.c
++
++include $(QUSER)/build_prog.mk
+diff --git a/test/cred_probe/main.c b/test/cred_probe/main.c
+new file mode 100644
+index 0000000..75c00b0
+--- /dev/null
++++ b/test/cred_probe/main.c
+@@ -0,0 +1,201 @@
++/*
++ * cred_probe: runtime credential, cwd, and umask lifecycle smoke helper.
++ *
++ * The parent mutates its ids, cwd, and umask through libc's taskman-backed
++ * POSIX wrappers, then spawns this same binary in child mode to verify the
++ * process table inheritance path.
++ *
++ * Copyright (c) 2026 Yuri Zaporozhets <yuriz@qsoe.net>
++ * SPDX-License-Identifier: Apache-2.0
++ */
++
++#include <spawn.h>
++#include <stdio.h>
++#include <string.h>
++#include <errno.h>
++#include <sys/qsoe.h>
++#include <sys/stat.h>
++#include <sys/wait.h>
++#include <unistd.h>
++
++#define CRED_PROBE_BIN          "/usr/bin/cred_probe"
++#define CRED_PROBE_CWD          "/usr/conf"
++#define CRED_PROBE_UID          ((uid_t)1001)
++#define CRED_PROBE_EUID_HELD    ((uid_t)1000)
++#define CRED_PROBE_GID          ((gid_t)2001)
++#define CRED_PROBE_EGID_HELD    ((gid_t)2000)
++#define CRED_PROBE_UMASK_FIRST  ((mode_t)0123)
++#define CRED_PROBE_UMASK_CHILD  ((mode_t)0456)
++#define CRED_PROBE_UMASK_RESET  ((mode_t)0022)
++
++static int fail(const char *msg)
++{
++    printf("tm-cred-runtime-smoke: %s\n", msg);
++    return 1;
++}
++
++static int fail_errno(const char *msg)
++{
++    printf("tm-cred-runtime-smoke: %s errno=%d\n", msg, qsoe_errno);
++    return 1;
++}
++
++static int check_ids(uid_t ruid, uid_t euid, gid_t rgid, gid_t egid,
++                     const char *context)
++{
++    uid_t got_ruid = getuid();
++    uid_t got_euid = geteuid();
++    gid_t got_rgid = getgid();
++    gid_t got_egid = getegid();
++
++    if (got_ruid != ruid || got_euid != euid ||
++        got_rgid != rgid || got_egid != egid) {
++        printf("tm-cred-runtime-smoke: %s ids mismatch "
++               "uid=%u euid=%u gid=%u egid=%u\n",
++               context,
++               (unsigned)got_ruid, (unsigned)got_euid,
++               (unsigned)got_rgid, (unsigned)got_egid);
++        return 1;
++    }
++    return 0;
++}
++
++static int check_cwd(const char *context)
++{
++    char cwd[128];
++
++    if (!getcwd(cwd, sizeof cwd)) {
++        return fail_errno(context);
++    }
++    if (strcmp(cwd, CRED_PROBE_CWD) != 0) {
++        printf("tm-cred-runtime-smoke: %s cwd mismatch '%s'\n",
++               context, cwd);
++        return 1;
++    }
++    return 0;
++}
++
++static int child_main(void)
++{
++    if (check_ids(CRED_PROBE_UID, CRED_PROBE_UID,
++                  CRED_PROBE_GID, CRED_PROBE_GID,
++                  "child inherited") != 0)
++        return 1;
++
++    if (check_cwd("child inherited") != 0)
++        return 1;
++
++    mode_t old = umask(CRED_PROBE_UMASK_RESET);
++    if ((old & 0777u) != CRED_PROBE_UMASK_CHILD) {
++        printf("tm-cred-runtime-smoke: child umask mismatch old=%03o\n",
++               (unsigned)(old & 0777u));
++        return 1;
++    }
++
++    printf("tm-cred-runtime-smoke: child inherited state ok\n");
++    return 0;
++}
++
++static int spawn_child(void)
++{
++    char *const argv[] = {
++        (char *)CRED_PROBE_BIN,
++        (char *)"child",
++        0,
++    };
++    char *const envp[] = { 0 };
++    pid_t child = 0;
++
++    int rc = posix_spawn(&child, CRED_PROBE_BIN, 0, 0, argv, envp);
++    if (rc != 0 || child <= 0) {
++        printf("tm-cred-runtime-smoke: spawn child failed rc=%d child=%d\n",
++               rc, (int)child);
++        return 1;
++    }
++
++    int status = -1;
++    pid_t got = waitpid(child, &status, 0);
++    if (got != child || !WIFEXITED(status) || WEXITSTATUS(status) != 0) {
++        printf("tm-cred-runtime-smoke: child wait failed got=%d status=%d\n",
++               (int)got, status);
++        return 1;
++    }
++
++    printf("tm-cred-runtime-smoke: spawn inheritance ok\n");
++    return 0;
++}
++
++static int parent_main(void)
++{
++    if (check_ids(0, 0, 0, 0, "initial root") != 0)
++        return 1;
++    printf("tm-cred-runtime-smoke: initial root ids ok\n");
++
++    (void)umask(CRED_PROBE_UMASK_FIRST);
++    mode_t old = umask(CRED_PROBE_UMASK_CHILD);
++    if ((old & 0777u) != CRED_PROBE_UMASK_FIRST) {
++        printf("tm-cred-runtime-smoke: umask exchange mismatch old=%03o\n",
++               (unsigned)(old & 0777u));
++        return 1;
++    }
++    printf("tm-cred-runtime-smoke: umask exchange ok\n");
++
++    if (chdir(CRED_PROBE_CWD) != 0)
++        return fail_errno("chdir /usr/conf failed");
++    if (check_cwd("parent") != 0)
++        return 1;
++    printf("tm-cred-runtime-smoke: cwd roundtrip ok\n");
++
++    if (setregid((gid_t)-1, CRED_PROBE_EGID_HELD) != 0)
++        return fail_errno("setregid held egid failed");
++    if (check_ids(0, 0, 0, CRED_PROBE_EGID_HELD,
++                  "held egid") != 0)
++        return 1;
++
++    if (setgid(CRED_PROBE_GID) != 0)
++        return fail_errno("setgid failed");
++    if (check_ids(0, 0, CRED_PROBE_GID, CRED_PROBE_GID,
++                  "setgid") != 0)
++        return 1;
++
++    if (setreuid((uid_t)-1, CRED_PROBE_EUID_HELD) != 0)
++        return fail_errno("setreuid held euid failed");
++    if (check_ids(0, CRED_PROBE_EUID_HELD,
++                  CRED_PROBE_GID, CRED_PROBE_GID,
++                  "held euid") != 0)
++        return 1;
++
++    if (seteuid(0) != 0)
++        return fail_errno("seteuid held root failed");
++    if (check_ids(0, 0, CRED_PROBE_GID, CRED_PROBE_GID,
++                  "restored euid") != 0)
++        return 1;
++
++    if (setuid(CRED_PROBE_UID) != 0)
++        return fail_errno("setuid failed");
++    if (check_ids(CRED_PROBE_UID, CRED_PROBE_UID,
++                  CRED_PROBE_GID, CRED_PROBE_GID,
++                  "setuid") != 0)
++        return 1;
++
++    printf("tm-cred-runtime-smoke: credential mutation ok\n");
++
++    if (setuid(0) == 0)
++        return fail("setuid root unexpectedly succeeded");
++    if (qsoe_errno != EPERM)
++        return fail_errno("setuid root failed with unexpected errno");
++    printf("tm-cred-runtime-smoke: permission gate ok\n");
++
++    if (spawn_child() != 0)
++        return 1;
++
++    printf("tm-cred-runtime-smoke: credential probe ok\n");
++    return 0;
++}
++
++int main(int argc, char **argv)
++{
++    if (argc > 1 && strcmp(argv[1], "child") == 0)
++        return child_main();
++    return parent_main();
++}

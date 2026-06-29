@@ -297,6 +297,9 @@ apply_patch_if_possible_or_present quser quser-retire-virtio-c.patch \
 apply_patch_if_possible_or_present quser quser-pathmgr-probe.patch \
     "$ROOT/quser/Makefile" \
     'test/pathmgr_probe'
+apply_patch_if_possible_or_present quser quser-cred-probe.patch \
+    "$ROOT/quser/Makefile" \
+    'test/cred_probe'
 apply_patch_if_possible quser quser-msgpass-lq-no-reply-skip.patch
 
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
@@ -507,6 +510,9 @@ require_missing "$ROOT/quser/dev/virtio/virtio_blk.h"
 require_line "$ROOT/quser/Makefile" '              test/pathmgr_probe \'
 require_line "$ROOT/quser/test/pathmgr_probe/Makefile" 'PROGRAM := pathmgr_probe'
 require_line "$ROOT/quser/test/pathmgr_probe/main.c" 'PATHMGR_PROBE_PATH'
+require_line "$ROOT/quser/Makefile" '              test/cred_probe \'
+require_line "$ROOT/quser/test/cred_probe/Makefile" 'PROGRAM := cred_probe'
+require_line "$ROOT/quser/test/cred_probe/main.c" 'tm-cred-runtime-smoke: credential probe ok'
 require_line "$ROOT/quser/test/suite/msgpass_test.c" '(void) ProcessTerminate(nr_pid, 0);'
 
 echo "apply-component-overrides.sh: component overrides ready"

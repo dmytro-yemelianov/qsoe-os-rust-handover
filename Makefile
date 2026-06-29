@@ -69,7 +69,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         rust-tm-cpio-provider rust-tm-cred-provider rust-tm-elf-provider rust-tm-fdt-provider rust-tm-pathmgr-provider rust-tm-procfs-provider \
         rust-tm-rsrcdb-provider rust-tm-script-provider rust-tm-syscfg-provider rust-tm-sysmap-provider rust-tm-sysfs-provider \
         rust-tm-pseudodev-provider rust-tm-providers \
-        tm-cpio-evidence tm-cpio-runtime-smoke tm-cred-evidence tm-elf-evidence tm-elf-runtime-smoke tm-fdt-evidence tm-fdt-runtime-smoke tm-pathmgr-evidence tm-pathmgr-runtime-smoke tm-procfs-evidence tm-providers-evidence tm-rsrcdb-evidence tm-script-evidence tm-script-runtime-smoke \
+        tm-cpio-evidence tm-cpio-runtime-smoke tm-cred-evidence tm-cred-runtime-smoke tm-elf-evidence tm-elf-runtime-smoke tm-fdt-evidence tm-fdt-runtime-smoke tm-pathmgr-evidence tm-pathmgr-runtime-smoke tm-procfs-evidence tm-providers-evidence tm-rsrcdb-evidence tm-script-evidence tm-script-runtime-smoke \
         tm-syscfg-evidence tm-syscfg-runtime-smoke tm-sysmap-evidence tm-sysmap-runtime-smoke tm-sysfs-evidence tm-sysfs-runtime-smoke tm-pseudodev-evidence \
         rust-slogger-boot-smoke \
         rust-virtio-boot-smoke rust-virtio-file-smoke \
@@ -94,7 +94,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-tm-elf-provider container-rust-tm-fdt-provider container-rust-tm-pathmgr-provider container-rust-tm-procfs-provider container-rust-tm-rsrcdb-provider container-rust-tm-script-provider \
         container-rust-tm-syscfg-provider container-rust-tm-sysmap-provider container-rust-tm-sysfs-provider \
         container-rust-tm-pseudodev-provider container-rust-tm-providers \
-        container-tm-cpio-evidence container-tm-cpio-runtime-smoke container-tm-cred-evidence container-tm-elf-evidence container-tm-elf-runtime-smoke container-tm-fdt-evidence container-tm-fdt-runtime-smoke container-tm-pathmgr-evidence container-tm-pathmgr-runtime-smoke container-tm-procfs-evidence container-tm-providers-evidence \
+        container-tm-cpio-evidence container-tm-cpio-runtime-smoke container-tm-cred-evidence container-tm-cred-runtime-smoke container-tm-elf-evidence container-tm-elf-runtime-smoke container-tm-fdt-evidence container-tm-fdt-runtime-smoke container-tm-pathmgr-evidence container-tm-pathmgr-runtime-smoke container-tm-procfs-evidence container-tm-providers-evidence \
         container-tm-rsrcdb-evidence container-tm-script-evidence container-tm-script-runtime-smoke container-tm-syscfg-evidence container-tm-syscfg-runtime-smoke \
         container-tm-sysmap-evidence container-tm-sysmap-runtime-smoke container-tm-sysfs-evidence container-tm-sysfs-runtime-smoke container-tm-pseudodev-evidence \
         container-rust-virtio-boot-smoke \
@@ -488,6 +488,9 @@ tm-cpio-runtime-smoke:
 tm-cred-evidence:
 	@scripts/tm-cred-evidence.sh
 
+tm-cred-runtime-smoke:
+	@scripts/tm-cred-runtime-smoke.sh
+
 tm-elf-evidence:
 	@scripts/tm-elf-evidence.sh
 
@@ -717,6 +720,9 @@ container-tm-cpio-runtime-smoke:
 
 container-tm-cred-evidence:
 	@scripts/container-toolchain.sh run make tm-cred-evidence
+
+container-tm-cred-runtime-smoke:
+	@scripts/container-toolchain.sh run make tm-cred-runtime-smoke
 
 container-tm-elf-evidence:
 	@scripts/container-toolchain.sh run make tm-elf-evidence
