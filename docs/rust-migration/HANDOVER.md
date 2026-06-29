@@ -342,10 +342,14 @@ The strict ELF audit showed:
   `qsoe-tm-rsrcdb` archive into LQ taskman. C remains default and rollback
   until resource attach/query/detach runtime coverage and a separate RC
   decision exist.
-- The current branch adds `tm_elf` behind `QSOE_RUST_TM_ELF=1`. The selector
+- `tm_elf` has a Rust opt-in provider behind `QSOE_RUST_TM_ELF=1`. The selector
   removes C `elf.o` from `libtaskman.a` and links the soft-float
   `qsoe-tm-elf` archive into NQ/LQ taskman. C remains default and rollback
   until ELF-backed spawn runtime coverage and a separate RC decision exist.
+- The current branch adds `tm_fdt` behind `QSOE_RUST_TM_FDT=1`. The selector
+  removes LQ C `sys/fdt.o` and links the soft-float `qsoe-tm-fdt` archive into
+  LQ taskman. C remains default and rollback until boot/syscfg runtime coverage
+  and a separate RC decision exist.
 
 ## Current Decisions
 
