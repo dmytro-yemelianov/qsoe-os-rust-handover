@@ -166,6 +166,9 @@ apply_patch_if_possible_or_present nq nq-taskman-rust-tm-pathmgr.patch \
 apply_patch_if_possible_or_present nq nq-taskman-rust-tm-shared-providers.patch \
     "$ROOT/nq/taskman/Makefile" \
     'RUST_TM_PROVIDERS_A := $(REPO_ROOT)/build/rust/tm-providers/libqsoe_tm_providers.a'
+apply_patch_if_possible_or_present nq nq-taskman-rust-tm-procfs-retired.patch \
+    "$ROOT/nq/taskman/Makefile" \
+    'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
 apply_patch_if_possible_or_present nq nq-makefile-rust-slogger-retired.patch \
     "$ROOT/nq/Makefile" \
     'SELECTED_SLOGGER_ELF ?= $(abspath ../build/rust/selected/sbin/slogger.elf)'
@@ -217,7 +220,10 @@ apply_patch_if_possible_or_present lq lq-makefile-rust-tm-sysmap.patch \
 apply_patch_if_possible_or_present lq lq-makefile-rust-tm-pathmgr.patch \
     "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_PATHMGR ?= 0'
-apply_patch_if_possible lq lq-makefile-rust-tm-shared-providers.patch
+apply_optional_patch lq lq-makefile-rust-tm-shared-providers.patch
+apply_patch_if_possible_or_present lq lq-makefile-rust-tm-procfs-retired.patch \
+    "$ROOT/lq/Makefile" \
+    'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
 apply_patch_if_possible_or_present lq lq-makefile-rust-slogger-retired.patch \
     "$ROOT/lq/Makefile" \
     'SELECTED_SLOGGER_ELF ?= $(abspath $(TOP)/..)/build/rust/selected/sbin/slogger.elf'
@@ -269,6 +275,9 @@ apply_patch_if_possible_or_present lq lq-taskman-rust-tm-pathmgr.patch \
 apply_patch_if_possible_or_present lq lq-taskman-rust-tm-shared-providers.patch \
     "$ROOT/lq/taskman/Makefile" \
     'RUST_TM_PROVIDERS_A := $(REPO_ROOT)/build/rust/tm-providers/libqsoe_tm_providers.a'
+apply_patch_if_possible_or_present lq lq-taskman-rust-tm-procfs-retired.patch \
+    "$ROOT/lq/taskman/Makefile" \
+    'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
 apply_patch_if_possible lq lq-msgpass-mcs-teardown-and-bulk-copy.patch
 apply_patch_if_possible_or_present quser quser-retire-test-msgpass-c.patch \
     "$ROOT/quser/Makefile" \
@@ -285,7 +294,8 @@ apply_patch_if_possible_or_present quser quser-retire-virtio-c.patch \
 apply_patch_if_possible quser quser-msgpass-lq-no-reply-skip.patch
 
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
-require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS ?= 0'
+require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS ?= 1'
+require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_ELF ?= 0'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PATHMGR ?= 0'
@@ -349,7 +359,8 @@ require_line "$ROOT/nq/Makefile" 'SBIN_PIPE_ELF=$(SELECTED_PIPE_ELF)'
 require_line "$ROOT/nq/Makefile" 'SBIN_VIRTIO_ELF=$(SELECTED_VIRTIO_ELF)'
 
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
-require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PROCFS ?= 0'
+require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PROCFS ?= 1'
+require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_ELF ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_FDT ?= 0'
@@ -418,7 +429,8 @@ require_absent "$ROOT/lq/Makefile" 'select at most one taskman Rust provider unt
 require_line "$ROOT/lq/Makefile" '$(LIBTASKMAN_A): FORCE'
 require_line "$ROOT/lq/Makefile" 'FORCE:'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 0'
-require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS ?= 0'
+require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS ?= 1'
+require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_ELF ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_FDT ?= 0'

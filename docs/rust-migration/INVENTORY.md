@@ -24,13 +24,13 @@ excluded unless `QSOE_INDEX_SEL4=1` is set.
 | `common` | 2 | 359 | Shared CPIO helper code. Rust CPIO parsing exists, but C remains for existing callers. |
 | `host_tools` | 2 | 781 | `qrvfs-tree` and `mkfs-qrv-rs` have Rust-default RC paths with C rollback. Tracked by #136. |
 | `libc` | 447 | 43,080 | Broad runtime, syscall, stdio, allocator, string, rtld, and QSOE wrapper surface. Not a wholesale Rust target. |
-| `libtaskman` | 23 | 3,013 | Best source of host-testable task-manager modules. `tm_procfs` is Rust-default RC; `tm_cpio`, `tm_cred`, `tm_elf`, `tm_pathmgr`, `tm_script`, `tm_syscfg`, and `tm_sysfs` are Rust opt-in; remaining candidates are tracked in #153. |
+| `libtaskman` | 22 | 2,864 | Best source of host-testable task-manager modules. `tm_procfs` is retired to Rust through the shared provider archive; `tm_cpio`, `tm_cred`, `tm_elf`, `tm_pathmgr`, `tm_script`, `tm_syscfg`, and `tm_sysfs` are Rust opt-in; remaining candidates are tracked in #153. |
 | `lq` | 90 | 17,853 | seL4 task manager, LQ libc wrappers, process, capability, path, memory, syscall, and boot glue. Pure/diagnostic slices only are candidates; LQ FDT, sysmap, pseudo-devices, and resource DB accounting are Rust opt-in. |
 | `nq` | 125 | 25,053 | Kernel, NQ libc, and NQ taskman surface. Near-term linked Rust is deferred by policy; fixture-only candidates are tracked in #155. |
 | `quser` | 121 | 40,075 | Userland services, drivers, resource-server support, shell, tests, and utilities. `test_msgpass` is the first retired C helper; `slogger`, `pipe`, and `devb-virtio` are retired C production paths; several services have Rust pilots; many remain C. |
-| **Total** | **810** | **130,214** | QSOE-owned C/asm/linker surface in this checkout, excluding generated build outputs and vendor seL4. |
+| **Total** | **809** | **130,065** | QSOE-owned C/asm/linker surface in this checkout, excluding generated build outputs and vendor seL4. |
 
-By file type: `518` C files, `280` headers, `10` assembly files, and `2` linker
+By file type: `517` C files, `280` headers, `10` assembly files, and `2` linker
 scripts.
 
 ## Issue-backed Migration Ledger
@@ -56,7 +56,7 @@ Issue state, labels, and metadata are the source of truth for current progress.
 | `devb-virtio` | #138 | Retired C block driver; Rust `devb-virtio-rs` is always staged as `/sbin/devb-virtio` in NQ/LQ images. |
 | `pipe` | #139 | Retired C service; Rust `pipe-rs` is always staged as `/sbin/pipe` in NQ/LQ images. |
 | `test_msgpass` | #140 | Retired C helper; Rust `test_msgpass-rs` is always staged as `/usr/bin/test_msgpass` in test images. |
-| `tm_procfs` | #141 | Rust-default RC with C rollback. |
+| `tm_procfs` | #141 | Retired C provider; Rust `qsoe-tm-procfs` is mandatory in taskman. |
 | `tm_cpio` | #142 | Rust opt-in provider with C rollback; not a Rust-default RC. |
 | `tm_script` | #143 | Rust opt-in provider with C rollback; not a Rust-default RC. |
 | `tm_elf` | #144 | Rust opt-in provider with C rollback; not a Rust-default RC. |
@@ -71,8 +71,9 @@ Issue state, labels, and metadata are the source of truth for current progress.
 
 `test_msgpass` is the first tracked C implementation retired after an RC window
 and rollback drill. `slogger` is the first retired production service, followed
-by `pipe` and `devb-virtio`. Future retirements remain governed by #26 and must
-be separate removal PRs after their own RC evidence.
+by `pipe` and `devb-virtio`. `tm_procfs` is the first retired task-manager
+provider. Future retirements remain governed by #26 and must be separate
+removal PRs after their own RC evidence.
 
 ## Remaining Candidate Buckets
 
@@ -84,7 +85,7 @@ be separate removal PRs after their own RC evidence.
 | Kernel Rust | #155 | Deferred. Current policy allows documentation and fixtures only. |
 | C retirement gate | #26 | Exercised by retiring the C `test_msgpass` helper plus C `slogger`, `pipe`, and `devb-virtio` production paths after their Rust-default RC evidence. Future removals must repeat the same checklist. |
 | OS-wide inventory | #156 | Satisfied by this document once merged. |
-| Shared task-manager Rust archive | #179 | In progress on the current branch: selected taskman Rust providers link through one `qsoe-tm-providers` archive with one panic handler. |
+| Shared task-manager Rust archive | #179 | Complete: selected taskman Rust providers link through one `qsoe-tm-providers` archive with one panic handler. |
 
 ## Areas Not Yet Split Into Per-component Issues
 

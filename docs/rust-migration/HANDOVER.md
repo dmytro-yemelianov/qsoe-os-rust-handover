@@ -85,26 +85,26 @@ added the Rust opt-in `tm_pathmgr` provider, PR #175 retired the C
 `test_msgpass` helper, and PR #176 styled retired roadmap state in the
 dashboard. PR #177 retired the C `slogger` service, PR #178 retired the C
 `pipe` service, and PR #180 retired the C `devb-virtio` block driver. The
-current `main` tip is `8b0df722de62718287407f9593a95cfdaa8c50d4`.
+current `main` tip is `2e6d5f5cd705097efe8b30ed8ad53321b53e4555`.
 
 Current open follow-ups:
 
-- #179: shared task-manager Rust provider archive. The current branch packages
-  selected taskman Rust providers through one `qsoe-tm-providers` static
-  archive with one panic handler, then proves `tm_cpio + tm_procfs` together.
+- #141: retire the C `tm_procfs` task-manager provider. The current branch
+  removes `libtaskman/src/tm_procfs.c`, makes `QSOE_RUST_TM_PROCFS=1`
+  mandatory, and keeps the public `tm_procfs.h` ABI for taskman C glue.
 
 The #96 Rust pipe data-path gate, #97 Rust `test_msgpass` gate, and #103
 `tm_procfs` opt-in gate are satisfied by trusted `main` CI run `28102250069` at
 `1d7b706403b54e8a798d3b1f560f5473d33e020b`.
 
-The #98 host-test gate for the portable `tm_procfs` model is satisfied by
-`make check-tm-procfs-model`. The #102 Rust provider gate is satisfied by
-`QSOE_RUST_TM_PROCFS=1`; C remains default and rollback.
+The #98 host-test gate for the portable `tm_procfs` model is now satisfied by
+Rust host tests through `make check-tm-procfs-model`. The #102 Rust provider
+gate is satisfied by mandatory `QSOE_RUST_TM_PROCFS=1`; the current branch
+closes the C rollback window for this provider.
 
-The current branch adds the shared taskman Rust provider archive. NQ/LQ taskman
-still keep C as default and rollback for every non-retired provider, but when
-any `QSOE_RUST_TM_*` selector is enabled the selected Rust providers link
-through one shared archive instead of one staticlib per provider.
+The shared taskman Rust provider archive landed in #179 / PR #181. NQ/LQ
+taskman now link `tm_procfs` through `qsoe-tm-providers` by default, and any
+additional `QSOE_RUST_TM_*` selector is packaged into that same archive.
 
 ## Linux Machine Setup
 
@@ -313,15 +313,13 @@ The strict ELF audit showed:
   registration, round-trip, EOF, and helper-exit markers. The current branch
   removes the C service from tracked `quser` source/image paths and rejects old
   rollback flags.
-- `tm_procfs` now has a Rust opt-in provider behind `QSOE_RUST_TM_PROCFS=1`.
-  The selector removes C `tm_procfs.o` from `libtaskman.a` and, on the current
-  branch, links the selected provider through the shared `qsoe-tm-providers`
-  archive. `make tm-procfs-evidence` audits the selected artifacts and runs
-  both C-default and Rust-selected `/proc` smokes; CI includes
+- `tm_procfs` is being retired to Rust-only on the current branch. The public
+  `tm_procfs.h` ABI remains, but `libtaskman/src/tm_procfs.c` is removed and
+  `QSOE_RUST_TM_PROCFS=0` is rejected. `make tm-procfs-evidence` audits the
+  Rust provider archive, checks NQ/LQ taskman contain no `tm_procfs.o`, verifies
+  retired selector rejection, and runs the Rust-only `/proc` smoke. CI includes
   `container-tm-procfs-evidence` on the configured `[self-hosted, X64]` runner
-  for trusted PRs and pushes. Trusted `main` run `28102250069` passed the
-  evidence step and uploaded both C-default/Rust-selected procfs logs plus
-  archive membership and readelf summaries. C remains default and rollback.
+  for trusted PRs and pushes.
 - `tm_cred` has a Rust opt-in provider behind `QSOE_RUST_TM_CRED=1`. It is
   merged on `main` through PR #162 with `make tm-cred-evidence` and
   `make container-source-build` evidence. C remains default and rollback until
@@ -382,11 +380,9 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 
 ## Next Recommended Work
 
-1. Finish PR #179 for the shared task-manager Rust provider archive, then
-   update #179 to `status:complete`.
-2. Use the shared archive to resume #141 `tm_procfs` C retirement only after
-   the #26 removal checklist is explicitly satisfied.
-3. Keep the hosted runner healthy for new PRs; CodeRabbit usage-credit failures
+1. Finish the #141 `tm_procfs` C provider retirement PR, then update #141 to
+   `status:retired`.
+2. Keep the hosted runner healthy for new PRs; CodeRabbit usage-credit failures
    are non-blocking until the account is replenished.
-4. Do not start any further C retirement until the release-candidate gate in
+3. Do not start any further C retirement until the release-candidate gate in
    `RETIREMENT.md` is satisfied; see #26.

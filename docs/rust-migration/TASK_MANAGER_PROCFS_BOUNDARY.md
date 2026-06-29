@@ -79,47 +79,46 @@ The Rust module must not panic across the C boundary. Any unexpected invalid
 pointer precondition remains an unsafe caller contract, matching C, but all
 documented malformed inputs must use the return values above.
 
-## Build And Rollback Plan
+## Current Build Status
 
-The implementation keeps the C object as the default:
+The implementation now uses Rust as the only taskman provider:
 
 ```text
-QSOE_RUST_TM_PROCFS=0  -> build libtaskman's C tm_procfs.o
 QSOE_RUST_TM_PROCFS=1  -> build and link the Rust tm_procfs provider
+QSOE_RUST_TM_PROCFS=0  -> rejected; C tm_procfs is retired
 ```
 
 The Rust artifact lives under the existing Rust workspace as `qsoe-tm-procfs`,
 with a `no_std`, `panic = "abort"` crate and no allocator. The NQ and LQ
-taskman builds select either the C object or the Rust staticlib, not both.
+taskman builds link it through the shared `qsoe-tm-providers` archive.
 
-Rollback is one build flag away:
+Rollback is closed for this provider:
 
-- leave `QSOE_RUST_TM_PROCFS=0` as the normal default;
-- if host tests, link audit, or boot smoke fail, rerun with the C default;
-- keep `libtaskman/src/tm_procfs.c` in tree until the global retirement gate in
-  `RETIREMENT.md` is satisfied.
+- `libtaskman/src/tm_procfs.c` is removed;
+- `QSOE_RUST_TM_PROCFS=0` fails fast;
+- the historical RC rollback evidence is recorded in
+  `TASK_MANAGER_PROCFS_RC.md`, and the removal record is
+  `TASK_MANAGER_PROCFS_RETIREMENT.md`.
 
-## Validation Required Before Default Selection
+## Validation
 
-Before selecting the Rust object by default in any image:
+The retired Rust provider remains covered by:
 
-- host tests compare path resolution, info formatting, and readdir behavior
-  against the current C contract;
+- Rust host tests for path resolution, info formatting, and readdir behavior;
 - the Rust crate builds for host tests and the taskman soft-float no-std target;
 - the selected taskman artifact passes the existing ELF audit expectations for
   taskman;
 - boot smoke reaches the normal login milestone;
 - `make tm-procfs-evidence` audits the Rust provider archive, verifies that
-  C-default taskman archives contain `tm_procfs.o` and Rust-selected archives
-  do not, checks NQ/LQ taskman ELF flags/sections, and runs C-default plus
-  Rust-selected `/proc` smokes;
+  NQ/LQ taskman archives contain no `tm_procfs.o`, checks retired selector
+  rejection, checks NQ/LQ taskman ELF flags/sections, and runs the Rust-only
+  `/proc` smoke;
 - `make container-tm-procfs-evidence` passes on the configured trusted Linux
-  runner before any separate default-selection decision; trusted `main` CI run
-  `28102250069` accepted this evidence for #103.
+  runner for same-repository PRs, pushes, and manual dispatches.
 
 ## Boundary Review Result
 
-The boundary is acceptable for a first task-manager pilot because the Rust
-module would preserve a stable C ABI, hold only callback pointers and fixed
-formatting logic, and remain fully disabled by default. Spawn, cap, relocation,
-loader, and LQ dispatch code stay C.
+The boundary is acceptable for the first retired task-manager provider because
+the Rust module preserves a stable C ABI, holds only callback pointers and
+fixed formatting logic, and leaves spawn, cap, relocation, loader, and LQ
+dispatch code in C.

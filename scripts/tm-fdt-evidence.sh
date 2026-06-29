@@ -143,7 +143,7 @@ capture_lq_taskman_plan() {
         QSOE_RUST_TM_CRED=0 \
         QSOE_RUST_TM_ELF=0 \
         QSOE_RUST_TM_FDT="$rust_selected" \
-        QSOE_RUST_TM_PROCFS=0 \
+        QSOE_RUST_TM_PROCFS=1 \
         QSOE_RUST_TM_PSEUDODEV=0 \
         QSOE_RUST_TM_RSRCDB=0 \
         QSOE_RUST_TM_SCRIPT=0 \
@@ -181,7 +181,7 @@ build_lq_taskman() {
         QSOE_RUST_TM_CRED=0 \
         QSOE_RUST_TM_ELF=0 \
         QSOE_RUST_TM_FDT="$rust_selected" \
-        QSOE_RUST_TM_PROCFS=0 \
+        QSOE_RUST_TM_PROCFS=1 \
         QSOE_RUST_TM_PSEUDODEV=0 \
         QSOE_RUST_TM_RSRCDB=0 \
         QSOE_RUST_TM_SCRIPT=0 \
@@ -205,7 +205,7 @@ echo "tm-fdt-evidence.sh: verifying LQ C-default link plan"
 capture_lq_taskman_plan lq-c-default 0
 require_plan_contains lq-c-default '/sys/fdt.o'
 require_plan_omits lq-c-default 'libqsoe_tm_fdt.a'
-require_plan_omits lq-c-default 'libqsoe_tm_providers.a'
+require_plan_contains lq-c-default 'libqsoe_tm_providers.a'
 
 echo "tm-fdt-evidence.sh: verifying LQ C-default taskman link"
 build_lq_taskman lq-c-default 0

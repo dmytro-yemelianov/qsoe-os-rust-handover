@@ -2,17 +2,17 @@
 
 Captured: 2026-06-24 02:02 CEST.
 
-The selected non-critical internal task-manager module is the portable
+The selected non-critical internal task-manager module was the portable
 `tm_procfs` model:
 
 ```text
-libtaskman/src/tm_procfs.c
+rust/crates/qsoe-tm-procfs
 libtaskman/include/tm_procfs.h
 ```
 
-The first Rust pilot should target only that portable model. It should not
-replace LQ's process table, connection context handling, open/read dispatch, or
-any seL4 invocation code.
+The Rust provider targets only that portable model. It does not replace LQ's
+process table, connection context handling, open/read dispatch, or any seL4
+invocation code.
 
 The C/Rust boundary, failure behavior, and rollback plan are specified in
 `TASK_MANAGER_PROCFS_BOUNDARY.md`.
@@ -60,18 +60,17 @@ These files stay C for the first pilot:
 | `rsrcdb` | Good later accounting candidate, but it is a service-facing allocation API. |
 | `devnull` / `devzero` | Small, but they enter through taskman's IO dispatch and cap-backed fd flow. |
 
-## Rust Opt-In Provider
+## Rust-Only Provider
 
-`qsoe-tm-procfs` now exports the existing `tm_procfs.h` ABI behind the
-reserved selector:
+`qsoe-tm-procfs` exports the existing `tm_procfs.h` ABI and is mandatory in
+taskman after C provider retirement:
 
 ```text
-QSOE_RUST_TM_PROCFS=0  -> C `libtaskman/src/tm_procfs.c` remains default
-QSOE_RUST_TM_PROCFS=1  -> Rust `qsoe-tm-procfs` staticlib is linked instead
+QSOE_RUST_TM_PROCFS=1  -> Rust `qsoe-tm-procfs` is linked through qsoe-tm-providers
+QSOE_RUST_TM_PROCFS=0  -> rejected; C tm_procfs is retired
 ```
 
-The selector removes `tm_procfs.o` from `libtaskman.a` when Rust is selected.
-NQ/LQ taskman now link the selected provider through the shared
+NQ/LQ taskman link the selected provider through the shared
 `qsoe-tm-providers` archive, built for `riscv64imac-unknown-none-elf` so it
 matches taskman's soft-float ABI.
 
@@ -81,8 +80,8 @@ crates that export the existing C ABI.
 
 ## Evidence
 
-The C rollback model remains covered by `make check-tm-procfs-model`, which
-tests:
+The Rust model is covered by `make check-tm-procfs-model`, which runs the
+`qsoe-tm-procfs` host tests for:
 
 - path resolution for `/proc`, `/proc/`, `/proc/<pid>`, `/proc/<pid>/`,
   `/proc/<pid>/info`, unknown pids, malformed pids, and unknown entries;
@@ -92,19 +91,19 @@ tests:
 - per-pid directory `readdir` behavior for the single `info` entry;
 - behavior when callbacks are unset or a pid disappears between operations.
 
-The Rust provider has equivalent host coverage through:
+The same tests can be run directly through:
 
 ```sh
 cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-procfs --features host-tests
 ```
 
-Image-level validation stays simple for the opt-in provider:
+Image-level validation stays simple for the retired provider:
 
 - boot to the normal login milestone;
 - run `make tm-procfs-evidence`, which audits the Rust provider archive,
-  verifies C-default and Rust-selected taskman archive membership, checks NQ/LQ
-  taskman ELF flags/sections, and runs both C-default and Rust-selected
-  `/proc` smokes;
+  verifies that NQ/LQ taskman archives no longer contain `tm_procfs.o`, checks
+  retired selector rejection, audits NQ/LQ taskman ELF flags/sections, and runs
+  the Rust-only `/proc` smoke;
 - verify existing process creation and boot markers are unchanged.
 
 Trusted CI runs `make container-tm-procfs-evidence` on the configured
@@ -114,18 +113,16 @@ before any separate Rust-default selection decision.
 
 ## Rust-Default RC Smoke
 
-`scripts/tm-procfs-rc-smoke.sh` makes Rust the default for the targeted RC
-image while preserving a C rollback drill:
+`scripts/tm-procfs-rc-smoke.sh` now validates the retired Rust-only image path:
 
 ```sh
 make tm-procfs-rc-smoke
-make tm-procfs-rc-rollback-smoke
 ```
 
-The RC path sets `QSOE_RUST_TM_PROCFS=1` and uses the existing `/proc` smoke.
-The rollback target sets `TM_PROCFS_RC_ROLLBACK=1`, which selects
-`QSOE_RUST_TM_PROCFS=0` and verifies the same markers with C `tm_procfs.o`
-restored. See `TASK_MANAGER_PROCFS_RC.md` for the release-candidate record.
+The retired path sets `QSOE_RUST_TM_PROCFS=1` and uses the existing `/proc`
+smoke. `TM_PROCFS_RC_ROLLBACK=1` now fails fast because the C provider is
+removed. See `TASK_MANAGER_PROCFS_RC.md` for the historical release-candidate
+record and `TASK_MANAGER_PROCFS_RETIREMENT.md` for the removal record.
 
 ## Selection Result
 

@@ -187,14 +187,14 @@ audit_provider_archive
 
 echo "tm-cpio-evidence.sh: verifying NQ C rollback membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
-    QSOE_RUST_TM_CPIO=0 QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=0 QSOE_RUST_TM_SYSFS=0
+    QSOE_RUST_TM_CPIO=0 QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 QSOE_RUST_TM_SYSFS=0
 require_cpio_count nq-c-default "$ROOT/nq/build/libtaskman/libtaskman.a" 1
 audit_flags nq-c-default-taskman "$ROOT/nq/build/taskman/taskman.elf"
 audit_linked_symbols nq-c-default-taskman "$ROOT/nq/build/taskman/taskman.elf"
 
 echo "tm-cpio-evidence.sh: verifying NQ Rust-selected membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
-    QSOE_RUST_TM_CPIO=1 QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=0 QSOE_RUST_TM_SYSFS=0
+    QSOE_RUST_TM_CPIO=1 QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 QSOE_RUST_TM_SYSFS=0
 require_cpio_count nq-rust-selected "$ROOT/nq/build/libtaskman/libtaskman.a" 0
 audit_flags nq-rust-selected-taskman "$ROOT/nq/build/taskman/taskman.elf"
 audit_linked_symbols nq-rust-selected-taskman "$ROOT/nq/build/taskman/taskman.elf"
@@ -203,7 +203,7 @@ echo "tm-cpio-evidence.sh: verifying LQ C rollback membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
     QSOE_RUST_TM_CPIO=0 \
     QSOE_RUST_TM_CRED=0 \
-    QSOE_RUST_TM_PROCFS=0 \
+    QSOE_RUST_TM_PROCFS=1 \
     QSOE_RUST_TM_PSEUDODEV=0 \
     QSOE_RUST_TM_SYSFS=0 \
     taskman
@@ -215,7 +215,7 @@ echo "tm-cpio-evidence.sh: verifying LQ Rust-selected membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
     QSOE_RUST_TM_CPIO=1 \
     QSOE_RUST_TM_CRED=0 \
-    QSOE_RUST_TM_PROCFS=0 \
+    QSOE_RUST_TM_PROCFS=1 \
     QSOE_RUST_TM_PSEUDODEV=0 \
     QSOE_RUST_TM_SYSFS=0 \
     taskman

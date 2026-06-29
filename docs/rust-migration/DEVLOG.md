@@ -24,6 +24,48 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-29 22:05 CEST - Retired C tm_procfs Provider
+
+Scope:
+
+- Retired the C `libtaskman/src/tm_procfs.c` provider after the Rust-default RC
+  path and shared-provider archive prerequisite.
+- Made `QSOE_RUST_TM_PROCFS=1` mandatory in root, NQ, LQ, libtaskman, and the
+  shared Rust provider builder.
+- Added component override patches that make fresh NQ/LQ checkouts reject
+  `QSOE_RUST_TM_PROCFS=0`.
+- Reworked `tm-procfs-evidence` for Rust-only membership, retired selector
+  rejection, and `/proc` smoke validation.
+- Removed the top-level `tm-procfs-rc-rollback-smoke` and container rollback
+  targets; direct `TM_PROCFS_RC_ROLLBACK=1` script use fails fast.
+- Updated status, inventory, retirement, task-manager, and provider docs.
+
+Commands:
+
+- `scripts/c-index.sh files`
+- `bash -n scripts/build-rust-tm-providers.sh scripts/check-tm-procfs-model.sh scripts/procfs-smoke.sh scripts/tm-procfs-evidence.sh scripts/tm-procfs-rc-smoke.sh scripts/apply-component-overrides.sh`
+- `./scripts/apply-component-overrides.sh`
+- `QSOE_RUST_TM_PROCFS=0 scripts/build-rust-tm-providers.sh`
+- `TM_PROCFS_RC_ROLLBACK=1 scripts/tm-procfs-rc-smoke.sh`
+- `make check-tm-procfs-model`
+- `make rust-tm-procfs-provider`
+- `make tm-procfs-evidence`
+- `make tm-providers-evidence`
+- `make tm-fdt-evidence`
+- `make rust-check`
+
+Result:
+
+- `tm_procfs` is now the first retired task-manager Rust provider.
+- The public `tm_procfs.h` ABI remains for taskman C glue, but the provider
+  implementation is Rust-only.
+- Normal taskman builds link `qsoe-tm-procfs` through the shared
+  `qsoe-tm-providers` archive; `QSOE_RUST_TM_PROCFS=0` is rejected.
+
+Follow-up:
+
+- Merge the retirement PR, then update #141 to `status:retired`.
+
 ## 2026-06-29 21:08 CEST - Shared Taskman Rust Provider Archive
 
 Scope:

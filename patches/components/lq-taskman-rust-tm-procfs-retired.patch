@@ -1,0 +1,21 @@
+diff --git a/taskman/Makefile b/taskman/Makefile
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -41,7 +41,7 @@ CROSS      ?= riscv64-linux-gnu-
+ CC         := $(CROSS)gcc
+ QSOE_RUST_TM_CPIO ?= 0
+-QSOE_RUST_TM_PROCFS ?= 0
++QSOE_RUST_TM_PROCFS ?= 1
+ QSOE_RUST_TM_CRED ?= 0
+ QSOE_RUST_TM_ELF ?= 0
+ QSOE_RUST_TM_FDT ?= 0
+ 
+@@ -54,6 +54,9 @@ QSOE_RUST_TM_PATHMGR ?= 0
+ 
+ TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_ELF) $(QSOE_RUST_TM_FDT) $(QSOE_RUST_TM_PATHMGR) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_RSRCDB) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSMAP) $(QSOE_RUST_TM_SYSFS)))
++ifneq ($(QSOE_RUST_TM_PROCFS),1)
++$(error QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement)
++endif
+ 
+ TASKMAN_DIR := $(TOP)/taskman
+ # Public QSOE/libc headers (sys/qsoe.h, qsoe/tm_msgs.h, ...) live in

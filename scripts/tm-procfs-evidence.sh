@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture tm_procfs Rust opt-in evidence without changing the default provider.
+# Capture tm_procfs Rust-only retirement evidence.
 
 set -eu
 
@@ -13,8 +13,9 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-procfs-evidence.sh
 
-Builds and audits the Rust tm_procfs opt-in path, verifies C rollback archive
-membership, and runs both C-default and Rust-selected /proc smokes.
+Builds and audits the retired Rust tm_procfs path, verifies that taskman
+archives no longer contain C tm_procfs.o, checks retired selector rejection,
+and runs the /proc smoke.
 
 Environment:
   TM_PROCFS_EVIDENCE_WORKDIR  output directory, default build/tm-procfs-evidence
@@ -91,6 +92,18 @@ require_tm_procfs_count() {
         fail "$label expected $expected tm_procfs.o members, got $count"
 }
 
+require_retired_selector_rejected() {
+    local label=$1
+    shift
+    local log="$WORKDIR/$label-retired-selector-rejection.txt"
+
+    if "$@" > "$log" 2>&1; then
+        fail "$label unexpectedly accepted QSOE_RUST_TM_PROCFS=0"
+    fi
+    grep -Fq 'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement' "$log" ||
+        fail "$label rejection did not mention retired tm_procfs selector"
+}
+
 audit_flags() {
     local label=$1
     local elf=$2
@@ -153,38 +166,34 @@ audit_provider_archive() {
         tee -a "$WORKDIR/rust-provider-summary.txt"
 }
 
+echo "tm-procfs-evidence.sh: running Rust host tests"
+"$MAKE" -C "$ROOT" --no-print-directory check-tm-procfs-model
+
 echo "tm-procfs-evidence.sh: building Rust provider archive"
 "$MAKE" -C "$ROOT" --no-print-directory rust-tm-procfs-provider
 audit_provider_archive
 
-echo "tm-procfs-evidence.sh: verifying NQ C rollback membership"
-"$MAKE" -C "$ROOT/nq/taskman" --no-print-directory QSOE_RUST_TM_PROCFS=0
-require_tm_procfs_count nq-c-default "$ROOT/nq/build/libtaskman/libtaskman.a" 1
-audit_flags nq-c-default-taskman "$ROOT/nq/build/taskman/taskman.elf"
-
-echo "tm-procfs-evidence.sh: verifying NQ Rust-selected membership"
+echo "tm-procfs-evidence.sh: verifying NQ Rust-only membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory QSOE_RUST_TM_PROCFS=1
-require_tm_procfs_count nq-rust-selected "$ROOT/nq/build/libtaskman/libtaskman.a" 0
-audit_flags nq-rust-selected-taskman "$ROOT/nq/build/taskman/taskman.elf"
+require_tm_procfs_count nq-rust-retired "$ROOT/nq/build/libtaskman/libtaskman.a" 0
+audit_flags nq-rust-retired-taskman "$ROOT/nq/build/taskman/taskman.elf"
 
-echo "tm-procfs-evidence.sh: verifying LQ C rollback membership"
-"$MAKE" -C "$ROOT/lq" --no-print-directory QSOE_RUST_TM_PROCFS=0 taskman
-require_tm_procfs_count lq-c-default "$ROOT/lq/build/libtaskman/libtaskman.a" 1
-audit_flags lq-c-default-taskman "$ROOT/lq/build/taskman.elf"
+echo "tm-procfs-evidence.sh: verifying NQ retired selector rejection"
+require_retired_selector_rejected nq \
+    "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory QSOE_RUST_TM_PROCFS=0
 
-echo "tm-procfs-evidence.sh: verifying LQ Rust-selected membership"
+echo "tm-procfs-evidence.sh: verifying LQ Rust-only membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory QSOE_RUST_TM_PROCFS=1 taskman
-require_tm_procfs_count lq-rust-selected "$ROOT/lq/build/libtaskman/libtaskman.a" 0
-audit_flags lq-rust-selected-taskman "$ROOT/lq/build/taskman.elf"
+require_tm_procfs_count lq-rust-retired "$ROOT/lq/build/libtaskman/libtaskman.a" 0
+audit_flags lq-rust-retired-taskman "$ROOT/lq/build/taskman.elf"
 
-echo "tm-procfs-evidence.sh: running C-default /proc smoke"
-QSOE_RUST_TM_PROCFS=0 \
-PROCFS_SMOKE_WORKDIR="$WORKDIR/c-default" \
-    "$MAKE" -C "$ROOT" --no-print-directory procfs-smoke
+echo "tm-procfs-evidence.sh: verifying LQ retired selector rejection"
+require_retired_selector_rejected lq \
+    "$MAKE" -C "$ROOT/lq" --no-print-directory QSOE_RUST_TM_PROCFS=0 taskman
 
-echo "tm-procfs-evidence.sh: running Rust-selected /proc smoke"
+echo "tm-procfs-evidence.sh: running Rust-only /proc smoke"
 QSOE_RUST_TM_PROCFS=1 \
-PROCFS_SMOKE_WORKDIR="$WORKDIR/rust-selected" \
+PROCFS_SMOKE_WORKDIR="$WORKDIR/rust-retired" \
     "$MAKE" -C "$ROOT" --no-print-directory procfs-smoke
 
 echo "tm-procfs-evidence.sh: evidence captured in $WORKDIR"

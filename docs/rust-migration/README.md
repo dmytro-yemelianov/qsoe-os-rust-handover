@@ -67,40 +67,42 @@ Read in this order:
    and scope exclusions.
 35. `TASK_MANAGER_PROCFS_BOUNDARY.md`: C/Rust ABI, failure behavior, and
    rollback plan for the selected pilot.
-36. `TASK_MANAGER_PROCFS_RC.md`: Rust-default `tm_procfs` release-candidate
-   note and C rollback drill.
-37. `TASK_MANAGER_PROVIDERS.md`: shared task-manager Rust provider archive,
+36. `TASK_MANAGER_PROCFS_RC.md`: historical Rust-default `tm_procfs`
+   release-candidate note and C rollback drill.
+37. `TASK_MANAGER_PROCFS_RETIREMENT.md`: C provider retirement note for
+   `tm_procfs`, including the Rust-only taskman path and removed rollback.
+38. `TASK_MANAGER_PROVIDERS.md`: shared task-manager Rust provider archive,
    multi-provider selector model, and evidence gate.
-38. `TASK_MANAGER_CPIO.md`: Rust opt-in task-manager CPIO archive provider
+39. `TASK_MANAGER_CPIO.md`: Rust opt-in task-manager CPIO archive provider
    and evidence gate.
-39. `TASK_MANAGER_SCRIPT.md`: Rust opt-in task-manager shebang parser provider
+40. `TASK_MANAGER_SCRIPT.md`: Rust opt-in task-manager shebang parser provider
    and evidence gate.
-40. `TASK_MANAGER_SYSCFG.md`: Rust opt-in task-manager syscfg TLV provider
+41. `TASK_MANAGER_SYSCFG.md`: Rust opt-in task-manager syscfg TLV provider
    and evidence gate.
-41. `TASK_MANAGER_CRED.md`: Rust opt-in task-manager credential policy
+42. `TASK_MANAGER_CRED.md`: Rust opt-in task-manager credential policy
    provider and evidence gate.
-42. `TASK_MANAGER_PSEUDODEV.md`: Rust opt-in LQ task-manager `/dev/null` and
+43. `TASK_MANAGER_PSEUDODEV.md`: Rust opt-in LQ task-manager `/dev/null` and
    `/dev/zero` provider and evidence gate.
-43. `TASK_MANAGER_RSRCDB.md`: Rust opt-in LQ task-manager resource DB
+44. `TASK_MANAGER_RSRCDB.md`: Rust opt-in LQ task-manager resource DB
    provider and evidence gate.
-44. `TASK_MANAGER_SYSFS.md`: Rust opt-in task-manager `/sys` provider and
+45. `TASK_MANAGER_SYSFS.md`: Rust opt-in task-manager `/sys` provider and
    evidence gate.
-45. `TASK_MANAGER_ELF.md`: Rust opt-in task-manager ELF view parser provider
+46. `TASK_MANAGER_ELF.md`: Rust opt-in task-manager ELF view parser provider
    and evidence gate.
-46. `TASK_MANAGER_FDT.md`: Rust opt-in LQ task-manager FDT parser provider and
+47. `TASK_MANAGER_FDT.md`: Rust opt-in LQ task-manager FDT parser provider and
    evidence gate.
-47. `TASK_MANAGER_SYSMAP.md`: Rust opt-in LQ task-manager sysmap page builder
+48. `TASK_MANAGER_SYSMAP.md`: Rust opt-in LQ task-manager sysmap page builder
    and evidence gate.
-48. `TASK_MANAGER_PATHMGR.md`: Rust opt-in task-manager path registry provider
+49. `TASK_MANAGER_PATHMGR.md`: Rust opt-in task-manager path registry provider
    and evidence gate.
-49. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+50. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
-50. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
-51. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+51. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
+52. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-52. `PLAN.md`: phased migration plan from baseline validation through possible
+53. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-53. `TASKS.md`: executable backlog with acceptance criteria.
+54. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust

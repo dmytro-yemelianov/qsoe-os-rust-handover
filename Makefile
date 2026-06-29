@@ -24,7 +24,7 @@ QSOE_RUST_TM_CRED ?= 0
 QSOE_RUST_TM_ELF ?= 0
 QSOE_RUST_TM_FDT ?= 0
 QSOE_RUST_TM_PATHMGR ?= 0
-QSOE_RUST_TM_PROCFS ?= 0
+QSOE_RUST_TM_PROCFS ?= 1
 QSOE_RUST_TM_PSEUDODEV ?= 0
 QSOE_RUST_TM_RSRCDB ?= 0
 QSOE_RUST_TM_SCRIPT ?= 0
@@ -35,6 +35,9 @@ QSOE_RUST_TREEQRVFS ?= 1
 QSOE_RUST_MKFS_QRV ?= 0
 
 TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_ELF) $(QSOE_RUST_TM_FDT) $(QSOE_RUST_TM_PATHMGR) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_RSRCDB) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSMAP) $(QSOE_RUST_TM_SYSFS)))
+ifneq ($(QSOE_RUST_TM_PROCFS),1)
+$(error QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement)
+endif
 
 SELECTED_SLOGGER_ELF ?= build/rust/selected/sbin/slogger.elf
 SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
@@ -73,7 +76,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         virtio-rc-file-smoke \
         rust-test-msgpass-smoke test-msgpass-rc-smoke pipe-smoke rust-pipe-smoke \
         rust-pipe-data-smoke pipe-rc-data-smoke \
-        procfs-smoke tm-procfs-rc-smoke tm-procfs-rc-rollback-smoke \
+        procfs-smoke tm-procfs-rc-smoke \
         container-toolchain-build container-shell container-check \
         container-index-c container-index-c-static container-index-c-compile-db \
         container-tidy-c \
@@ -107,7 +110,6 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-check-qrvfs-rust-writer-fixture \
         container-check-qrvfs-rust-writer-production-root \
         container-procfs-smoke container-tm-procfs-rc-smoke \
-        container-tm-procfs-rc-rollback-smoke \
         container-treeqrvfs-rc-smoke \
         container-treeqrvfs-rc-rollback-smoke \
         container-source-build
@@ -463,7 +465,19 @@ rust-tm-pseudodev-provider:
 	    scripts/build-rust-tm-providers.sh build/rust/tm-pseudodev/libqsoe_tm_pseudodev.a
 
 rust-tm-providers:
-	@scripts/build-rust-tm-providers.sh
+	@QSOE_RUST_TM_CPIO=$(QSOE_RUST_TM_CPIO) \
+	    QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED) \
+	    QSOE_RUST_TM_ELF=$(QSOE_RUST_TM_ELF) \
+	    QSOE_RUST_TM_FDT=$(QSOE_RUST_TM_FDT) \
+	    QSOE_RUST_TM_PATHMGR=$(QSOE_RUST_TM_PATHMGR) \
+	    QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS) \
+	    QSOE_RUST_TM_PSEUDODEV=$(QSOE_RUST_TM_PSEUDODEV) \
+	    QSOE_RUST_TM_RSRCDB=$(QSOE_RUST_TM_RSRCDB) \
+	    QSOE_RUST_TM_SCRIPT=$(QSOE_RUST_TM_SCRIPT) \
+	    QSOE_RUST_TM_SYSCFG=$(QSOE_RUST_TM_SYSCFG) \
+	    QSOE_RUST_TM_SYSMAP=$(QSOE_RUST_TM_SYSMAP) \
+	    QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS) \
+	    scripts/build-rust-tm-providers.sh
 
 tm-cpio-evidence:
 	@scripts/tm-cpio-evidence.sh
@@ -548,9 +562,6 @@ procfs-smoke:
 
 tm-procfs-rc-smoke:
 	@scripts/tm-procfs-rc-smoke.sh
-
-tm-procfs-rc-rollback-smoke:
-	@TM_PROCFS_RC_ROLLBACK=1 scripts/tm-procfs-rc-smoke.sh
 
 container-toolchain-build:
 	@scripts/container-toolchain.sh build
@@ -769,9 +780,6 @@ container-procfs-smoke:
 
 container-tm-procfs-rc-smoke:
 	@scripts/container-toolchain.sh run make tm-procfs-rc-smoke
-
-container-tm-procfs-rc-rollback-smoke:
-	@scripts/container-toolchain.sh run make tm-procfs-rc-rollback-smoke
 
 container-treeqrvfs-rc-smoke:
 	@scripts/container-toolchain.sh run make treeqrvfs-rc-smoke

@@ -15,12 +15,25 @@ taskman's /proc model can list /proc and read /proc/1/info.
 
 Environment:
   PROCFS_SMOKE_WORKDIR   output directory, default build/procfs-smoke
-  QSOE_RUST_TM_PROCFS    set to 1 to select the Rust tm_procfs provider
+  QSOE_RUST_TM_PROCFS    must be 1 after C tm_procfs retirement
 EOF
 }
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MAKE=${MAKE:-make}
+case "${QSOE_RUST_TM_PROCFS:-1}" in
+    1|true|TRUE|yes|YES)
+        export QSOE_RUST_TM_PROCFS=1
+        ;;
+    0|false|FALSE|no|NO)
+        echo "procfs-smoke.sh: C tm_procfs is retired; use Rust qsoe-tm-procfs" >&2
+        exit 2
+        ;;
+    *)
+        echo "procfs-smoke.sh: QSOE_RUST_TM_PROCFS must be 1 after C retirement" >&2
+        exit 2
+        ;;
+esac
 timeout_s=180
 log=
 keep_running=0

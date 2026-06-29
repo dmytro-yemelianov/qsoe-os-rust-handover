@@ -278,34 +278,33 @@ Rust-only path; `QSOE_PIPE_RC_ROLLBACK=1` is rejected.
 
 ## Task Manager `/proc` Selection
 
-The Rust `tm_procfs` provider can be built as a soft-float taskman staticlib
-without changing the normal taskman default:
+The C `tm_procfs` provider is retired. The Rust provider remains buildable as a
+focused soft-float taskman staticlib, and normal NQ/LQ taskman links now carry
+it through the shared provider archive:
 
 ```sh
 make rust-tm-procfs-provider
 make tm-procfs-evidence
-QSOE_RUST_TM_PROCFS=1 make procfs-smoke
+make procfs-smoke
 ```
 
-With the default `QSOE_RUST_TM_PROCFS=0`, NQ and LQ taskman link the existing
-C `tm_procfs.o`. With `QSOE_RUST_TM_PROCFS=1`, the component Makefile selector
-omits C `tm_procfs.o`, builds `qsoe-tm-procfs` for
-`riscv64imac-unknown-none-elf`, and links `libqsoe_tm_procfs.a` into taskman.
-Process lifecycle, spawn, loader, seL4 invocation code, and LQ `/proc` glue
-remain C.
+`QSOE_RUST_TM_PROCFS` must be `1`; setting it to `0` fails fast because
+`libtaskman/src/tm_procfs.c` has been removed. The taskman link omits
+`tm_procfs.o`, builds `qsoe-tm-procfs` for `riscv64imac-unknown-none-elf`, and
+links it through `libqsoe_tm_providers.a`. Process lifecycle, spawn, loader,
+seL4 invocation code, and LQ `/proc` glue remain C.
 
-The release-candidate path makes Rust the default for the targeted `/proc`
-smoke image while keeping an explicit C rollback drill:
+The historical release-candidate command remains as a Rust-only compatibility
+smoke:
 
 ```sh
 make tm-procfs-rc-smoke
-make tm-procfs-rc-rollback-smoke
 ```
 
-`make tm-procfs-rc-smoke` selects `qsoe-tm-procfs` by default and verifies
-`/bin/ls /proc` plus `/proc/1/info` through taskman's existing LQ procfs glue.
-`make tm-procfs-rc-rollback-smoke` sets `TM_PROCFS_RC_ROLLBACK=1` and verifies
-the same markers with the C provider restored.
+`make tm-procfs-rc-smoke` verifies `/bin/ls /proc` plus `/proc/1/info` through
+taskman's existing LQ procfs glue. `TM_PROCFS_RC_ROLLBACK=1` is rejected after
+C retirement; the prior rollback drill is documented in
+`docs/rust-migration/TASK_MANAGER_PROCFS_RC.md`.
 
 ## Task Manager CPIO Selection
 

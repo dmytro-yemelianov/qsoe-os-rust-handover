@@ -137,7 +137,7 @@ capture_lq_taskman_plan() {
         LIBTASKMAN_A="$ROOT/lq/build/libtaskman/libtaskman.a" \
         LIBTASKMAN_INC="$ROOT/libtaskman/include" \
         QSOE_RUST_TM_CRED=0 \
-        QSOE_RUST_TM_PROCFS=0 \
+        QSOE_RUST_TM_PROCFS=1 \
         QSOE_RUST_TM_PSEUDODEV="$rust_selected" \
         > "$log"
 }
@@ -168,7 +168,7 @@ build_lq_taskman() {
     rm -f "$ROOT/lq/build/taskman.elf"
     "$MAKE" -C "$ROOT/lq" --no-print-directory \
         QSOE_RUST_TM_CRED=0 \
-        QSOE_RUST_TM_PROCFS=0 \
+        QSOE_RUST_TM_PROCFS=1 \
         QSOE_RUST_TM_PSEUDODEV="$rust_selected" \
         taskman
     audit_flags "$label-taskman" "$ROOT/lq/build/taskman.elf"
@@ -186,7 +186,7 @@ capture_lq_taskman_plan lq-c-default 0
 require_plan_contains lq-c-default '/sys/devnull.o'
 require_plan_contains lq-c-default '/sys/devzero.o'
 require_plan_omits lq-c-default 'libqsoe_tm_pseudodev.a'
-require_plan_omits lq-c-default 'libqsoe_tm_providers.a'
+require_plan_contains lq-c-default 'libqsoe_tm_providers.a'
 
 echo "tm-pseudodev-evidence.sh: verifying LQ C-default taskman link"
 build_lq_taskman lq-c-default 0

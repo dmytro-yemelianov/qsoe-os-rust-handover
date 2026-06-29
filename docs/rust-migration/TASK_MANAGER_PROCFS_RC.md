@@ -2,9 +2,9 @@
 
 Captured: 2026-06-28 21:08 CEST.
 
-This note records the `tm_procfs` Rust-default release-candidate path. It does
-not retire the C implementation. Normal source builds still preserve the C
-provider, and the RC image path keeps a one-command C rollback drill.
+This note records the historical `tm_procfs` Rust-default release-candidate
+path that preceded C provider retirement. The C implementation is now retired;
+see `TASK_MANAGER_PROCFS_RETIREMENT.md` for the current Rust-only path.
 
 ## Rust Migration: `tm_procfs`
 
@@ -20,8 +20,8 @@ Release or build: `qsoe-tm-procfs-rc1`, introduced by the
   `build/rust/tm-procfs/libqsoe_tm_procfs.a`
 - Current taskman Rust link model: selected providers are packaged through the
   shared `build/rust/tm-providers/libqsoe_tm_providers.a` archive
-- C implementation status: rollback-only for the RC image path; still present
-  in tree and still used by non-RC normal builds
+- C implementation status during this RC: rollback-only for the RC image path;
+  later removed by `TASK_MANAGER_PROCFS_RETIREMENT.md`
 - User-visible behavior changes: none expected for `/proc`, `/proc/<pid>`, or
   `/proc/<pid>/info`
 
@@ -32,9 +32,9 @@ remain C.
 
 ## Rollback
 
-- Rollback available: yes
-- Rollback flag: `TM_PROCFS_RC_ROLLBACK=1`
-- Rollback command:
+- Historical rollback available during RC: yes
+- Historical rollback flag: `TM_PROCFS_RC_ROLLBACK=1`
+- Historical rollback command:
 
 ```sh
 make tm-procfs-rc-rollback-smoke
@@ -46,11 +46,11 @@ Default RC smoke:
 make tm-procfs-rc-smoke
 ```
 
-Rollback window: still open until the C retirement gate in `RETIREMENT.md` is
-satisfied and a separate removal PR is reviewed.
+Rollback window: closed after the C retirement gate in `RETIREMENT.md` was
+satisfied for `tm_procfs`.
 
-Rollback limitations: none known for the QSOE/L `/proc` smoke path. The
-rollback image uses the same C `tm_procfs.o` provider as the pre-RC path.
+Current rollback limitations: the C provider is retired. The historical
+rollback image used the same C `tm_procfs.o` provider as the pre-RC path.
 
 ## Test Evidence
 
@@ -59,7 +59,7 @@ rollback image uses the same C `tm_procfs.o` provider as the pre-RC path.
 - Artifact and membership audit: `make tm-procfs-evidence`
 - Existing opt-in smoke: `QSOE_RUST_TM_PROCFS=1 make procfs-smoke`
 - Rust-default RC smoke: `make tm-procfs-rc-smoke`
-- C rollback smoke: `make tm-procfs-rc-rollback-smoke`
+- Historical C rollback smoke: `make tm-procfs-rc-rollback-smoke`
 
 The `/proc` smoke boots QSOE/L, injects a temporary sysinit fragment, verifies
 `/bin/ls /proc`, reads `/proc/1/info`, and checks the expected `taskman` info
@@ -67,16 +67,17 @@ fields before reaching `login:`.
 
 ## Known Limitations
 
-- No C source is removed by this RC.
+- No C source was removed by this RC; removal happened later in
+  `TASK_MANAGER_PROCFS_RETIREMENT.md`.
 - The RC covers QSOE/L QEMU `/proc` behavior, not a full hardware release.
 - Only the portable `tm_procfs` model is selected through Rust; task-manager
   process lifecycle and LQ procfs glue remain C.
-- C retirement remains blocked by #26 until the retirement checklist is
-  reviewed; this RC evidence does not remove or disable the C implementation.
+- C retirement is now complete; this note remains as prior RC and rollback
+  evidence.
 
 ## Review Notes
 
 - Unsafe review: no new Rust unsafe code in this RC target wiring.
 - Data or on-disk format migration: none.
-- Operator impact: use `make tm-procfs-rc-smoke` to validate the Rust default
-  RC path and `make tm-procfs-rc-rollback-smoke` to validate rollback.
+- Operator impact: use `make tm-procfs-rc-smoke` to validate the current
+  Rust-only path. `TM_PROCFS_RC_ROLLBACK=1` now fails fast.

@@ -25,8 +25,8 @@ The shared archive makes the model explicit:
 
 - each provider crate keeps one C ABI surface and can still be host-tested on
   its own;
-- taskman links one Rust archive when any `QSOE_RUST_TM_*` provider selector is
-  enabled;
+- taskman links one Rust archive for mandatory Rust `tm_procfs`, plus any other
+  enabled `QSOE_RUST_TM_*` provider selectors;
 - there is exactly one panic handler in the linked taskman Rust code;
 - multiple provider selectors can be enabled together without duplicate Rust
   runtime symbols;
@@ -42,7 +42,7 @@ QSOE_RUST_TM_CRED=1
 QSOE_RUST_TM_ELF=1
 QSOE_RUST_TM_FDT=1
 QSOE_RUST_TM_PATHMGR=1
-QSOE_RUST_TM_PROCFS=1
+QSOE_RUST_TM_PROCFS=1  # mandatory after C tm_procfs retirement
 QSOE_RUST_TM_PSEUDODEV=1
 QSOE_RUST_TM_RSRCDB=1
 QSOE_RUST_TM_SCRIPT=1
@@ -51,13 +51,15 @@ QSOE_RUST_TM_SYSFS=1
 QSOE_RUST_TM_SYSMAP=1
 ```
 
-When one or more selectors are set, NQ/LQ taskman omit the matching C objects
-and link `libqsoe_tm_providers.a`. The build script maps selectors to
-`qsoe-tm-providers` Cargo features and fails if no provider was selected.
+NQ/LQ taskman always omit retired C `tm_procfs.o` and link
+`libqsoe_tm_providers.a`. Other selectors omit their matching C objects when
+enabled. The build script maps selectors to `qsoe-tm-providers` Cargo features
+and rejects `QSOE_RUST_TM_PROCFS=0` because that C provider is retired.
 
-Legacy targets such as `make rust-tm-procfs-provider` still work for focused
-evidence and compatibility. They delegate to the shared builder with one
-feature enabled and copy the resulting archive to the historical path.
+Legacy targets such as `make rust-tm-cpio-provider` still work for focused
+evidence and compatibility. They delegate to the shared builder with the
+requested feature plus mandatory `tm-procfs`, then copy the resulting archive
+to the historical path.
 
 ## Evidence
 

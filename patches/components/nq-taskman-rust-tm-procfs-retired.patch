@@ -1,0 +1,20 @@
+diff --git a/taskman/Makefile b/taskman/Makefile
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -20,7 +20,7 @@ CC        = $(CROSS)gcc
+ LD        = $(CROSS)ld
+ OBJCOPY   = $(CROSS)objcopy
+ QSOE_RUST_TM_CPIO ?= 0
+-QSOE_RUST_TM_PROCFS ?= 0
++QSOE_RUST_TM_PROCFS ?= 1
+ QSOE_RUST_TM_CRED ?= 0
+ QSOE_RUST_TM_ELF ?= 0
+ QSOE_RUST_TM_PATHMGR ?= 0
+@@ -31,5 +31,8 @@ QSOE_RUST_TM_SYSFS ?= 0
+ 
+ TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_ELF) $(QSOE_RUST_TM_PATHMGR) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSFS)))
++ifneq ($(QSOE_RUST_TM_PROCFS),1)
++$(error QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement)
++endif
+
+ GCC_INCLUDE := $(shell $(CC) -print-file-name=include)

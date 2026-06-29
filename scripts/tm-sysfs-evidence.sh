@@ -166,20 +166,20 @@ audit_provider_archive
 
 echo "tm-sysfs-evidence.sh: verifying NQ C rollback membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
-    QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=0 QSOE_RUST_TM_SYSFS=0
+    QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 QSOE_RUST_TM_SYSFS=0
 require_sysfs_count nq-c-default "$ROOT/nq/build/libtaskman/libtaskman.a" 1
 audit_flags nq-c-default-taskman "$ROOT/nq/build/taskman/taskman.elf"
 
 echo "tm-sysfs-evidence.sh: verifying NQ Rust-selected membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
-    QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=0 QSOE_RUST_TM_SYSFS=1
+    QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 QSOE_RUST_TM_SYSFS=1
 require_sysfs_count nq-rust-selected "$ROOT/nq/build/libtaskman/libtaskman.a" 0
 audit_flags nq-rust-selected-taskman "$ROOT/nq/build/taskman/taskman.elf"
 
 echo "tm-sysfs-evidence.sh: verifying LQ C rollback membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
     QSOE_RUST_TM_CRED=0 \
-    QSOE_RUST_TM_PROCFS=0 \
+    QSOE_RUST_TM_PROCFS=1 \
     QSOE_RUST_TM_PSEUDODEV=0 \
     QSOE_RUST_TM_SYSFS=0 \
     taskman
@@ -189,7 +189,7 @@ audit_flags lq-c-default-taskman "$ROOT/lq/build/taskman.elf"
 echo "tm-sysfs-evidence.sh: verifying LQ Rust-selected membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
     QSOE_RUST_TM_CRED=0 \
-    QSOE_RUST_TM_PROCFS=0 \
+    QSOE_RUST_TM_PROCFS=1 \
     QSOE_RUST_TM_PSEUDODEV=0 \
     QSOE_RUST_TM_SYSFS=1 \
     taskman
