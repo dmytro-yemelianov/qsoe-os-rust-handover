@@ -26,7 +26,7 @@ removed just because a Rust version exists.
   `slogger-rs`, `devb-virtio-rs`, `pipe-rs`, `test_msgpass-rs`, and
   `qsoe-tm-procfs`.
 - Rust opt-in task-manager providers exist for `qsoe-tm-cpio`,
-  `qsoe-tm-cred`, `qsoe-tm-elf`, `qsoe-tm-pseudodev`,
+  `qsoe-tm-cred`, `qsoe-tm-elf`, `qsoe-tm-fdt`, `qsoe-tm-pseudodev`,
   `qsoe-tm-rsrcdb`, `qsoe-tm-script`, `qsoe-tm-syscfg`, and
   `qsoe-tm-sysfs`; C remains the normal taskman default for each.
 - Rust `mkfs-qrv-rs` has fixture, production-root, target-initialization,
@@ -66,6 +66,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | `tm_cpio` task-manager provider | Rust opt-in | `qsoe-tm-cpio` exports the existing `tm_cpio.h` ABI behind `QSOE_RUST_TM_CPIO=1`; `make tm-cpio-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. Next gate: add boot/runtime coverage for CPIO-backed spawn and file access before any Rust-default RC decision. |
 | `tm_cred` task-manager provider | Rust opt-in | `qsoe-tm-cred` exports the existing `tm_cred.h` ABI behind `QSOE_RUST_TM_CRED=1`; `make tm-cred-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. Next gate: add a credential-specific runtime smoke before any Rust-default RC decision. |
 | `tm_elf` task-manager provider | Rust opt-in | `qsoe-tm-elf` exports the existing `tm_elf.h` ABI behind `QSOE_RUST_TM_ELF=1`; `make tm-elf-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. Next gate: add loader/runtime coverage for ELF-backed spawn before any Rust-default RC decision. |
+| `tm_fdt` task-manager provider | Rust opt-in | `qsoe-tm-fdt` exports the existing LQ `tm_fdt_*` ABI behind `QSOE_RUST_TM_FDT=1`; `make tm-fdt-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies LQ taskman links with C rollback and Rust-selected archives. Next gate: add boot/syscfg runtime coverage before any Rust-default RC decision. |
 | `tm_pseudodev` task-manager provider | Rust opt-in | `qsoe-tm-pseudodev` exports the existing LQ `/dev/null` and `/dev/zero` ABI behind `QSOE_RUST_TM_PSEUDODEV=1`; `make tm-pseudodev-evidence` runs Rust host tests, audits the soft-float staticlib, and verifies LQ C-default/Rust-selected taskman links. Next gate: add a focused `/dev/null` and `/dev/zero` runtime smoke before any Rust-default RC decision. |
 | `tm_rsrcdb` task-manager provider | Rust opt-in | `qsoe-tm-rsrcdb` exports the existing LQ `tm_rsrc_*` ABI behind `QSOE_RUST_TM_RSRCDB=1`; `make tm-rsrcdb-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies LQ C-default/Rust-selected taskman links. Next gate: add runtime coverage through `rsrcdbmgr_*` callers before any Rust-default RC decision. |
 | `tm_script` task-manager provider | Rust opt-in | `qsoe-tm-script` exports the existing `tm_script.h` ABI behind `QSOE_RUST_TM_SCRIPT=1`; `make tm-script-evidence` runs C/Rust host tests, audits the soft-float staticlib, and verifies NQ/LQ taskman links with C rollback and Rust-selected archives. Next gate: add script-spawn runtime coverage before any Rust-default RC decision. |
@@ -100,7 +101,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 - `tm_procfs` now has a Rust-default release-candidate path with explicit C
   rollback through the `/proc` smoke. Keep C retirement blocked until #26's
   checklist and a separate removal PR.
-- `tm_cpio`, `tm_cred`, `tm_elf`, `tm_pseudodev`, `tm_rsrcdb`,
+- `tm_cpio`, `tm_cred`, `tm_elf`, `tm_fdt`, `tm_pseudodev`, `tm_rsrcdb`,
   `tm_script`, `tm_syscfg`, and `tm_sysfs` are Rust opt-in task-manager
   providers only.
   Keep them C-default until runtime smoke coverage and a separate RC decision
@@ -141,6 +142,9 @@ make tm-cred-evidence
 make check-tm-elf-model
 make rust-tm-elf-provider
 make tm-elf-evidence
+make check-tm-fdt-model
+make rust-tm-fdt-provider
+make tm-fdt-evidence
 make check-tm-procfs-model
 make rust-tm-procfs-provider
 make tm-procfs-evidence

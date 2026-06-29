@@ -27,7 +27,7 @@ no direct seL4 object manipulation, not automatically low risk.
 | Shebang parser | `libtaskman/src/script.c`, `libtaskman/include/tm_script.h` | Single bounded parser used by `tm_spawn` when scripts are executed. Rust opt-in provider exists behind `QSOE_RUST_TM_SCRIPT=1`; see `TASK_MANAGER_SCRIPT.md`. | Medium: pure parser but affects spawn fallback. |
 | ELF view parser | `libtaskman/src/elf.c`, `libtaskman/include/tm_elf.h` | Read-only ELF64 program-header and interpreter parser. Rust opt-in provider exists behind `QSOE_RUST_TM_ELF=1`; see `TASK_MANAGER_ELF.md`. | High: pure parser, but used by relocation and loader flow. |
 | Syscfg TLV helpers | `libtaskman/src/syscfg.c`, `libtaskman/include/tm_syscfg.h` | Caller-owned TLV builder and walker. Rust opt-in provider exists behind `QSOE_RUST_TM_SYSCFG=1`; see `TASK_MANAGER_SYSCFG.md`. | Medium: platform data reaches early boot decisions. |
-| FDT parser | `lq/taskman/sys/fdt.c`, `lq/taskman/sys/fdt.h` | Minimal big-endian device-tree scanner for `/chosen`, compatible strings, and properties. | Medium: boot config source. |
+| FDT parser | `lq/taskman/sys/fdt.c`, `lq/taskman/sys/fdt.h` | Minimal big-endian device-tree scanner for `/chosen`, compatible strings, and properties. Rust opt-in provider exists behind `QSOE_RUST_TM_FDT=1`; see `TASK_MANAGER_FDT.md`. | Medium: boot config source. |
 | Sysmap builder | `lq/taskman/sys/sysmap.c`, `lq/taskman/sys/sysmap.h` | Builds the read-only `PSYS` page mapped into children. | Medium: child runtime metadata. |
 | `/proc` model | `libtaskman/src/tm_procfs.c`, `libtaskman/include/tm_procfs.h` | Formats `/proc/<pid>/info`, resolves paths, and walks pid directories through callbacks. | Low: diagnostic surface, no initial process creation. |
 | `/proc` LQ glue | `lq/taskman/path/procfs.c`, `lq/taskman/path/procfs.h` | Connects the portable `/proc` model to LQ process-table accessors and connection context. | Low-medium: reads live process table but does not create caps. |
@@ -42,8 +42,8 @@ The selected Phase 9 pilot candidate is the portable `/proc` model
 (`tm_procfs`). See `TASK_MANAGER_PROCFS.md` for the scope exclusions and
 evidence required before implementation.
 
-Subsequent bounded providers now exist for `tm_cpio`, `tm_cred`, `tm_elf`, LQ
-pseudo-devices, `tm_rsrcdb`, `tm_script`, `tm_syscfg`, and `tm_sysfs`. They
+Subsequent bounded providers now exist for `tm_cpio`, `tm_cred`, `tm_elf`,
+`tm_fdt`, LQ pseudo-devices, `tm_rsrcdb`, `tm_script`, `tm_syscfg`, and `tm_sysfs`. They
 remain Rust opt-in only. `tm_elf` is intentionally not a default candidate yet:
 it is a read-only parser, but its output feeds spawn, relocation, and loader
 admission.

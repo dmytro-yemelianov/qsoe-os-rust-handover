@@ -24,6 +24,55 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-29 15:39 CEST - tm_fdt Rust Opt-In Provider
+
+Scope:
+
+- Added `qsoe-tm-fdt`, a no-std Rust staticlib exporting the existing LQ
+  taskman `tm_fdt_*` ABI.
+- Added `QSOE_RUST_TM_FDT=1` selection for LQ taskman. The selector omits C
+  `sys/fdt.o`, then links `build/rust/tm-fdt/libqsoe_tm_fdt.a`.
+- Added a C host-model fixture, Rust host tests, provider build script,
+  evidence script, tracked LQ component patches, CI evidence step, and docs.
+- Preserved the current C parser behavior for minimal big-endian FDT walking:
+  header validation, NOP-root skipping, `name@unit` path matching, raw and
+  typed property reads, compatible string lists, and `reg` tuple decoding.
+- Kept C as the normal default and rollback implementation.
+
+Commands:
+
+- `make check-tm-fdt-model`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-fdt --features host-tests --lib`
+- `cargo clippy --manifest-path rust/Cargo.toml -p qsoe-tm-fdt --features host-tests -- -D warnings`
+- `bash -n scripts/check-tm-fdt-model.sh scripts/build-rust-tm-fdt-provider.sh scripts/tm-fdt-evidence.sh scripts/apply-component-overrides.sh scripts/rust-check.sh scripts/rust-workflow.sh`
+- `./scripts/apply-component-overrides.sh`
+- `make -n check-tm-fdt-model rust-tm-fdt-provider tm-fdt-evidence container-rust-tm-fdt-provider container-tm-fdt-evidence`
+- `make rust-tm-fdt-provider`
+- `make tm-fdt-evidence`
+- `make check-host-tools`
+- `make rust-check`
+- `make container-tm-fdt-evidence`
+
+Result:
+
+- The C host fixture and Rust host tests pass for header validation, total-size
+  reporting, path lookup, string/u32/raw properties, compatible lookup,
+  malformed string rejection, and `reg` tuple decoding.
+- The provider archive exports all nine `tm_fdt_*` symbols and all archive
+  members report RVC soft-float ABI.
+- LQ C-default taskman links with C `sys/fdt.o`; LQ Rust-selected taskman
+  omits that object and links `libqsoe_tm_fdt.a`.
+- The final LQ taskman ELF links in both modes and passes the evidence script's
+  ELF flag and section audit.
+- The container-equivalent `tm_fdt` evidence target passes and captures the
+  same C-default/Rust-selected link evidence.
+
+Follow-up:
+
+- Keep `tm_fdt` Rust opt-in only until boot/syscfg runtime coverage proves the
+  FDT-backed `/chosen`, memory, PCI, and command-line paths before any
+  Rust-default RC decision.
+
 ## 2026-06-29 15:05 CEST - tm_elf Rust Opt-In Provider
 
 Scope:
