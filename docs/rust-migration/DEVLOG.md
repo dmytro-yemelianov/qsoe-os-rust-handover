@@ -24,6 +24,36 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-29 22:40 CEST - tm_script Runtime Smoke
+
+Scope:
+
+- Added `make tm-script-runtime-smoke` and container CI wiring.
+- The smoke rebuilds QSOE/L with `QSOE_RUST_TM_SCRIPT=1` and mandatory
+  `QSOE_RUST_TM_PROCFS=1`.
+- It stages a temporary executable `/usr/bin/tm_script_probe` shell script into
+  the virtio qrvfs image, injects a sysinit fragment that invokes the probe by
+  path, and waits for the probe marker and clean-exit marker.
+- Updated `tm_script` status docs so the next gate is a separate Rust-default
+  RC decision rather than missing basic runtime coverage.
+
+Commands:
+
+- `bash -n scripts/tm-script-runtime-smoke.sh scripts/tm-script-evidence.sh scripts/boot-smoke.sh`
+- `make -n tm-script-runtime-smoke container-tm-script-runtime-smoke`
+- `make tm-script-runtime-smoke`
+
+Result:
+
+- The local `make tm-script-runtime-smoke` run passed.
+- The smoke proves the Rust-selected shebang parser is exercised through direct
+  script spawn, not by sourcing a sysinit fragment in the current shell.
+
+Follow-up:
+
+- Keep `tm_script` Rust opt-in while deciding whether to open a separate
+  Rust-default RC window.
+
 ## 2026-06-29 22:20 CEST - tm_cpio Runtime Smoke
 
 Scope:
@@ -725,8 +755,9 @@ Result:
 
 Follow-up:
 
-- Keep `tm_script` Rust opt-in only until script-spawn runtime coverage exists
-  before any Rust-default RC decision.
+- Script-spawn runtime coverage was added later by
+  `make tm-script-runtime-smoke`; keep `tm_script` Rust opt-in until a separate
+  Rust-default RC decision exists.
 
 ## 2026-06-29 12:33 CEST - tm_cpio Rust Opt-In Provider
 

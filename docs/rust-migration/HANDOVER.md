@@ -337,8 +337,9 @@ The strict ELF audit showed:
   rollback until a separate RC decision exists.
 - `tm_script` has a Rust opt-in provider behind `QSOE_RUST_TM_SCRIPT=1`. The
   selector removes C `script.o` from `libtaskman.a` and links through the
-  shared taskman Rust provider archive. C remains default and rollback until
-  script-spawn runtime coverage and a separate RC decision exist.
+  shared taskman Rust provider archive. `make tm-script-runtime-smoke` covers
+  direct shebang-backed script spawn. C remains default and rollback until a
+  separate RC decision exists.
 - `tm_syscfg` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSCFG=1`. The
   selector removes C `syscfg.o` from `libtaskman.a` and links through the
   shared taskman Rust provider archive. C remains default and rollback until

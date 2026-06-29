@@ -338,6 +338,7 @@ without changing the normal taskman default:
 make check-tm-script-model
 make rust-tm-script-provider
 make tm-script-evidence
+make tm-script-runtime-smoke
 ```
 
 With the default `QSOE_RUST_TM_SCRIPT=0`, NQ and LQ taskman link the existing
@@ -346,6 +347,10 @@ omits C `script.o`, builds `qsoe-tm-script` for
 `riscv64imac-unknown-none-elf`, and links `libqsoe_tm_script.a` into taskman.
 Interpreter loading, argv construction, CPIO lookup, ELF loading, relocation,
 process tables, and seL4 invocation code remain C.
+
+`make tm-script-runtime-smoke` boots QSOE/L with Rust `tm_script` selected,
+stages `/usr/bin/tm_script_probe` as a temporary shell script, and runs it
+directly so taskman must parse the shebang before loading `/bin/sh`.
 
 ## Task Manager ELF View Parser Selection
 

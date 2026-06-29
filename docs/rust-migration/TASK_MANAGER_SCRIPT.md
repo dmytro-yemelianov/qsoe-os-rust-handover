@@ -83,9 +83,24 @@ are RVC soft-float, and links both NQ and LQ taskman in C rollback and
 Rust-selected modes. The gate also verifies `script.o` is present for
 `QSOE_RUST_TM_SCRIPT=0` and absent for `QSOE_RUST_TM_SCRIPT=1`.
 
+The focused runtime smoke is:
+
+```sh
+make tm-script-runtime-smoke
+```
+
+It rebuilds QSOE/L with `QSOE_RUST_TM_SCRIPT=1` and mandatory
+`QSOE_RUST_TM_PROCFS=1`, stages a temporary executable
+`/usr/bin/tm_script_probe` shell script in the virtio qrvfs image, injects a
+sysinit fragment that runs the probe directly, and verifies that the probe
+prints its marker and exits successfully. Running the script by path forces
+taskman spawn to parse the shebang before loading `/bin/sh`.
+
 ## Current State
 
 `tm_script` is Rust opt-in only. It is not a Rust-default release candidate and
-has no C retirement approval. Keep `libtaskman/src/script.c` as the rollback
-implementation until boot/runtime smokes cover script spawn fallback, the global
-retirement checklist is satisfied, and a separate removal PR is reviewed.
+has no C retirement approval. Runtime coverage now exists for direct
+shebang-backed script spawn, so the next gate is a separate Rust-default RC
+decision. Keep `libtaskman/src/script.c` as the rollback implementation until
+that RC window is accepted, the global retirement checklist is satisfied, and a
+separate removal PR is reviewed.
