@@ -343,6 +343,24 @@ links `libqsoe_tm_cpio.a` into taskman. CPIO-backed file descriptor state,
 path dispatch, spawn, ELF loading, relocation, process tables, and seL4
 invocation code remain C.
 
+## Task Manager Shebang Parser Selection
+
+The Rust `tm_script` provider can be built as a soft-float taskman staticlib
+without changing the normal taskman default:
+
+```sh
+make check-tm-script-model
+make rust-tm-script-provider
+make tm-script-evidence
+```
+
+With the default `QSOE_RUST_TM_SCRIPT=0`, NQ and LQ taskman link the existing
+C `script.o`. With `QSOE_RUST_TM_SCRIPT=1`, the component Makefile selector
+omits C `script.o`, builds `qsoe-tm-script` for
+`riscv64imac-unknown-none-elf`, and links `libqsoe_tm_script.a` into taskman.
+Interpreter loading, argv construction, CPIO lookup, ELF loading, relocation,
+process tables, and seL4 invocation code remain C.
+
 ## Task Manager Credential Selection
 
 The Rust `tm_cred` provider can be built as a soft-float taskman staticlib
@@ -397,9 +415,10 @@ decoding, process tables, and seL4 invocation code remain C.
 
 Do not set more than one of `QSOE_RUST_TM_CPIO=1`,
 `QSOE_RUST_TM_CRED=1`, `QSOE_RUST_TM_PROCFS=1`,
-`QSOE_RUST_TM_PSEUDODEV=1`, and `QSOE_RUST_TM_SYSFS=1` together yet. Current
-taskman providers are separate no-std Rust staticlibs; selecting more than one
-requires a later shared taskman Rust archive.
+`QSOE_RUST_TM_PSEUDODEV=1`, `QSOE_RUST_TM_SCRIPT=1`, and
+`QSOE_RUST_TM_SYSFS=1` together yet. Current taskman providers are separate
+no-std Rust staticlibs; selecting more than one requires a later shared taskman
+Rust archive.
 
 ## Parser Fuzzing
 

@@ -67,6 +67,7 @@ run_fast() {
     cargo test --manifest-path "$MANIFEST" -p qsoe-tm-cred --features host-tests --lib
     cargo test --manifest-path "$MANIFEST" -p qsoe-tm-pseudodev --features host-tests --lib
     cargo test --manifest-path "$MANIFEST" -p qsoe-tm-procfs --features host-tests --lib
+    cargo test --manifest-path "$MANIFEST" -p qsoe-tm-script --features host-tests --lib
     cargo test --manifest-path "$MANIFEST" -p qsoe-tm-sysfs --features host-tests --lib
 }
 
@@ -95,6 +96,7 @@ run_deep() {
         cargo test --manifest-path "$MANIFEST" -p qsoe-tm-cred --features host-tests
         cargo test --manifest-path "$MANIFEST" -p qsoe-tm-pseudodev --features host-tests
         cargo test --manifest-path "$MANIFEST" -p qsoe-tm-procfs --features host-tests
+        cargo test --manifest-path "$MANIFEST" -p qsoe-tm-script --features host-tests
         cargo test --manifest-path "$MANIFEST" -p qsoe-tm-sysfs --features host-tests
     fi
 

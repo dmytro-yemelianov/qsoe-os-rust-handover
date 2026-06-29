@@ -1,0 +1,43 @@
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -44,10 +44,11 @@
+ QSOE_RUST_TM_PROCFS ?= 0
+ QSOE_RUST_TM_CRED ?= 0
+ QSOE_RUST_TM_PSEUDODEV ?= 0
++QSOE_RUST_TM_SCRIPT ?= 0
+ QSOE_RUST_TM_SYSFS ?= 0
+ 
+-TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_SYSFS)))
+-ifneq ($(filter 2 3 4 5,$(TM_RUST_PROVIDER_COUNT)),)
++TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSFS)))
++ifneq ($(filter 2 3 4 5 6,$(TM_RUST_PROVIDER_COUNT)),)
+ $(error select at most one taskman Rust provider until they share one staticlib)
+ endif
+ 
+@@ -94,5 +95,6 @@
+ RUST_TM_CRED_A := $(REPO_ROOT)/build/rust/tm-cred/libqsoe_tm_cred.a
+ RUST_TM_PSEUDODEV_A := $(REPO_ROOT)/build/rust/tm-pseudodev/libqsoe_tm_pseudodev.a
++RUST_TM_SCRIPT_A := $(REPO_ROOT)/build/rust/tm-script/libqsoe_tm_script.a
+ RUST_TM_SYSFS_A := $(REPO_ROOT)/build/rust/tm-sysfs/libqsoe_tm_sysfs.a
+ 
+ TASKMAN_RUST_LIBS :=
+@@ -112,6 +114,9 @@
+ ifeq ($(QSOE_RUST_TM_PSEUDODEV),1)
+ TASKMAN_RUST_LIBS += $(RUST_TM_PSEUDODEV_A)
+ endif
++ifeq ($(QSOE_RUST_TM_SCRIPT),1)
++TASKMAN_RUST_LIBS += $(RUST_TM_SCRIPT_A)
++endif
+ ifeq ($(QSOE_RUST_TM_SYSFS),1)
+ TASKMAN_RUST_LIBS += $(RUST_TM_SYSFS_A)
+ endif
+@@ -283,6 +288,9 @@
+ $(RUST_TM_PSEUDODEV_A): FORCE
+ 	@$(REPO_ROOT)/scripts/build-rust-tm-pseudodev-provider.sh $@
+ 
++$(RUST_TM_SCRIPT_A): FORCE
++	@$(REPO_ROOT)/scripts/build-rust-tm-script-provider.sh $@
++
+ $(RUST_TM_SYSFS_A): FORCE
+ 	@$(REPO_ROOT)/scripts/build-rust-tm-sysfs-provider.sh $@
+ 

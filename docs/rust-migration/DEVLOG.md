@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-29 12:33 CEST.
+Last updated: 2026-06-29 12:54 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,53 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-06-29 12:54 CEST - tm_script Rust Opt-In Provider
+
+Scope:
+
+- Added `qsoe-tm-script`, a no-std Rust staticlib exporting the existing
+  portable `tm_script.h` ABI.
+- Added `QSOE_RUST_TM_SCRIPT=1` selection for NQ and LQ taskman. The selector
+  omits C `script.o` from `libtaskman.a`, then links
+  `build/rust/tm-script/libqsoe_tm_script.a`.
+- Added a C host-model fixture, Rust host tests, provider build script,
+  evidence script, tracked NQ/LQ component patches, CI evidence step, and docs.
+- Preserved the C parser's current truncation behavior for too-small output
+  buffers.
+- Kept C as the normal default and rollback implementation.
+
+Commands:
+
+- `make check-tm-script-model`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-script --features host-tests`
+- `cargo clippy --manifest-path rust/Cargo.toml -p qsoe-tm-script --features host-tests -- -D warnings`
+- `bash -n scripts/check-tm-script-model.sh scripts/build-rust-tm-script-provider.sh scripts/tm-script-evidence.sh scripts/apply-component-overrides.sh`
+- `./scripts/apply-component-overrides.sh`
+- `make -n rust-tm-script-provider tm-script-evidence container-rust-tm-script-provider container-tm-script-evidence`
+- `make rust-tm-script-provider`
+- `make tm-script-evidence`
+- `make check-host-tools`
+- `make rust-check`
+
+Result:
+
+- The C host fixture and Rust host tests pass for interpreter and single
+  argument parsing, CR/LF line termination, malformed-line rejection, output
+  clearing, zero-capacity behavior, and current truncation behavior.
+- The provider archive exports `tm_script_parse_shebang` and all archive
+  members report RVC soft-float ABI.
+- NQ and LQ C-default taskman archives include one `script.o` member.
+  Rust-selected archives include zero `script.o` members and link
+  `libqsoe_tm_script.a`; linked taskman ELFs export the expected
+  `tm_script_parse_shebang` symbol in both modes.
+- The provider mutual-exclusion guard rejects invalid multi-provider taskman
+  builds until a shared taskman Rust archive exists.
+
+Follow-up:
+
+- Keep `tm_script` Rust opt-in only until script-spawn runtime coverage exists
+  before any Rust-default RC decision.
 
 ## 2026-06-29 12:33 CEST - tm_cpio Rust Opt-In Provider
 

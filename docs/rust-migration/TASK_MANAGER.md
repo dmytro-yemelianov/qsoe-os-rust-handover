@@ -24,7 +24,7 @@ no direct seL4 object manipulation, not automatically low risk.
 | Module | Files | Notes | Initial risk |
 | --- | --- | --- | --- |
 | CPIO archive model | `libtaskman/src/cpio.c`, `libtaskman/include/tm_cpio.h` | Pure `newc` walking, symlink resolution, directory iteration, and existence checks over caller-owned bytes. Rust opt-in provider exists behind `QSOE_RUST_TM_CPIO=1`; see `TASK_MANAGER_CPIO.md`. | Medium: boot archive lookup is spawn-adjacent. |
-| Shebang parser | `libtaskman/src/script.c`, `libtaskman/include/tm_script.h` | Single bounded parser used by `tm_spawn` when scripts are executed. | Medium: pure parser but affects spawn fallback. |
+| Shebang parser | `libtaskman/src/script.c`, `libtaskman/include/tm_script.h` | Single bounded parser used by `tm_spawn` when scripts are executed. Rust opt-in provider exists behind `QSOE_RUST_TM_SCRIPT=1`; see `TASK_MANAGER_SCRIPT.md`. | Medium: pure parser but affects spawn fallback. |
 | ELF view parser | `libtaskman/src/elf.c`, `libtaskman/include/tm_elf.h` | Read-only ELF64 program-header and interpreter parser. | High: pure parser, but used by relocation and loader flow. |
 | Syscfg TLV helpers | `libtaskman/src/syscfg.c`, `libtaskman/include/tm_syscfg.h` | Caller-owned TLV builder and walker. | Medium: platform data reaches early boot decisions. |
 | FDT parser | `lq/taskman/sys/fdt.c`, `lq/taskman/sys/fdt.h` | Minimal big-endian device-tree scanner for `/chosen`, compatible strings, and properties. | Medium: boot config source. |
@@ -43,9 +43,9 @@ The selected Phase 9 pilot candidate is the portable `/proc` model
 evidence required before implementation.
 
 Subsequent bounded providers now exist for `tm_cpio`, `tm_cred`, LQ
-pseudo-devices, and `tm_sysfs`. They remain Rust opt-in only and do not change
-the rule that task-manager Rust work must avoid spawn, capability, relocation,
-and loader paths.
+pseudo-devices, `tm_script`, and `tm_sysfs`. They remain Rust opt-in only and
+do not change the rule that task-manager Rust work must avoid spawn,
+capability, relocation, and loader paths.
 
 ## Spawn-Critical Paths
 
