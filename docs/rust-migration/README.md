@@ -28,7 +28,8 @@ Read in this order:
 12. `RUST_SPIKE.md`: Rust toolchain scaffold and minimal link-smoke contract.
 13. `BINDINGS.md`: current Rust ABI, FFI, and resource-server binding scope.
 14. `WORKFLOW.md`: Rust edit-loop, quality, ABI, deep-check workflow, Codebase
-   Memory discovery order, and issue-backed tooling gates.
+   Memory discovery order, roadmap validation/checklist commands, and
+   issue-backed tooling gates.
 15. `UNSAFE_REVIEW.md`: unsafe-code review checklist for Rust migration PRs.
 16. `SLOGGER.md`: current C `slogger` behavior and Rust pilot acceptance.
 17. `SLOGGER_BOOT_COMPARE.md`: C vs Rust `slogger` boot-log comparison.

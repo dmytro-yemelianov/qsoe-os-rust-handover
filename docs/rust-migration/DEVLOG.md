@@ -24,6 +24,45 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 10:21 CEST - Component Gate Harness
+
+Scope:
+
+- Added `scripts/roadmap-gates.py` with two commands:
+  - `validate` parses every `qsoe-roadmap:v1` issue block from live GitHub
+    Issues API data and checks roadmap/kind/status label consistency.
+  - `component <selector>` prints the selectors, evidence, runtime/boot smoke,
+    RC, rollback, and issue-update checklist for a roadmap component.
+- Added top-level Make targets:
+  - `make roadmap-validate`
+  - `make roadmap-component-gate COMPONENT=<id-or-issue-number>`
+- Wired `make roadmap-validate` into main CI before build work and into the
+  Roadmap Pages workflow before dashboard publication.
+- Documented the commands in `WORKFLOW.md`, the top-level README, and the
+  migration docs index.
+
+Commands:
+
+- `mcp__codebase_memory_mcp.list_projects`
+- `gh issue view 200 --json number,title,state,labels,body,comments`
+- `make roadmap-validate`
+- `make roadmap-component-gate COMPONENT=tm-elf-view`
+- `make roadmap-component-gate COMPONENT=146`
+
+Result:
+
+- Live roadmap metadata currently validates: 38 metadata items across 17
+  components, 11 phases, 6 backlog candidates, and 4 tooling gates.
+- Component checklists now come directly from issue metadata instead of manual
+  reconstruction during RC and retirement work.
+- Codebase Memory MCP still failed with `Transport closed`, so this change used
+  the documented fallback discovery path.
+
+Follow-up:
+
+- After this PR lands, update #200 from `status:future` to complete and close
+  it with the PR/main CI run evidence.
+
 ## 2026-06-30 09:58 CEST - Graph-First Workflow Rule
 
 Scope:

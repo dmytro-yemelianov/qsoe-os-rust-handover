@@ -157,7 +157,7 @@ improvements from C-to-Rust component candidates.
 
 | Issue | Gate | Workflow role |
 | --- | --- | --- |
-| #200 | Component gate harness and roadmap sync | Generate the per-component evidence/RC/rollback checklist from issue metadata and reject malformed roadmap state before dashboard publication. |
+| #200 | Component gate harness and roadmap sync | Generate the per-component evidence/RC/rollback checklist from issue metadata and reject malformed roadmap state in CI and before dashboard publication. |
 | #201 | CI cache and sccache acceleration | Shorten repeated Rust/C taskman and smoke-test loops without caching stale release artifacts. |
 | #202 | Static analysis and supply-chain gates | Add CodeQL plus dependency-review pressure around C/C++/Rust security and dependency changes. |
 | #203 | Rust host test and parser fuzz workflow | Promote `cargo-nextest`, parser fuzzing, and coverage from optional deep tools into explicit gates for parser-heavy PRs. |
@@ -173,17 +173,37 @@ tool's issue explicitly says the gate has been promoted.
 For each component status transition:
 
 1. Read the component's roadmap issue and docs before editing.
-2. Run the component evidence target, runtime smoke, RC smoke, and rollback
+2. Generate the component checklist:
+
+   ```sh
+   make roadmap-component-gate COMPONENT=<component-id-or-issue-number>
+   ```
+
+3. Run the component evidence target, runtime smoke, RC smoke, and rollback
    smoke required by the issue metadata.
-3. Update docs and the issue metadata in the same PR that changes selector
+4. Update docs and the issue metadata in the same PR that changes selector
    state.
-4. After merge, record the PR CI run, merge commit, and successful main CI run
+5. Validate roadmap metadata:
+
+   ```sh
+   make roadmap-validate
+   ```
+
+6. After merge, record the PR CI run, merge commit, and successful main CI run
    in the roadmap issue.
-5. Keep the next gate explicit: opt-in, Rust-default RC, C retirement, or
+7. Keep the next gate explicit: opt-in, Rust-default RC, C retirement, or
    deferral.
 
-Issue #200 should automate this loop. Until that harness exists, reviewers
-should enforce it manually.
+`make roadmap-validate` fetches `roadmap` issues through the GitHub Issues API,
+parses every `qsoe-roadmap:v1` metadata block, and verifies kind/status label
+consistency. The main CI workflow runs it before build work starts, and the
+Roadmap Pages workflow runs it before publishing the dashboard artifact.
+
+`make roadmap-component-gate` is the review preflight for component moves. It
+prints the current selectors, evidence commands, runtime/boot smokes, RC
+commands, C rollback files/commands, and issue-update checklist from the
+selected component's issue metadata. Treat missing output in one of those
+sections as a metadata gap to fix before changing selector state.
 
 ## Optional Deep Tools
 

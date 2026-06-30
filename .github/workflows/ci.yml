@@ -2,6 +2,7 @@ name: CI
 
 permissions:
   contents: read
+  issues: read
 
 on:
   push:
@@ -26,6 +27,11 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
+
+      - name: Validate roadmap issue metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: make roadmap-validate
 
       - name: Build Debian toolchain image
         run: make container-toolchain-build

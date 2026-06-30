@@ -4,12 +4,15 @@ on:
   push:
     branches: [main]
     paths:
+      - "Makefile"
       - "docs/roadmap/**"
       - ".github/workflows/pages.yml"
+      - "scripts/roadmap-gates.py"
   workflow_dispatch:
 
 permissions:
   contents: read
+  issues: read
 
 concurrency:
   group: qsoe-roadmap-pages
@@ -21,6 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read # checkout needs repository contents.
+      issues: read # roadmap validator reads issue-backed metadata.
       pages: write # deploy-pages publishes the Pages artifact.
       id-token: write # deploy-pages uses OIDC for Pages deployment.
     environment:
@@ -32,6 +36,11 @@ jobs:
         uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           persist-credentials: false
+
+      - name: Validate roadmap issue metadata
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: make roadmap-validate
 
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5

@@ -60,6 +60,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         index-c index-c-files index-c-tags index-c-cscope index-c-global \
         index-c-static index-c-compile-db tidy-c \
         elf-baseline audit-artifacts \
+        roadmap-validate roadmap-component-gate \
         rust-fast rust-quality rust-check rust-abi rust-deep rust-fuzz-smoke \
         rust-coverage \
         rust-qsoe-link-smoke rust-slogger-link-smoke \
@@ -349,6 +350,13 @@ elf-baseline:
 
 audit-artifacts: fsqrv-image
 	@scripts/audit-artifacts.sh
+
+roadmap-validate:
+	@scripts/roadmap-gates.py validate
+
+roadmap-component-gate:
+	@test -n "$(COMPONENT)" || { echo "usage: make roadmap-component-gate COMPONENT=<id-or-issue>"; exit 2; }
+	@scripts/roadmap-gates.py component "$(COMPONENT)"
 
 rust-fast:
 	@scripts/rust-workflow.sh fast

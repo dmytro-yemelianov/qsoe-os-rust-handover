@@ -70,7 +70,8 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
   translation buckets.
 - `docs/rust-migration/STATUS.md` for component-by-component migration state.
 - `docs/rust-migration/WORKFLOW.md` for the quality tiers, Codebase Memory
-  discovery order, and issue-backed tooling gates (#200 through #203).
+  discovery order, `make roadmap-validate`, `make roadmap-component-gate`, and
+  issue-backed tooling gates (#200 through #203).
 - `docs/rust-migration/RETIREMENT.md` for the gate before any C code removal.
 - `docs/rust-migration/DEVLOG.md` for command history and validation evidence.
 
