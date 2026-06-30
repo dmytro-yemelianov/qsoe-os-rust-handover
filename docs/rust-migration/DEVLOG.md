@@ -24,6 +24,64 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 18:30 CEST - tm_cred Rust-Default RC
+
+Scope:
+
+- Promoted `tm_cred` from Rust opt-in to Rust-default RC while preserving C
+  rollback through `QSOE_RUST_TM_CRED=0`.
+- Changed the umbrella, standalone `libtaskman`, and tracked NQ/LQ component
+  override defaults to `QSOE_RUST_TM_CRED ?= 1`.
+- Added `tm-cred-rc-smoke` and `tm-cred-rc-rollback-smoke` targets plus CI
+  hooks and artifact upload coverage.
+- Updated `tm-cred-runtime-smoke` so the Rust path remains default but the RC
+  rollback path can explicitly reuse the live credential probe with
+  `TM_CRED_RUNTIME_ALLOW_C=1`.
+- Updated shared provider evidence so `tm_cred` is audited with the default
+  provider set.
+- Added `TASK_MANAGER_CRED_RC.md`, updated status/docs/readmes, and moved issue
+  #150 to `status:rc` / `rust-default-rc`.
+
+Commands:
+
+- `mcp__codebase_memory_mcp.index_status(...)` for root, `lq`, and `nq`
+- `mcp__codebase_memory_mcp.search_code(pattern="QSOE_RUST_TM_CRED")`
+- `bash -n scripts/tm-cred-rc-smoke.sh scripts/tm-cred-runtime-smoke.sh scripts/tm-cred-evidence.sh scripts/tm-providers-evidence.sh scripts/apply-component-overrides.sh scripts/build-rust-tm-providers.sh`
+- `scripts/apply-component-overrides.sh`
+- `QSOE_RUST_TM_CRED=0 make -C libtaskman --no-print-directory`
+- `make -C libtaskman --no-print-directory`
+- `make check-tm-cred-model`
+- `make tm-cred-evidence`
+- `timeout 300 make tm-cred-rc-smoke`
+- `timeout 300 make tm-cred-rc-rollback-smoke`
+- `timeout 300 make tm-providers-evidence`
+- `make roadmap-validate`
+- `make roadmap-component-gate COMPONENT=tm-cred`
+- `git diff --check`
+- `make rust-quality`
+
+Result:
+
+- Root, `lq`, and `nq` codebase-memory indexes were confirmed ready before code
+  discovery; `nq` was indexed when it was missing.
+- Default `libtaskman.a` now omits `cred.o`; explicit
+  `QSOE_RUST_TM_CRED=0` still builds the C rollback archive with `cred.o`.
+- `make tm-cred-evidence` passed C/Rust host tests, soft-float archive audit,
+  exported symbol checks, and NQ/LQ C rollback plus Rust-default membership
+  checks.
+- `make tm-cred-rc-smoke` passed the Rust-default LQ boot probe with all live
+  credential markers.
+- `make tm-cred-rc-rollback-smoke` passed the same LQ boot probe with the C
+  rollback selected.
+- `make tm-providers-evidence` passed with `tm_cpio`, `tm_cred`, and
+  `tm_procfs` selected through the shared provider archive.
+- Roadmap metadata validates with issue #150 reopened as an RC item.
+
+Follow-up:
+
+- Let trusted CI establish the RC baseline before considering any C retirement
+  PR for `libtaskman/src/cred.c`.
+
 ## 2026-06-30 17:00 CEST - tm_sysfs C Retirement
 
 Scope:

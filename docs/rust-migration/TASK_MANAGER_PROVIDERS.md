@@ -39,7 +39,7 @@ The existing provider selectors remain the public interface:
 
 ```text
 QSOE_RUST_TM_CPIO=1
-QSOE_RUST_TM_CRED=1
+QSOE_RUST_TM_CRED=1   # Rust-default RC; 0 remains C rollback
 QSOE_RUST_TM_ELF=1
 QSOE_RUST_TM_FDT=1
 QSOE_RUST_TM_PATHMGR=1

@@ -124,6 +124,8 @@ case "${QSOE_RUST_TM_SYSFS:-1}" in
         ;;
 esac
 
+QSOE_RUST_TM_CRED=${QSOE_RUST_TM_CRED:-1}
+
 add_feature() {
     local var=$1
     local feature=$2

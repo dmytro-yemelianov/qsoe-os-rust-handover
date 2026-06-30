@@ -325,12 +325,11 @@ The strict ELF audit showed:
   rejected. `make tm-procfs-evidence` audits the Rust provider archive, checks
   NQ/LQ taskman contain no `tm_procfs.o`, verifies retired selector rejection,
   and runs the Rust-only `/proc` smoke.
-- `tm_cred` has a Rust opt-in provider behind `QSOE_RUST_TM_CRED=1`. It is
-  merged on `main` through PR #162 with `make tm-cred-evidence` and
-  `make container-source-build` evidence, and now has `make tm-cred-runtime-smoke`
+- `tm_cred` is now a Rust-default RC behind `QSOE_RUST_TM_CRED=1`, with
+  `QSOE_RUST_TM_CRED=0` and `make tm-cred-rc-rollback-smoke` preserving the C
+  `cred.o` rollback path. `make tm-cred-rc-smoke` reuses the focused runtime
   coverage for live uid/gid mutation, cwd, umask, permission rejection, and
-  spawn inheritance. C remains default and rollback until a separate RC decision
-  exists.
+  spawn inheritance.
 - `tm_pseudodev` has a Rust opt-in provider behind
   `QSOE_RUST_TM_PSEUDODEV=1`. The selector replaces only LQ `sys/devnull.o`
   and `sys/devzero.o` with the selected Rust provider archive.

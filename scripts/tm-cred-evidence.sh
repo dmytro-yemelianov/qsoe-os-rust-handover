@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture tm_cred Rust opt-in evidence without changing the default provider.
+# Capture tm_cred Rust-default RC evidence while preserving C rollback coverage.
 
 set -eu
 
@@ -14,7 +14,7 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-cred-evidence.sh
 
-Builds and audits the Rust tm_cred opt-in path and verifies C rollback archive
+Builds and audits the Rust tm_cred default path and verifies C rollback archive
 membership for NQ and LQ taskman links.
 
 Environment:
@@ -168,25 +168,25 @@ audit_provider_archive
 echo "tm-cred-evidence.sh: verifying NQ C rollback membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
     QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1
-require_cred_count nq-c-default "$ROOT/nq/build/libtaskman/libtaskman.a" 1
-audit_flags nq-c-default-taskman "$ROOT/nq/build/taskman/taskman.elf"
+require_cred_count nq-c-rollback "$ROOT/nq/build/libtaskman/libtaskman.a" 1
+audit_flags nq-c-rollback-taskman "$ROOT/nq/build/taskman/taskman.elf"
 
-echo "tm-cred-evidence.sh: verifying NQ Rust-selected membership"
+echo "tm-cred-evidence.sh: verifying NQ Rust-default membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
     QSOE_RUST_TM_CRED=1 QSOE_RUST_TM_PROCFS=1
-require_cred_count nq-rust-selected "$ROOT/nq/build/libtaskman/libtaskman.a" 0
-audit_flags nq-rust-selected-taskman "$ROOT/nq/build/taskman/taskman.elf"
+require_cred_count nq-rust-default "$ROOT/nq/build/libtaskman/libtaskman.a" 0
+audit_flags nq-rust-default-taskman "$ROOT/nq/build/taskman/taskman.elf"
 
 echo "tm-cred-evidence.sh: verifying LQ C rollback membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
     QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 taskman
-require_cred_count lq-c-default "$ROOT/lq/build/libtaskman/libtaskman.a" 1
-audit_flags lq-c-default-taskman "$ROOT/lq/build/taskman.elf"
+require_cred_count lq-c-rollback "$ROOT/lq/build/libtaskman/libtaskman.a" 1
+audit_flags lq-c-rollback-taskman "$ROOT/lq/build/taskman.elf"
 
-echo "tm-cred-evidence.sh: verifying LQ Rust-selected membership"
+echo "tm-cred-evidence.sh: verifying LQ Rust-default membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
     QSOE_RUST_TM_CRED=1 QSOE_RUST_TM_PROCFS=1 taskman
-require_cred_count lq-rust-selected "$ROOT/lq/build/libtaskman/libtaskman.a" 0
-audit_flags lq-rust-selected-taskman "$ROOT/lq/build/taskman.elf"
+require_cred_count lq-rust-default "$ROOT/lq/build/libtaskman/libtaskman.a" 0
+audit_flags lq-rust-default-taskman "$ROOT/lq/build/taskman.elf"
 
 echo "tm-cred-evidence.sh: evidence captured in $WORKDIR"

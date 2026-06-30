@@ -112,13 +112,21 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-cpio-rc-smoke
 
-      - name: Run tm_cred Rust opt-in evidence
+      - name: Run tm_cred Rust-default RC evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-cred-evidence
 
       - name: Run tm_cred Rust runtime smoke
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-cred-runtime-smoke
+
+      - name: Run tm_cred Rust-default RC smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-tm-cred-rc-smoke
+
+      - name: Run tm_cred C rollback RC smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-tm-cred-rc-rollback-smoke
 
       - name: Run tm_script Rust-only evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -242,6 +250,8 @@ jobs:
             build/tm-cred-evidence/**/*.txt
             build/tm-cred-runtime-smoke/*.log
             build/tm-cred-runtime-smoke/*.txt
+            build/tm-cred-rc/*.log
+            build/tm-cred-rc/*.txt
             build/tm-script-evidence/**/*.log
             build/tm-script-evidence/**/*.txt
             build/tm-script-runtime-smoke/*.log

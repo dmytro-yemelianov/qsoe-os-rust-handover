@@ -1,0 +1,11 @@
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -43,7 +43,7 @@
+ CC         := $(CROSS)gcc
+ QSOE_RUST_TM_CPIO ?= 1
+ QSOE_RUST_TM_PROCFS ?= 1
+-QSOE_RUST_TM_CRED ?= 0
++QSOE_RUST_TM_CRED ?= 1
+ QSOE_RUST_TM_ELF ?= 1
+ QSOE_RUST_TM_FDT ?= 0
+ QSOE_RUST_TM_PATHMGR ?= 0

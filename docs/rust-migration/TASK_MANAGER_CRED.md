@@ -1,8 +1,8 @@
 # Task Manager Credential Policy Provider
 
-Captured: 2026-06-29 CEST.
+Captured: 2026-06-30 CEST.
 
-`tm_cred` is the second bounded task-manager Rust provider after `tm_procfs`.
+`tm_cred` is a bounded task-manager Rust-default RC provider.
 It covers only the portable credential, cwd, and umask state model:
 
 ```text
@@ -37,11 +37,11 @@ pointers into the portable provider.
 
 ## Selector
 
-Normal builds remain C-default:
+Normal builds are Rust-default during the RC window, with C rollback preserved:
 
 ```text
-QSOE_RUST_TM_CRED=0  -> C `libtaskman/src/cred.c` remains selected
-QSOE_RUST_TM_CRED=1  -> Rust `qsoe-tm-cred` staticlib is linked instead
+QSOE_RUST_TM_CRED=1  -> Rust `qsoe-tm-cred` is selected by default
+QSOE_RUST_TM_CRED=0  -> C `libtaskman/src/cred.c` rollback remains selected
 ```
 
 When Rust is selected, `libtaskman/Makefile` excludes `cred.o` from
@@ -78,7 +78,7 @@ The Rust provider has equivalent host coverage:
 cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-cred --features host-tests
 ```
 
-The full opt-in evidence gate is:
+The full RC evidence gate is:
 
 ```sh
 make tm-cred-evidence
@@ -86,8 +86,8 @@ make tm-cred-evidence
 
 It runs the C fixture, Rust host tests, builds and audits the Rust staticlib,
 checks exported symbols, verifies all archive members are RVC soft-float, and
-links both NQ and LQ taskman in C rollback and Rust-selected modes. The gate
-also verifies `cred.o` is present for `QSOE_RUST_TM_CRED=0` and absent for
+links both NQ and LQ taskman in C rollback and Rust-default modes. The gate also
+verifies `cred.o` is present for `QSOE_RUST_TM_CRED=0` and absent for
 `QSOE_RUST_TM_CRED=1`.
 
 The focused runtime gate is:
@@ -103,10 +103,21 @@ qrvfs image, and runs it from sysinit. The helper checks initial root ids, umask
 exchange, cwd round-trip through `/usr/conf`, held-id uid/gid transitions,
 non-root `setuid(0)` rejection, and inherited ids/cwd/umask in a spawned child.
 
+The RC gates are:
+
+```sh
+make tm-cred-rc-smoke
+make tm-cred-rc-rollback-smoke
+```
+
+The default RC gate validates NQ and LQ archive membership with `cred.o` absent
+and then reuses the live runtime smoke. The rollback gate sets
+`TM_CRED_RC_ROLLBACK=1`, verifies `cred.o` remains present, and reuses the same
+live probe under an explicit `TM_CRED_RUNTIME_ALLOW_C=1` guard.
+
 ## Current State
 
-`tm_cred` is Rust opt-in only. It now has focused runtime smoke coverage, but it
-is not a Rust-default release candidate and has no C retirement approval. Keep
-`libtaskman/src/cred.c` as the rollback implementation until a separate
-Rust-default RC decision, the global retirement checklist, and a separate
-removal PR are satisfied.
+`tm_cred` is a Rust-default RC with C rollback. It has no C retirement approval.
+Keep `libtaskman/src/cred.c` as the rollback implementation until the RC has
+enough trusted evidence, the global retirement checklist is satisfied, and a
+separate removal PR is approved.

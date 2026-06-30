@@ -414,6 +414,15 @@ apply_patch_if_possible_or_present lq lq-makefile-rust-tm-elf-rc-default.patch \
 apply_patch_if_possible_or_present lq lq-taskman-rust-tm-elf-rc-default.patch \
     "$ROOT/lq/taskman/Makefile" \
     'QSOE_RUST_TM_ELF ?= 1'
+apply_patch_if_possible_or_present nq nq-taskman-rust-tm-cred-rc-default.patch \
+    "$ROOT/nq/taskman/Makefile" \
+    'QSOE_RUST_TM_CRED ?= 1'
+apply_patch_if_possible_or_present lq lq-makefile-rust-tm-cred-rc-default.patch \
+    "$ROOT/lq/Makefile" \
+    'QSOE_RUST_TM_CRED ?= 1'
+apply_patch_if_possible_or_present lq lq-taskman-rust-tm-cred-rc-default.patch \
+    "$ROOT/lq/taskman/Makefile" \
+    'QSOE_RUST_TM_CRED ?= 1'
 
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 1'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO must be 1 after C tm_cpio retirement'
@@ -423,7 +432,7 @@ require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_ELF must be 1 after C tm_
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_SCRIPT must be 1 after C tm_script retirement'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_SYSCFG must be 1 after C tm_syscfg retirement'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_SYSFS must be 1 after C tm_sysfs retirement'
-require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
+require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 1'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_ELF ?= 1'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PATHMGR ?= 0'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_SCRIPT ?= 1'
@@ -499,7 +508,7 @@ require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SCRIPT must be 1 after C tm_scrip
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSCFG must be 1 after C tm_syscfg retirement'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSMAP must be 1 after C tm_sysmap retirement'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSFS must be 1 after C tm_sysfs retirement'
-require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
+require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CRED ?= 1'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_ELF ?= 1'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_FDT ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PATHMGR ?= 0'
@@ -575,7 +584,7 @@ require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SCRIPT must be 1 after C 
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SYSCFG must be 1 after C tm_syscfg retirement'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SYSMAP must be 1 after C tm_sysmap retirement'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SYSFS must be 1 after C tm_sysfs retirement'
-require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
+require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 1'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_ELF ?= 1'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_FDT ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PATHMGR ?= 0'
