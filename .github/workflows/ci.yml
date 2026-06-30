@@ -184,6 +184,14 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-sysfs-runtime-smoke
 
+      - name: Run tm_sysfs Rust-default RC smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-tm-sysfs-rc-smoke
+
+      - name: Run tm_sysfs C rollback RC smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-tm-sysfs-rc-rollback-smoke
+
       - name: Upload boot smoke logs
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -243,4 +251,6 @@ jobs:
             build/tm-sysfs-evidence/**/*.txt
             build/tm-sysfs-runtime-smoke/*.log
             build/tm-sysfs-runtime-smoke/*.txt
+            build/tm-sysfs-rc/*.log
+            build/tm-sysfs-rc/*.txt
           if-no-files-found: ignore

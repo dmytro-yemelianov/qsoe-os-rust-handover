@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture tm_sysfs Rust opt-in evidence without changing the default provider.
+# Capture tm_sysfs evidence while preserving the C rollback provider.
 
 set -eu
 
@@ -14,7 +14,7 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-sysfs-evidence.sh
 
-Builds and audits the Rust tm_sysfs opt-in path and verifies C rollback archive
+Builds and audits the Rust tm_sysfs path and verifies C rollback archive
 membership for NQ and LQ taskman links.
 
 Environment:
@@ -167,8 +167,8 @@ audit_provider_archive
 echo "tm-sysfs-evidence.sh: verifying NQ C rollback membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
     QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 QSOE_RUST_TM_SYSFS=0
-require_sysfs_count nq-c-default "$ROOT/nq/build/libtaskman/libtaskman.a" 1
-audit_flags nq-c-default-taskman "$ROOT/nq/build/taskman/taskman.elf"
+require_sysfs_count nq-c-rollback "$ROOT/nq/build/libtaskman/libtaskman.a" 1
+audit_flags nq-c-rollback-taskman "$ROOT/nq/build/taskman/taskman.elf"
 
 echo "tm-sysfs-evidence.sh: verifying NQ Rust-selected membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
@@ -183,8 +183,8 @@ echo "tm-sysfs-evidence.sh: verifying LQ C rollback membership"
     QSOE_RUST_TM_PSEUDODEV=0 \
     QSOE_RUST_TM_SYSFS=0 \
     taskman
-require_sysfs_count lq-c-default "$ROOT/lq/build/libtaskman/libtaskman.a" 1
-audit_flags lq-c-default-taskman "$ROOT/lq/build/taskman.elf"
+require_sysfs_count lq-c-rollback "$ROOT/lq/build/libtaskman/libtaskman.a" 1
+audit_flags lq-c-rollback-taskman "$ROOT/lq/build/taskman.elf"
 
 echo "tm-sysfs-evidence.sh: verifying LQ Rust-selected membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \

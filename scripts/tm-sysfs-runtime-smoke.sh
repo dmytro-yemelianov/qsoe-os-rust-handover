@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Boot QSOE/L with Rust tm_sysfs selected and exercise /sys runtime consumers.
+# Boot QSOE/L with the selected tm_sysfs provider and exercise /sys consumers.
 
 set -eu
 
@@ -10,16 +10,17 @@ usage: scripts/tm-sysfs-runtime-smoke.sh [-t seconds] [-o log] [--keep-running] 
 
 Injects a temporary sysinit fragment that enumerates /sys and reads all five
 portable /sys files, rebuilds the virtio qrvfs image, and boots QSOE/L with
-QSOE_RUST_TM_SYSFS=1.
+Rust tm_sysfs selected.
 
-This validates the Rust-selected libtaskman tm_sysfs model through LQ taskman's
-existing path dispatch. Syscfg/FDT discovery, process creation, IPC, and seL4
-object manipulation remain C.
+By default this validates the Rust-selected libtaskman tm_sysfs model through
+LQ taskman's existing path dispatch. Syscfg/FDT discovery, process creation,
+IPC, and seL4 object manipulation remain C.
 
 Environment:
   TM_SYSFS_RUNTIME_SMOKE_WORKDIR  output directory, default build/tm-sysfs-runtime-smoke
-  QSOE_RUST_TM_SYSFS              set to 1; this smoke validates the Rust selection
+  QSOE_RUST_TM_SYSFS              defaults to 1; set 0 only with rollback escape hatch
   QSOE_RUST_TM_PROCFS             must remain 1 after C tm_procfs retirement
+  TM_SYSFS_RUNTIME_ALLOW_C        internal RC rollback escape hatch
 EOF
 }
 
@@ -77,13 +78,23 @@ if [ "$timeout_s" -le 0 ]; then
     exit 2
 fi
 
+tm_sysfs_mode=
 case "${QSOE_RUST_TM_SYSFS:-1}" in
     1|true|TRUE|yes|YES)
         export QSOE_RUST_TM_SYSFS=1
+        tm_sysfs_mode=rust-selected
         ;;
     0|false|FALSE|no|NO)
-        echo "tm-sysfs-runtime-smoke.sh: this smoke validates QSOE_RUST_TM_SYSFS=1" >&2
-        exit 2
+        case "${TM_SYSFS_RUNTIME_ALLOW_C:-0}" in
+            1|true|TRUE|yes|YES)
+                export QSOE_RUST_TM_SYSFS=0
+                tm_sysfs_mode=c-rollback
+                ;;
+            *)
+                echo "tm-sysfs-runtime-smoke.sh: this smoke validates QSOE_RUST_TM_SYSFS=1" >&2
+                exit 2
+                ;;
+        esac
         ;;
     *)
         echo "tm-sysfs-runtime-smoke.sh: QSOE_RUST_TM_SYSFS must be 1" >&2
@@ -110,7 +121,7 @@ source_conf="$ROOT/quser/conf"
 source_sysinit="$source_conf/sysinit"
 fragment=
 lq_libc="$ROOT/lq/build/libc/libc.so"
-members_log="$workdir/lq-rust-selected-libtaskman-members.txt"
+members_log="$workdir/lq-$tm_sysfs_mode-libtaskman-members.txt"
 
 boot_syscfg_marker="syscfg built from FDT"
 boot_sysmap_marker="sysmap page built"
@@ -224,31 +235,41 @@ echo "tm-sysfs-runtime-smoke.sh: rebuilding quser with LQ libc"
 echo "tm-sysfs-runtime-smoke.sh: rebuilding virtio qrvfs image"
 "$MAKE" -C "$ROOT" virtio --no-print-directory
 
-echo "tm-sysfs-runtime-smoke.sh: rebuilding QSOE/L image with Rust tm_sysfs"
+echo "tm-sysfs-runtime-smoke.sh: rebuilding QSOE/L image with $tm_sysfs_mode tm_sysfs"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
     QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_SYSFS=1
+    QSOE_RUST_TM_SYSFS="$QSOE_RUST_TM_SYSFS"
 
 "$AR" t "$ROOT/lq/build/libtaskman/libtaskman.a" > "$members_log"
-if grep -Fxq tm_sysfs.o "$members_log"; then
-    echo "tm-sysfs-runtime-smoke.sh: Rust-selected libtaskman still contains tm_sysfs.o" >&2
-    exit 1
-fi
+case "$QSOE_RUST_TM_SYSFS" in
+    1)
+        if grep -Fxq tm_sysfs.o "$members_log"; then
+            echo "tm-sysfs-runtime-smoke.sh: Rust-selected libtaskman still contains tm_sysfs.o" >&2
+            exit 1
+        fi
 
-for symbol in \
-    tm_sysfs_init \
-    tm_sysfs_resolve \
-    tm_sysfs_path_exists \
-    tm_sysfs_content \
-    tm_sysfs_nentries \
-    tm_sysfs_entry_name
-do
-    if ! "$NM" -g --defined-only "$ROOT/build/rust/tm-providers/libqsoe_tm_providers.a" |
-        grep -Eq "[[:space:]]$symbol$"; then
-        echo "tm-sysfs-runtime-smoke.sh: Rust provider archive is missing $symbol" >&2
-        exit 1
-    fi
-done
+        for symbol in \
+            tm_sysfs_init \
+            tm_sysfs_resolve \
+            tm_sysfs_path_exists \
+            tm_sysfs_content \
+            tm_sysfs_nentries \
+            tm_sysfs_entry_name
+        do
+            if ! "$NM" -g --defined-only "$ROOT/build/rust/tm-providers/libqsoe_tm_providers.a" |
+                grep -Eq "[[:space:]]$symbol$"; then
+                echo "tm-sysfs-runtime-smoke.sh: Rust provider archive is missing $symbol" >&2
+                exit 1
+            fi
+        done
+        ;;
+    0)
+        if ! grep -Fxq tm_sysfs.o "$members_log"; then
+            echo "tm-sysfs-runtime-smoke.sh: C rollback libtaskman is missing tm_sysfs.o" >&2
+            exit 1
+        fi
+        ;;
+esac
 
 boot_args=(-k lq -t "$timeout_s" -o "$log")
 if [ "$keep_running" -eq 1 ]; then
@@ -270,7 +291,7 @@ expected_markers=(
 )
 boot_extra_patterns=$(printf '%s\n' "${expected_markers[@]}")
 
-echo "tm-sysfs-runtime-smoke.sh: booting Rust tm_sysfs runtime smoke"
+echo "tm-sysfs-runtime-smoke.sh: booting $tm_sysfs_mode tm_sysfs runtime smoke"
 QSOE_BOOT_VIRTIO_PATTERN="/dev/vblk0 ready" \
     QSOE_BOOT_EXTRA_PATTERNS="$boot_extra_patterns" \
     "$ROOT/scripts/boot-smoke.sh" "${boot_args[@]}"

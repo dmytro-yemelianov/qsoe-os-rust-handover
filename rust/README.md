@@ -552,38 +552,33 @@ query, detach, and destroy calls.
 
 ## Task Manager `/sys` Selection
 
-The Rust `tm_sysfs` provider can be built as a soft-float taskman staticlib
-without changing the normal taskman default:
+The Rust `tm_sysfs` provider is in a Rust-default RC window and can still be
+rolled back to the C taskman provider:
 
 ```sh
 make check-tm-sysfs-model
 make rust-tm-sysfs-provider
 make tm-sysfs-evidence
 make tm-sysfs-runtime-smoke
+make tm-sysfs-rc-smoke
+make tm-sysfs-rc-rollback-smoke
 ```
 
-With the default `QSOE_RUST_TM_SYSFS=0`, NQ and LQ taskman link the existing
-C `tm_sysfs.o`. With `QSOE_RUST_TM_SYSFS=1`, the component Makefile selector
-omits C `tm_sysfs.o`, builds `qsoe-tm-sysfs` for
-`riscv64imac-unknown-none-elf`, and links `libqsoe_tm_sysfs.a` into taskman.
-Sysmap/syscfg discovery, init path selection, open/read/readdir dispatch, IPC
-decoding, process tables, and seL4 invocation code remain C.
+With the default `QSOE_RUST_TM_SYSFS=1`, NQ and LQ taskman omit C
+`tm_sysfs.o`, build `qsoe-tm-sysfs` for `riscv64imac-unknown-none-elf`, and
+link the shared `qsoe-tm-providers` archive into taskman. With
+`QSOE_RUST_TM_SYSFS=0`, NQ and LQ taskman restore the existing C `tm_sysfs.o`
+rollback provider. Sysmap/syscfg discovery, init path selection,
+open/read/readdir dispatch, IPC decoding, process tables, and seL4 invocation
+code remain C.
 
 `make tm-sysfs-runtime-smoke` boots QSOE/L with Rust `tm_sysfs` selected,
 verifies the Rust-selected `libtaskman.a` omits C `tm_sysfs.o`, and checks a
 sysinit child can enumerate `/sys` plus read `board`, `builddate`, `cmdline`,
 `osname`, and `version`.
-
-Do not set more than one of `QSOE_RUST_TM_CPIO=1`,
-`QSOE_RUST_TM_CRED=1`, `QSOE_RUST_TM_ELF=1`,
-`QSOE_RUST_TM_FDT=1`, `QSOE_RUST_TM_PATHMGR=1`,
-`QSOE_RUST_TM_PROCFS=1`,
-`QSOE_RUST_TM_PSEUDODEV=1`,
-`QSOE_RUST_TM_RSRCDB=1`, `QSOE_RUST_TM_SCRIPT=1`,
-`QSOE_RUST_TM_SYSCFG=1`, `QSOE_RUST_TM_SYSMAP=1`, and
-`QSOE_RUST_TM_SYSFS=1` together yet.
-Current taskman providers are separate no-std Rust staticlibs; selecting more
-than one requires a later shared taskman Rust archive.
+`make tm-sysfs-rc-smoke` first audits default Rust archive selection, then
+runs the same live path; `make tm-sysfs-rc-rollback-smoke` repeats it with C
+rollback.
 
 ## Parser Fuzzing
 

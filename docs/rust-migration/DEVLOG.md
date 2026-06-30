@@ -24,6 +24,57 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 02:17 CEST - tm_sysfs Rust-Default RC
+
+Scope:
+
+- Promoted `tm_sysfs` to a Rust-default release-candidate selector:
+  `QSOE_RUST_TM_SYSFS ?= 1` in the umbrella, `libtaskman`, and applied NQ/LQ
+  component Makefiles.
+- Added component override patches that flip ignored NQ/LQ checkouts to the
+  new default while preserving `QSOE_RUST_TM_SYSFS=0` as C rollback.
+- Added `make tm-sysfs-rc-smoke` and `make tm-sysfs-rc-rollback-smoke`; both
+  verify NQ/LQ `libtaskman.a` archive membership before booting the live LQ
+  `/sys` readdir and file-read probe.
+- Added CI wiring and `TASK_MANAGER_SYSFS_RC.md` to record the RC window and
+  rollback drill.
+
+Commands:
+
+- `bash -n scripts/tm-sysfs-rc-smoke.sh scripts/tm-sysfs-runtime-smoke.sh scripts/tm-sysfs-evidence.sh scripts/apply-component-overrides.sh scripts/boot-smoke.sh`
+- `make -n tm-sysfs-rc-smoke tm-sysfs-rc-rollback-smoke container-tm-sysfs-rc-smoke container-tm-sysfs-rc-rollback-smoke`
+- `patch -d nq --dry-run -p1 < patches/components/nq-taskman-rust-tm-sysfs-rc-default.patch`
+- `patch -d lq --dry-run -p1 < patches/components/lq-makefile-rust-tm-sysfs-rc-default.patch`
+- `patch -d lq --dry-run -p1 < patches/components/lq-taskman-rust-tm-sysfs-rc-default.patch`
+- `./scripts/apply-component-overrides.sh`
+- `patch -d nq --reverse --dry-run -p1 < patches/components/nq-taskman-rust-tm-sysfs-rc-default.patch`
+- `patch -d lq --reverse --dry-run -p1 < patches/components/lq-makefile-rust-tm-sysfs-rc-default.patch`
+- `patch -d lq --reverse --dry-run -p1 < patches/components/lq-taskman-rust-tm-sysfs-rc-default.patch`
+- `make tm-sysfs-rc-smoke`
+- `make tm-sysfs-rc-rollback-smoke`
+- `make tm-sysfs-evidence`
+- `make tm-sysfs-runtime-smoke`
+- `git diff --check`
+- `make check-qrvfs-rust-writer-production-root`
+- `make -C libtaskman --no-print-directory`
+
+Result:
+
+- `make tm-sysfs-rc-smoke` passed with `nq-rust-default tm_sysfs.o count: 0`
+  and `lq-rust-default tm_sysfs.o count: 0`, then reached all live `/sys`
+  runtime markers.
+- `make tm-sysfs-rc-rollback-smoke` passed with
+  `nq-c-rollback tm_sysfs.o count: 1` and
+  `lq-c-rollback tm_sysfs.o count: 1`, then reached the same live runtime
+  markers under `QSOE_RUST_TM_SYSFS=0`.
+- The existing `tm-sysfs-evidence` and `tm-sysfs-runtime-smoke` gates still
+  pass after the default flip.
+
+Follow-up:
+
+- Publish the PR, wait for trusted CI, merge, and update #148 to
+  `status:rc`.
+
 ## 2026-06-30 01:52 CEST - tm_script Rust-Default RC
 
 Scope:

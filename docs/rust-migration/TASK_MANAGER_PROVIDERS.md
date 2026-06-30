@@ -30,7 +30,8 @@ The shared archive makes the model explicit:
 - there is exactly one panic handler in the linked taskman Rust code;
 - multiple provider selectors can be enabled together without duplicate Rust
   runtime symbols;
-- C remains default and rollback for every non-retired taskman provider.
+- C remains rollback for every non-retired taskman provider, but Rust-default
+  RC providers can make Rust the normal selector before C retirement.
 
 ## Selector Model
 

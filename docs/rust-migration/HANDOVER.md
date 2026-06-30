@@ -367,12 +367,12 @@ The strict ELF audit showed:
   repath, dynamic helper registration, duplicate rejection, MsgSend through
   the resolved binding, and unregister-on-exit cleanup. C remains default and
   rollback until a separate RC decision exists.
-- `tm_sysfs` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSFS=1`. The
+- `tm_sysfs` is in a Rust-default RC behind `QSOE_RUST_TM_SYSFS=1`. The
   selector removes C `tm_sysfs.o` from `libtaskman.a` and links through the
-  shared taskman Rust provider archive. `make tm-sysfs-runtime-smoke` boots LQ
-  with Rust `tm_sysfs` selected and checks `/sys` readdir plus all five portable
-  `/sys` files from sysinit. C remains default and rollback until a separate RC
-  decision exists.
+  shared taskman Rust provider archive. `QSOE_RUST_TM_SYSFS=0` remains C
+  rollback. `make tm-sysfs-rc-smoke` covers the default Rust archive selection
+  and `/sys` readdir plus all five portable `/sys` file reads; `make
+  tm-sysfs-rc-rollback-smoke` repeats the same path with C rollback.
 - `tm_rsrcdb` has a Rust opt-in provider behind `QSOE_RUST_TM_RSRCDB=1`. The
   selector removes LQ C `sys/rsrcdb.o` and links through the shared taskman
   Rust provider archive. `make tm-rsrcdb-runtime-smoke` covers live

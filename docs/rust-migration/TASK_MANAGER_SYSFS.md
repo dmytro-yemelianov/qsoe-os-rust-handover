@@ -43,11 +43,11 @@ C and still serve `/sys` through their existing C path layers.
 
 ## Selector
 
-Normal taskman builds remain C-default:
+Normal taskman builds are in a Rust-default RC window:
 
 ```text
-QSOE_RUST_TM_SYSFS=0  -> C `libtaskman/src/tm_sysfs.c` remains selected
-QSOE_RUST_TM_SYSFS=1  -> Rust `qsoe-tm-sysfs` staticlib is linked instead
+QSOE_RUST_TM_SYSFS=1  -> Rust `qsoe-tm-sysfs` provider is selected (default)
+QSOE_RUST_TM_SYSFS=0  -> C `libtaskman/src/tm_sysfs.c` rollback is selected
 ```
 
 When Rust is selected, `libtaskman/Makefile` excludes `tm_sysfs.o` from
@@ -88,6 +88,8 @@ The full opt-in evidence gate is:
 ```sh
 make tm-sysfs-evidence
 make tm-sysfs-runtime-smoke
+make tm-sysfs-rc-smoke
+make tm-sysfs-rc-rollback-smoke
 ```
 
 It runs the C fixture, Rust host tests, builds and audits the Rust staticlib,
@@ -123,9 +125,14 @@ tm-sysfs-runtime-smoke: /sys/osname ok
 tm-sysfs-runtime-smoke: /sys/version ok
 ```
 
+The RC smoke first builds NQ and LQ taskman in the default selector mode and
+verifies C `tm_sysfs.o` is absent from `libtaskman.a`. The rollback smoke
+repeats the same archive-membership and live runtime checks with
+`QSOE_RUST_TM_SYSFS=0`, where C `tm_sysfs.o` must be present.
+
 ## Current State
 
-`tm_sysfs` is Rust opt-in only. It is not a Rust-default release candidate and
-has no C retirement approval. Keep `libtaskman/src/tm_sysfs.c` as the rollback
-implementation until a separate Rust-default RC decision exists; C retirement
-still requires the global retirement checklist and a separate removal PR.
+`tm_sysfs` is a Rust-default release candidate with C rollback still
+available. It has no C retirement approval. Keep `libtaskman/src/tm_sysfs.c`
+as the rollback implementation until the global retirement checklist is
+satisfied and a separate removal PR is reviewed.

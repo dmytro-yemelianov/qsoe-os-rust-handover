@@ -31,7 +31,7 @@ no direct seL4 object manipulation, not automatically low risk.
 | Sysmap builder | `lq/taskman/sys/sysmap.c`, `lq/taskman/sys/sysmap.h` | Builds the read-only `PSYS` page mapped into children. Rust opt-in provider exists behind `QSOE_RUST_TM_SYSMAP=1`; see `TASK_MANAGER_SYSMAP.md`. | Medium: child runtime metadata. |
 | `/proc` model | `rust/crates/qsoe-tm-procfs`, `libtaskman/include/tm_procfs.h` | Formats `/proc/<pid>/info`, resolves paths, and walks pid directories through callbacks. | Low: retired Rust provider; diagnostic surface, no initial process creation. |
 | `/proc` LQ glue | `lq/taskman/path/procfs.c`, `lq/taskman/path/procfs.h` | Connects the portable `/proc` model to LQ process-table accessors and connection context. | Low-medium: reads live process table but does not create caps. |
-| `/sys` model | `libtaskman/src/tm_sysfs.c`, `libtaskman/include/tm_sysfs.h` | Read-only file model for board, cmdline, osname, version, and builddate. Rust opt-in provider exists behind `QSOE_RUST_TM_SYSFS=1`; see `TASK_MANAGER_SYSFS.md`. | Medium: `/sys/cmdline` can influence init's mainfs path. |
+| `/sys` model | `libtaskman/src/tm_sysfs.c`, `libtaskman/include/tm_sysfs.h` | Read-only file model for board, cmdline, osname, version, and builddate. Rust-default RC provider exists behind `QSOE_RUST_TM_SYSFS=1`; C rollback remains `QSOE_RUST_TM_SYSFS=0`; see `TASK_MANAGER_SYSFS.md`. | Medium: `/sys/cmdline` can influence init's mainfs path. |
 | Path registry | `libtaskman/src/pathmgr.c`, `libtaskman/include/tm_pathmgr.h` | Fixed-pool namespace tree, path resolve, repath, symlink expansion, and child iteration. Rust opt-in provider exists behind `QSOE_RUST_TM_PATHMGR=1`; see `TASK_MANAGER_PATHMGR.md`. | Medium-high: every open and device registration depends on it. |
 | Credentials policy | `libtaskman/src/cred.c`, `libtaskman/include/tm_cred.h` | Pure cwd, umask, uid/gid mutation, and permission checks. Rust opt-in provider exists behind `QSOE_RUST_TM_CRED=1`; see `TASK_MANAGER_CRED.md`. | Low-medium: process semantics, not boot spawn. |
 | Resource DB accounting | `lq/taskman/sys/rsrcdb.c`, `lq/taskman/sys/rsrcdb.h` | Fixed-pool resource-range allocation, split/merge, rollback on partial attach. Rust opt-in provider exists behind `QSOE_RUST_TM_RSRCDB=1`; see `TASK_MANAGER_RSRCDB.md`. | Low-medium: accounting table, but service-facing. |
@@ -44,7 +44,8 @@ evidence required before implementation.
 
 Subsequent bounded providers now exist for `tm_cpio`, `tm_cred`, `tm_elf`,
 `tm_fdt`, `tm_pathmgr`, LQ pseudo-devices, `tm_rsrcdb`, `tm_script`,
-`tm_syscfg`, `tm_sysmap`, and `tm_sysfs`. They remain Rust opt-in only.
+`tm_syscfg`, `tm_sysmap`, and `tm_sysfs`. `tm_cpio`, `tm_script`, and
+`tm_sysfs` are Rust-default RCs; the rest remain Rust opt-in only.
 `tm_elf` is intentionally not a default candidate yet: it is a read-only
 parser, but its output feeds spawn, relocation, and loader admission.
 
