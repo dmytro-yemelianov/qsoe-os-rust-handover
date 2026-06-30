@@ -169,6 +169,9 @@ apply_patch_if_possible_or_present nq nq-taskman-rust-tm-shared-providers.patch 
 apply_patch_if_possible_or_present nq nq-taskman-rust-tm-procfs-retired.patch \
     "$ROOT/nq/taskman/Makefile" \
     'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
+apply_patch_if_possible_or_present nq nq-taskman-rust-tm-script-retired.patch \
+    "$ROOT/nq/taskman/Makefile" \
+    'QSOE_RUST_TM_SCRIPT must be 1 after C tm_script retirement'
 apply_patch_if_possible_or_present nq nq-makefile-rust-slogger-retired.patch \
     "$ROOT/nq/Makefile" \
     'SELECTED_SLOGGER_ELF ?= $(abspath ../build/rust/selected/sbin/slogger.elf)'
@@ -224,6 +227,9 @@ apply_optional_patch lq lq-makefile-rust-tm-shared-providers.patch
 apply_patch_if_possible_or_present lq lq-makefile-rust-tm-procfs-retired.patch \
     "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
+apply_patch_if_possible_or_present lq lq-makefile-rust-tm-script-retired.patch \
+    "$ROOT/lq/Makefile" \
+    'QSOE_RUST_TM_SCRIPT must be 1 after C tm_script retirement'
 apply_patch_if_possible_or_present lq lq-makefile-rust-slogger-retired.patch \
     "$ROOT/lq/Makefile" \
     'SELECTED_SLOGGER_ELF ?= $(abspath $(TOP)/..)/build/rust/selected/sbin/slogger.elf'
@@ -278,6 +284,9 @@ apply_patch_if_possible_or_present lq lq-taskman-rust-tm-shared-providers.patch 
 apply_patch_if_possible_or_present lq lq-taskman-rust-tm-procfs-retired.patch \
     "$ROOT/lq/taskman/Makefile" \
     'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
+apply_patch_if_possible_or_present lq lq-taskman-rust-tm-script-retired.patch \
+    "$ROOT/lq/taskman/Makefile" \
+    'QSOE_RUST_TM_SCRIPT must be 1 after C tm_script retirement'
 apply_patch_if_possible_or_present lq lq-taskman-stack-32k.patch \
     "$ROOT/lq/taskman/start.S" \
     '    .skip 32768'
@@ -364,6 +373,7 @@ apply_patch_if_possible_or_present lq lq-taskman-rust-tm-elf-rc-default.patch \
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 1'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS ?= 1'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
+require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_SCRIPT must be 1 after C tm_script retirement'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_ELF ?= 1'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_PATHMGR ?= 0'
@@ -429,6 +439,7 @@ require_line "$ROOT/nq/Makefile" 'SBIN_VIRTIO_ELF=$(SELECTED_VIRTIO_ELF)'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CPIO ?= 1'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PROCFS ?= 1'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
+require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SCRIPT must be 1 after C tm_script retirement'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_ELF ?= 1'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_FDT ?= 0'
@@ -499,6 +510,7 @@ require_line "$ROOT/lq/Makefile" 'FORCE:'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 1'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS ?= 1'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement'
+require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SCRIPT must be 1 after C tm_script retirement'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_ELF ?= 1'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_FDT ?= 0'

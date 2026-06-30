@@ -146,7 +146,7 @@ capture_lq_taskman_plan() {
         QSOE_RUST_TM_PROCFS=1 \
         QSOE_RUST_TM_PSEUDODEV=0 \
         QSOE_RUST_TM_RSRCDB=0 \
-        QSOE_RUST_TM_SCRIPT=0 \
+        QSOE_RUST_TM_SCRIPT=1 \
         QSOE_RUST_TM_SYSCFG=0 \
         QSOE_RUST_TM_SYSFS=0 \
         > "$log"
@@ -184,7 +184,7 @@ build_lq_taskman() {
         QSOE_RUST_TM_PROCFS=1 \
         QSOE_RUST_TM_PSEUDODEV=0 \
         QSOE_RUST_TM_RSRCDB=0 \
-        QSOE_RUST_TM_SCRIPT=0 \
+        QSOE_RUST_TM_SCRIPT=1 \
         QSOE_RUST_TM_SYSCFG=0 \
         QSOE_RUST_TM_SYSFS=0 \
         taskman

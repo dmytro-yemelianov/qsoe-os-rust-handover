@@ -70,8 +70,8 @@ ifneq ($(QSOE_RUST_TM_PROCFS),1)
 $(error QSOE_RUST_TM_PROCFS must be 1 after C tm_procfs retirement)
 endif
 
-ifneq ($(filter $(QSOE_RUST_TM_SCRIPT),0 1),$(QSOE_RUST_TM_SCRIPT))
-$(error QSOE_RUST_TM_SCRIPT must be 0 or 1)
+ifneq ($(QSOE_RUST_TM_SCRIPT),1)
+$(error QSOE_RUST_TM_SCRIPT must be 1 after C tm_script retirement)
 endif
 
 ifneq ($(filter $(QSOE_RUST_TM_SYSCFG),0 1),$(QSOE_RUST_TM_SYSCFG))

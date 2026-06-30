@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Validate the tm_script Rust-default RC selector and the C rollback path.
+# Validate the retired tm_script Rust selector.
 
 set -eu
 
@@ -8,13 +8,12 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-script-rc-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
-Builds NQ and LQ taskman in the selected tm_script RC mode, verifies the
-expected script.o archive membership, then reuses the live tm_script runtime
-smoke.
+Builds NQ and LQ taskman with the retired Rust tm_script provider, verifies
+that C script.o is absent, then reuses the live tm_script runtime smoke.
 
 Environment:
-  TM_SCRIPT_RC_ROLLBACK  set 1 to select C tm_script rollback
-  QSOE_RUST_TM_SCRIPT    defaults to the Rust RC path; may be 0 or 1
+  TM_SCRIPT_RC_ROLLBACK  unsupported after C tm_script retirement
+  QSOE_RUST_TM_SCRIPT    must remain 1 after C tm_script retirement
   TM_SCRIPT_RC_WORKDIR   output directory, default build/tm-script-rc
 EOF
 }
@@ -83,74 +82,51 @@ require_script_count() {
         fail "$label expected $expected script.o members, got $count"
 }
 
-normalize_selector() {
-    case "$1" in
-        1|true|TRUE|yes|YES)
-            printf '1'
-            ;;
-        0|false|FALSE|no|NO)
-            printf '0'
-            ;;
-        *)
-            fail "QSOE_RUST_TM_SCRIPT must be 0 or 1"
-            ;;
-    esac
-}
-
 mkdir -p "$workdir"
 "$ROOT/scripts/apply-component-overrides.sh"
 
-case "$rollback" in
-    0|false|FALSE|no|NO)
-        if [ "${QSOE_RUST_TM_SCRIPT+x}" ]; then
-            selected=$(normalize_selector "$QSOE_RUST_TM_SCRIPT")
-            if [ "$selected" -eq 1 ]; then
-                mode=rust-selected
-                expected_script_count=0
-            else
-                mode=c-selected
-                expected_script_count=1
-            fi
-        else
-            selected=1
-            mode=rust-default
-            expected_script_count=0
-        fi
-        ;;
+case "${QSOE_RUST_TM_SCRIPT:-1}" in
     1|true|TRUE|yes|YES)
-        selected=0
-        mode=c-rollback
-        expected_script_count=1
+        selected=1
+        ;;
+    0|false|FALSE|no|NO)
+        echo "tm-script-rc-smoke.sh: C tm_script is retired; QSOE_RUST_TM_SCRIPT must be 1" >&2
+        exit 2
         ;;
     *)
-        fail "TM_SCRIPT_RC_ROLLBACK must be 0 or 1"
+        echo "tm-script-rc-smoke.sh: QSOE_RUST_TM_SCRIPT must be 1 after C retirement" >&2
+        exit 2
+        ;;
+esac
+
+case "$rollback" in
+    0|false|FALSE|no|NO)
+        mode=rust-retired
+        expected_script_count=0
+        ;;
+    1|true|TRUE|yes|YES)
+        echo "tm-script-rc-smoke.sh: C tm_script rollback is retired" >&2
+        exit 2
+        ;;
+    *)
+        echo "tm-script-rc-smoke.sh: TM_SCRIPT_RC_ROLLBACK must be 0 after C retirement" >&2
+        exit 2
         ;;
 esac
 
 echo "tm-script-rc-smoke.sh: mode=$mode rollback=$rollback"
 
 echo "tm-script-rc-smoke.sh: verifying NQ taskman selector"
-if [ "$mode" = rust-default ]; then
-    env -u QSOE_RUST_TM_SCRIPT "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
-        QSOE_RUST_TM_PROCFS=1
-else
-    "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
-        QSOE_RUST_TM_SCRIPT="$selected" \
-        QSOE_RUST_TM_PROCFS=1
-fi
+"$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
+    QSOE_RUST_TM_SCRIPT=1 \
+    QSOE_RUST_TM_PROCFS=1
 require_script_count "nq-$mode" "$ROOT/nq/build/libtaskman/libtaskman.a" "$expected_script_count"
 
 echo "tm-script-rc-smoke.sh: verifying LQ taskman selector"
-if [ "$mode" = rust-default ]; then
-    env -u QSOE_RUST_TM_SCRIPT "$MAKE" -C "$ROOT/lq" --no-print-directory \
-        QSOE_RUST_TM_PROCFS=1 \
-        taskman
-else
-    "$MAKE" -C "$ROOT/lq" --no-print-directory \
-        QSOE_RUST_TM_SCRIPT="$selected" \
-        QSOE_RUST_TM_PROCFS=1 \
-        taskman
-fi
+"$MAKE" -C "$ROOT/lq" --no-print-directory \
+    QSOE_RUST_TM_SCRIPT=1 \
+    QSOE_RUST_TM_PROCFS=1 \
+    taskman
 require_script_count "lq-$mode" "$ROOT/lq/build/libtaskman/libtaskman.a" "$expected_script_count"
 
 runtime_args=("$@")
@@ -161,8 +137,5 @@ fi
 export QSOE_RUST_TM_SCRIPT="$selected"
 export QSOE_RUST_TM_PROCFS=1
 export TM_SCRIPT_RUNTIME_SMOKE_WORKDIR="$workdir"
-if [ "$selected" -eq 0 ]; then
-    export TM_SCRIPT_RUNTIME_ALLOW_C=1
-fi
 
 exec "$ROOT/scripts/tm-script-runtime-smoke.sh" "${runtime_args[@]}"

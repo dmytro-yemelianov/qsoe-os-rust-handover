@@ -335,8 +335,8 @@ the same live path; `make tm-cpio-rc-rollback-smoke` repeats it with C rollback.
 
 ## Task Manager Shebang Parser Selection
 
-The Rust `tm_script` provider is in a Rust-default RC window and can still be
-rolled back to the C taskman provider:
+The Rust `tm_script` provider is retired as the mandatory taskman shebang
+parser provider:
 
 ```sh
 make check-tm-script-model
@@ -344,22 +344,21 @@ make rust-tm-script-provider
 make tm-script-evidence
 make tm-script-runtime-smoke
 make tm-script-rc-smoke
-make tm-script-rc-rollback-smoke
 ```
 
 With the default `QSOE_RUST_TM_SCRIPT=1`, NQ and LQ taskman omit C `script.o`,
 build `qsoe-tm-script` for `riscv64imac-unknown-none-elf`, and link the shared
-`qsoe-tm-providers` archive into taskman. With `QSOE_RUST_TM_SCRIPT=0`, NQ and
-LQ taskman restore the existing C `script.o` rollback provider. Interpreter
-loading, argv construction, CPIO lookup, ELF loading, relocation, process
-tables, and seL4 invocation code remain C.
+`qsoe-tm-providers` archive into taskman. `QSOE_RUST_TM_SCRIPT=0` now fails
+fast because the C `script.o` rollback provider is retired. Interpreter loading,
+argv construction, CPIO lookup, ELF loading, relocation, process tables, and
+seL4 invocation code remain C.
 
 `make tm-script-runtime-smoke` boots QSOE/L with Rust `tm_script` selected,
 stages `/usr/bin/tm_script_probe` as a temporary shell script, and runs it
 directly so taskman must parse the shebang before loading `/bin/sh`.
 `make tm-script-rc-smoke` first audits default Rust archive selection, then
-runs the same live path; `make tm-script-rc-rollback-smoke` repeats it with C
-rollback.
+runs the same live path. `TM_SCRIPT_RC_ROLLBACK=1 scripts/tm-script-rc-smoke.sh`
+fails fast after retirement.
 
 ## Task Manager ELF View Parser Selection
 

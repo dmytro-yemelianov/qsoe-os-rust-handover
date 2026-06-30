@@ -24,6 +24,61 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 12:40 CEST - `tm_script` C Provider Retirement
+
+Scope:
+
+- Removed the C `tm_script` provider implementation from
+  `libtaskman/src/script.c`.
+- Removed the C host model fixture `tests/tm_script_model_test.c`; the Rust
+  `qsoe-tm-script` host tests are now the canonical parser evidence.
+- Made `QSOE_RUST_TM_SCRIPT=1` mandatory in the top-level and libtaskman
+  makefiles, the Rust provider archive builder, component override patches, and
+  tm_script smoke/evidence scripts.
+- Removed the tm_script C rollback smoke target and converted rollback selector
+  attempts into fail-fast configuration errors.
+- Updated docs, inventory/status summaries, and the component patch overlay to
+  mark `tm_script` as a retired C provider.
+
+Commands:
+
+- `mcp__codebase_memory_mcp.list_projects`
+- `mcp__codebase_memory_mcp.index_status`
+- `mcp__codebase_memory_mcp.search_graph`
+- `bash -n scripts/build-rust-tm-providers.sh scripts/check-tm-script-model.sh scripts/tm-script-evidence.sh scripts/tm-script-runtime-smoke.sh scripts/tm-script-rc-smoke.sh scripts/apply-component-overrides.sh`
+- `scripts/apply-component-overrides.sh`
+- `make check-tm-script-model`
+- `QSOE_RUST_TM_SCRIPT=0 scripts/build-rust-tm-providers.sh /tmp/should-not-build-tm-script.a`
+- `make tm-script-evidence`
+- `TM_SCRIPT_RC_ROLLBACK=1 scripts/tm-script-rc-smoke.sh`
+- `QSOE_RUST_TM_SCRIPT=0 scripts/tm-script-rc-smoke.sh`
+- `timeout 300 make tm-script-rc-smoke`
+- `make tm-fdt-evidence`
+- `make tm-pathmgr-evidence`
+- `make tm-rsrcdb-evidence`
+- `make roadmap-validate`
+- `git diff --check`
+- `make rust-quality`
+
+Result:
+
+- `qsoe-tm-script` host tests pass and cover shebang parsing, empty or invalid
+  interpreter rejection, CR line endings, and C-compatible truncation behavior.
+- Rust provider archives still build with the required `tm-script` feature, and
+  explicit `QSOE_RUST_TM_SCRIPT=0` use is rejected before any archive build.
+- NQ and LQ taskman builds no longer include `script.o`; final taskman symbols
+  resolve to the Rust `tm_script_parse_shebang` provider.
+- The runtime RC smoke still boots the direct shebang spawn probe and exits
+  cleanly in Rust-retired mode.
+- Adjacent taskman evidence paths (`tm-fdt`, `tm-pathmgr`, `tm-rsrcdb`) pass
+  after switching their link-plan setup to the mandatory Rust tm_script provider.
+- Roadmap metadata validates with 38 issue-backed items.
+
+Follow-up:
+
+- Open the retirement PR, watch QSOE CI, merge after green, then close issue
+  #143 with the PR and main-branch CI evidence.
+
 ## 2026-06-30 11:21 CEST - CI Cache And `sccache` Prototype
 
 Scope:

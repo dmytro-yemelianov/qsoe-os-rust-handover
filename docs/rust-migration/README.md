@@ -79,44 +79,46 @@ Read in this order:
    and evidence gate.
 40. `TASK_MANAGER_CPIO_RC.md`: Rust-default `tm_cpio` release-candidate note
    and C rollback drill.
-41. `TASK_MANAGER_SCRIPT.md`: Rust-default RC task-manager shebang parser provider
+41. `TASK_MANAGER_SCRIPT.md`: retired Rust task-manager shebang parser provider
    and evidence gate.
-42. `TASK_MANAGER_SCRIPT_RC.md`: Rust-default `tm_script` release-candidate
-   note and C rollback drill.
-43. `TASK_MANAGER_SYSCFG.md`: Rust-default RC task-manager syscfg TLV provider
+42. `TASK_MANAGER_SCRIPT_RC.md`: historical Rust-default `tm_script`
+   release-candidate note and C rollback drill.
+43. `TASK_MANAGER_SCRIPT_RETIREMENT.md`: C provider retirement note for
+   `tm_script`, including the Rust-only taskman path and removed rollback.
+44. `TASK_MANAGER_SYSCFG.md`: Rust-default RC task-manager syscfg TLV provider
    and evidence gate.
-44. `TASK_MANAGER_SYSCFG_RC.md`: Rust-default `tm_syscfg` release-candidate
+45. `TASK_MANAGER_SYSCFG_RC.md`: Rust-default `tm_syscfg` release-candidate
    note and C rollback drill.
-45. `TASK_MANAGER_CRED.md`: Rust opt-in task-manager credential policy
+46. `TASK_MANAGER_CRED.md`: Rust opt-in task-manager credential policy
    provider and evidence gate.
-46. `TASK_MANAGER_PSEUDODEV.md`: Rust opt-in LQ task-manager `/dev/null` and
+47. `TASK_MANAGER_PSEUDODEV.md`: Rust opt-in LQ task-manager `/dev/null` and
    `/dev/zero` provider and evidence gate.
-47. `TASK_MANAGER_RSRCDB.md`: Rust opt-in LQ task-manager resource DB
+48. `TASK_MANAGER_RSRCDB.md`: Rust opt-in LQ task-manager resource DB
    provider and evidence gate.
-48. `TASK_MANAGER_SYSFS.md`: Rust-default RC task-manager `/sys` provider and
+49. `TASK_MANAGER_SYSFS.md`: Rust-default RC task-manager `/sys` provider and
    evidence gate.
-49. `TASK_MANAGER_SYSFS_RC.md`: Rust-default `tm_sysfs` release-candidate
+50. `TASK_MANAGER_SYSFS_RC.md`: Rust-default `tm_sysfs` release-candidate
    note and C rollback drill.
-50. `TASK_MANAGER_ELF.md`: Rust-default RC task-manager ELF view parser provider
+51. `TASK_MANAGER_ELF.md`: Rust-default RC task-manager ELF view parser provider
    and evidence gate.
-51. `TASK_MANAGER_ELF_RC.md`: Rust-default `tm_elf` release-candidate note
+52. `TASK_MANAGER_ELF_RC.md`: Rust-default `tm_elf` release-candidate note
    and C rollback drill.
-52. `TASK_MANAGER_FDT.md`: Rust opt-in LQ task-manager FDT parser provider and
+53. `TASK_MANAGER_FDT.md`: Rust opt-in LQ task-manager FDT parser provider and
    evidence gate.
-53. `TASK_MANAGER_SYSMAP.md`: Rust-default RC LQ task-manager sysmap page
+54. `TASK_MANAGER_SYSMAP.md`: Rust-default RC LQ task-manager sysmap page
    builder and evidence gate.
-54. `TASK_MANAGER_SYSMAP_RC.md`: Rust-default `tm_sysmap` release-candidate
+55. `TASK_MANAGER_SYSMAP_RC.md`: Rust-default `tm_sysmap` release-candidate
    note and C rollback drill.
-55. `TASK_MANAGER_PATHMGR.md`: Rust opt-in task-manager path registry provider
+56. `TASK_MANAGER_PATHMGR.md`: Rust opt-in task-manager path registry provider
    and evidence gate.
-56. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+57. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
-57. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
-58. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+58. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
+59. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-59. `PLAN.md`: phased migration plan from baseline validation through possible
+60. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-60. `TASKS.md`: executable backlog with acceptance criteria.
+61. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust
