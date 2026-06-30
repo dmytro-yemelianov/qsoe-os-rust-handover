@@ -53,6 +53,7 @@ RUN apt-get update && \
         qemu-system-misc \
         ripgrep \
         rsync \
+        sccache \
         universal-ctags \
         cscope \
         xz-utils && \
@@ -87,9 +88,10 @@ RUN curl --proto '=https' --tlsv1.2 -fsSLo /tmp/rustup-init https://sh.rustup.rs
     chmod -R a+rwX /opt/rust "${CARGO_HOME}"
 
 RUN printf '%s\n' \
-        'export RUSTUP_HOME=/opt/rust/rustup' \
-        'export CARGO_HOME=/cargo-cache' \
+        'export RUSTUP_HOME=${RUSTUP_HOME:-/opt/rust/rustup}' \
+        'export CARGO_HOME=${CARGO_HOME:-/cargo-cache}' \
         'export PATH=/opt/rust/cargo/bin:$PATH' \
+        'if [ -n "${QSOE_SCCACHE_WRAPPER_DIR:-}" ]; then export PATH="${QSOE_SCCACHE_WRAPPER_DIR}:$PATH"; fi' \
         > /etc/profile.d/qsoe-rust.sh
 
 WORKDIR /work/qsoe/os

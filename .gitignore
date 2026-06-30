@@ -19,6 +19,9 @@ boot/*.bin
 # Build artifacts (the `make nvme` QEMU test image, etc.)
 build/
 
+# Local dependency/compiler caches mounted into toolchain containers
+.qsoe-cache/
+
 # Rust migration spike build artifacts
 rust/target/
 rust/fuzz/artifacts/

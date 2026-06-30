@@ -24,6 +24,69 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 11:21 CEST - CI Cache And `sccache` Prototype
+
+Scope:
+
+- Added `sccache` to the Debian toolchain image.
+- Added persistent container cache mounts under `.qsoe-cache/container` for
+  home, Cargo registry/git state, and the `sccache` object store.
+- Added `QSOE_SCCACHE=1` for Rust `RUSTC_WRAPPER=sccache` and
+  `QSOE_SCCACHE_C=1` for compiler-name-preserving C/C++ wrappers inside the
+  container.
+- `QSOE_SCCACHE=1` defaults `CARGO_INCREMENTAL=0` unless the caller overrides
+  it, because incremental Rust dev-profile builds are not cacheable by
+  `sccache`.
+- Added a pinned `actions/cache` restore/save step for Cargo registry/git and
+  `sccache` data only; QSOE build products, `rust/target`, images, and logs
+  remain uncached.
+- Added `make container-sccache-stats` for ad hoc cache-store visibility.
+- Added `QSOE_SCCACHE_STATS=1` for CI so each container invocation prints its
+  own `sccache --show-stats` output before exiting.
+
+Commands:
+
+- `mcp__codebase_memory_mcp.index_status`
+- `mcp__codebase_memory_mcp.search_graph`
+- `mcp__codebase_memory_mcp.get_code_snippet`
+- `docker run --rm debian:trixie bash -lc 'apt-get update >/dev/null && apt-cache policy sccache'`
+- `bash -n scripts/container-toolchain.sh scripts/sccache-compiler-wrapper.sh`
+- `git diff --check`
+- `make container-toolchain-build`
+- `QSOE_SCCACHE=1 QSOE_SCCACHE_C=1 scripts/container-toolchain.sh run bash -c '...'`
+- `QSOE_SCCACHE=1 QSOE_SCCACHE_C=1 scripts/container-toolchain.sh run bash -lc '...'`
+- `QSOE_SCCACHE=1 QSOE_SCCACHE_STATS=1 scripts/container-toolchain.sh run bash -c 'rm -rf /tmp/qsoe-rust-sccache-smoke; CARGO_TARGET_DIR=/tmp/qsoe-rust-sccache-smoke cargo check --manifest-path rust/Cargo.toml -p qsoe-abi'`
+- `QSOE_SCCACHE=1 QSOE_SCCACHE_C=1 QSOE_SCCACHE_STATS=1 make container-rust-fast`
+- `QSOE_SCCACHE=1 QSOE_SCCACHE_C=1 QSOE_SCCACHE_STATS=1 scripts/container-toolchain.sh run bash -c 'QSOE_INDEX_CLEAN=1 QSOE_INDEX_DB_FLAVOR=container make index-c-compile-db; QSOE_TIDY_LIMIT=10 make tidy-c'`
+
+Result:
+
+- Debian trixie provides `sccache` 0.10.0-4 from `main`.
+- The wrapper path works for both non-login and login shells; both resolve
+  `gcc` and `riscv64-linux-gnu-gcc` through `/tmp/qsoe-sccache-wrappers`.
+- The C/C++ smoke records cacheable host and RISC-V GCC requests, then repeats
+  as cache hits from the persisted `.qsoe-cache/container/sccache` store.
+- A forced Rust `qsoe-abi` compile first records one Rust cache miss and then
+  repeats as one Rust cache hit when run again with a fresh target directory.
+- `make container-rust-fast` passes with the CI cache environment and recorded
+  32 cacheable Rust misses during the first post-incremental-disable run.
+- PR CI run 28434537628 failed in the compile-database step when the initial
+  `build/cache/container` location was removed by `make clean` while mounted as
+  `/tmp/qsoe-sccache`; the cache root was moved to `.qsoe-cache/container`.
+- The failed CI step was reproduced locally after the move: it generated 878
+  compile commands, ran bounded clang-tidy, and finished with 871 executed
+  C/C++ `sccache` requests and no cache errors.
+- Baseline before the cache change: `main` CI run 28431125597 completed in
+  7m41s wall time on 2026-06-30, and the taskman RC smoke steps were 6-8s each.
+- After timings are pending the cache PR run and the follow-up `main` run,
+  because the first run may be a cold cache population.
+
+Follow-up:
+
+- Record the PR/main CI timings and `sccache --show-stats` output in #201.
+- Close #201 only after the cache wiring passes CI and the issue records the
+  before/after evidence.
+
 ## 2026-06-30 10:21 CEST - Component Gate Harness
 
 Scope:

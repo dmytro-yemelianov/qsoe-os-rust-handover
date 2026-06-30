@@ -79,6 +79,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         rust-pipe-data-smoke pipe-rc-data-smoke \
         procfs-smoke tm-procfs-rc-smoke \
         container-toolchain-build container-shell container-check \
+        container-sccache-stats \
         container-index-c container-index-c-static container-index-c-compile-db \
         container-tidy-c \
         container-elf-baseline container-audit-artifacts \
@@ -648,6 +649,9 @@ container-shell:
 
 container-check:
 	@scripts/container-toolchain.sh check
+
+container-sccache-stats:
+	@scripts/container-toolchain.sh run bash -c 'if command -v sccache >/dev/null 2>&1; then sccache --show-stats; if [ -n "$${SCCACHE_DIR:-}" ]; then du -sh "$$SCCACHE_DIR" || true; fi; else echo "sccache not installed"; fi'
 
 container-index-c: container-index-c-static
 

@@ -111,6 +111,82 @@ macOS/container cache contention. Developers can still override the location:
 CARGO_TARGET_DIR=/tmp/qsoe-rust-target make rust-quality
 ```
 
+## Container Cache And `sccache`
+
+Container runs keep persistent dependency/compiler cache state under:
+
+```text
+.qsoe-cache/container/home
+.qsoe-cache/container/cargo-home
+.qsoe-cache/container/sccache
+```
+
+The cache root can be changed, or disabled entirely:
+
+```sh
+QSOE_CONTAINER_CACHE_ROOT=/var/tmp/qsoe-cache make container-rust-quality
+QSOE_CONTAINER_CACHE=0 make container-rust-quality
+```
+
+The GitHub Actions CI cache stores only Cargo registry/git state and the
+`sccache` object store:
+
+```text
+.qsoe-cache/container/cargo-home/registry
+.qsoe-cache/container/cargo-home/git
+.qsoe-cache/container/sccache
+```
+
+It deliberately does not cache `build/release`, `rust/target`, component build
+directories, QEMU images, or boot logs. The cache root is outside `build/` so
+`make clean` and compile-database regeneration cannot erase an active cache
+mount. Final outputs remain rebuilt by the normal Make and smoke-test gates.
+
+CI enables both Rust and compiler-name-preserving C/C++ wrappers:
+
+```text
+QSOE_SCCACHE=1
+QSOE_SCCACHE_C=1
+```
+
+`QSOE_SCCACHE=1` sets `RUSTC_WRAPPER=sccache` and defaults
+`CARGO_INCREMENTAL=0` so Rust compile calls are cacheable in CI. Override
+`CARGO_INCREMENTAL` explicitly when local incremental behavior matters more
+than shared compiler cache hits. `QSOE_SCCACHE_C=1` prepends wrappers for `cc`,
+`gcc`, `clang`, and the RISC-V GNU compiler names inside the container without
+editing component Makefiles. Disable either variable while debugging
+cache-sensitive compiler behavior.
+
+Prefer non-login shells for custom cached container commands:
+
+```sh
+scripts/container-toolchain.sh run bash -c 'make rust-quality'
+```
+
+The container profile preserves an already-mounted `CARGO_HOME` and reapplies
+the `sccache` wrapper path, but the CI workflow avoids login-shell surprises on
+cache-sensitive steps.
+
+Cache invalidation is keyed on:
+
+- `rust/Cargo.lock`, `rust/fuzz/Cargo.lock`, Rust manifests, and
+  `rust/rust-toolchain.toml`;
+- `toolchains/debian/Dockerfile`;
+- `scripts/container-toolchain.sh`, `scripts/sccache-compiler-wrapper.sh`, and
+  Rust workflow scripts;
+- component override patches under `patches/components/`.
+
+Changes outside that set can still affect final OS images, which is why final
+build products are not cached. Use this for cache visibility:
+
+```sh
+make container-sccache-stats
+```
+
+CI also sets `QSOE_SCCACHE_STATS=1`, which prints per-container-run `sccache`
+stats before each container exits. The counters are not aggregated across
+containers, but the backed object store persists across runs.
+
 ## Quality Policy
 
 `make rust-quality` is the minimum gate for changes under `rust/`:
@@ -158,7 +234,7 @@ improvements from C-to-Rust component candidates.
 | Issue | Gate | Workflow role |
 | --- | --- | --- |
 | #200 | Component gate harness and roadmap sync | Generate the per-component evidence/RC/rollback checklist from issue metadata and reject malformed roadmap state in CI and before dashboard publication. |
-| #201 | CI cache and sccache acceleration | Shorten repeated Rust/C taskman and smoke-test loops without caching stale release artifacts. |
+| #201 | CI cache and sccache acceleration | Shorten repeated Rust/C taskman and smoke-test loops with Cargo registry/git cache, `sccache`, and explicit no-build-output cache boundaries. |
 | #202 | Static analysis and supply-chain gates | Add CodeQL plus dependency-review pressure around C/C++/Rust security and dependency changes. |
 | #203 | Rust host test and parser fuzz workflow | Promote `cargo-nextest`, parser fuzzing, and coverage from optional deep tools into explicit gates for parser-heavy PRs. |
 
