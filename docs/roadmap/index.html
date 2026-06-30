@@ -79,6 +79,32 @@
         </div>
       </section>
 
+      <section class="architecture-section" aria-labelledby="architecture-title">
+        <div class="section-heading">
+          <div>
+            <h2 id="architecture-title">Microkernel / Module Map</h2>
+            <p>Same issue-backed component set, shown as conservative and Rust-migrated system postures.</p>
+          </div>
+        </div>
+        <div class="architecture-grid">
+          <article class="architecture-card">
+            <div class="chart-heading">
+              <h3>Conservative</h3>
+              <p>C defaults, rollback paths, and deferred kernel-adjacent boundaries</p>
+            </div>
+            <div class="architecture-map" id="architecture-conservative"></div>
+          </article>
+          <article class="architecture-card">
+            <div class="chart-heading">
+              <h3>Rust-Migrated</h3>
+              <p>Rust defaults, opt-in providers, and retired C implementations</p>
+            </div>
+            <div class="architecture-map" id="architecture-rust"></div>
+          </article>
+        </div>
+        <div class="architecture-legend" id="architecture-legend" aria-label="Architecture legend"></div>
+      </section>
+
       <section class="controls" aria-label="Roadmap filters">
         <div class="control-field">
           <label for="search">Search</label>

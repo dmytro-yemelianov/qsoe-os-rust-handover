@@ -75,6 +75,9 @@ const els = {
   riskChart: document.querySelector("#risk-chart"),
   phaseChart: document.querySelector("#phase-chart"),
   backlogChart: document.querySelector("#backlog-chart"),
+  architectureConservative: document.querySelector("#architecture-conservative"),
+  architectureRust: document.querySelector("#architecture-rust"),
+  architectureLegend: document.querySelector("#architecture-legend"),
   components: document.querySelector("#components"),
   componentCount: document.querySelector("#component-count"),
   phases: document.querySelector("#phases"),
@@ -298,6 +301,7 @@ function render() {
   renderMetrics();
   renderWhy();
   renderProgressVisuals();
+  renderArchitecture();
   renderFilters();
   renderComponents();
   renderPhases();
@@ -361,6 +365,194 @@ function renderProgressVisuals() {
   renderBarChart(els.riskChart, countBy([...components, ...candidateBacklog, ...toolingGates], "risk"));
   renderBarChart(els.phaseChart, countBy(roadmapPhases, "status"));
   renderBarChart(els.backlogChart, countBy(candidateBacklog, "posture"));
+}
+
+function renderArchitecture() {
+  const components = state.data.components;
+  const activeComponents = components.filter((component) => !component.retired);
+  const cDefaultCount = activeComponents.filter((component) => component.cDefault).length;
+  const rollbackCount = activeComponents.filter((component) => component.cRollback.length > 0).length;
+  const rustMigratedCount = components.filter((component) => (
+    component.rustDefault || component.rustOptIn || component.retired
+  )).length;
+  const retiredCount = components.filter((component) => component.retired).length;
+
+  renderArchitectureMap(els.architectureConservative, {
+    mode: "conservative",
+    kernelDetail: "seL4 kernel, bootstrap, spawn, capability, loader, and relocation paths stay in the conservative boundary.",
+    stats: [
+      `${cDefaultCount} C defaults`,
+      `${rollbackCount} rollback paths`,
+      `${activeComponents.length} active modules`
+    ],
+    groups: architectureGroups(components)
+  });
+
+  renderArchitectureMap(els.architectureRust, {
+    mode: "rust",
+    kernelDetail: "seL4 stays unchanged while proven modules move behind Rust providers, services, and host tools.",
+    stats: [
+      `${rustMigratedCount} Rust-backed modules`,
+      `${retiredCount} C retirements`,
+      `${components.length} tracked modules`
+    ],
+    groups: architectureGroups(components)
+  });
+
+  els.architectureLegend.replaceChildren(
+    legendItem("C default", "module-c"),
+    legendItem("C rollback", "module-rollback"),
+    legendItem("Rust default", "module-rust"),
+    legendItem("Rust opt-in", "module-optin"),
+    legendItem("C retired", "module-retired")
+  );
+}
+
+function renderArchitectureMap(container, config) {
+  const kernel = el("div", "kernel-node");
+  kernel.append(el("strong", "", "seL4 microkernel"), el("span", "", config.kernelDetail));
+
+  const statRow = el("div", "architecture-stats");
+  statRow.append(...config.stats.map((stat) => el("span", "", stat)));
+
+  const boundary = el("div", "architecture-boundary");
+  boundary.append(el("span", "", "IPC / C ABI boundary"));
+
+  const lanes = el("div", "architecture-lanes");
+  lanes.append(...config.groups.map((group) => {
+    const lane = el("section", "architecture-lane");
+    const heading = el("div", "lane-heading");
+    heading.append(el("h4", "", group.title), el("span", "", `${group.components.length}`));
+    const modules = el("div", "module-cloud");
+    modules.append(...group.components.map((component) => architectureModule(component, config.mode)));
+    lane.append(heading, modules);
+    return lane;
+  }));
+
+  container.replaceChildren(kernel, statRow, boundary, lanes);
+}
+
+function architectureGroups(components) {
+  const labels = {
+    "task-manager": "Task manager providers",
+    "services": "Resource servers and drivers",
+    "host-tools": "Host and image tools",
+    "test-helper": "Test helpers",
+    "support": "Support modules"
+  };
+  const order = ["task-manager", "services", "host-tools", "test-helper", "support"];
+  const groups = new Map(order.map((id) => [id, []]));
+
+  for (const component of components) {
+    groups.get(componentArchitectureGroup(component)).push(component);
+  }
+
+  return order
+    .map((id) => ({
+      id,
+      title: labels[id],
+      components: groups.get(id).sort(byOrderThenName)
+    }))
+    .filter((group) => group.components.length > 0);
+}
+
+function componentArchitectureGroup(component) {
+  const id = component.id || "";
+  const area = component.area || "";
+
+  if (area === "task-manager" || id.startsWith("tm-")) {
+    return "task-manager";
+  }
+  if (area === "host-tools" || id.includes("qrvfs") || id.includes("mkfs")) {
+    return "host-tools";
+  }
+  if (area === "test-helper" || id.startsWith("test-")) {
+    return "test-helper";
+  }
+  if (area === "resource-server" || area === "driver" || area === "service") {
+    return "services";
+  }
+  return "support";
+}
+
+function architectureModule(component, mode) {
+  const link = el("a", `module-node ${architectureModuleClass(component, mode)}`);
+  link.href = component.issue.url;
+  link.target = "_blank";
+  link.rel = "noreferrer";
+  link.title = component.issue.title;
+  link.append(el("strong", "", moduleShortName(component)), el("span", "", architectureModulePosture(component, mode)));
+  return link;
+}
+
+function architectureModuleClass(component, mode) {
+  if (component.retired) {
+    return "module-retired";
+  }
+  if (mode === "conservative") {
+    if (component.cDefault) {
+      return "module-c";
+    }
+    if (component.cRollback.length > 0) {
+      return "module-rollback";
+    }
+    if (component.rustOptIn) {
+      return "module-optin";
+    }
+    return "module-unknown";
+  }
+  if (component.rustDefault) {
+    return "module-rust";
+  }
+  if (component.rustOptIn) {
+    return "module-optin";
+  }
+  if (component.cDefault) {
+    return "module-c";
+  }
+  return "module-unknown";
+}
+
+function architectureModulePosture(component, mode) {
+  if (component.retired) {
+    return "C retired";
+  }
+  if (mode === "conservative") {
+    if (component.cDefault) {
+      return "C default";
+    }
+    if (component.cRollback.length > 0) {
+      return "C rollback";
+    }
+    if (component.rustOptIn) {
+      return "Rust opt-in";
+    }
+    return readable(component.currentState);
+  }
+  if (component.rustDefault) {
+    return component.cRollback.length > 0 ? "Rust default + rollback" : "Rust default";
+  }
+  if (component.rustOptIn) {
+    return "Rust opt-in";
+  }
+  if (component.cDefault) {
+    return "C default";
+  }
+  return readable(component.currentState);
+}
+
+function moduleShortName(component) {
+  return component.name
+    .replace(/^Task-manager\s+/i, "")
+    .replace(/\s+task-manager\s+/i, " ")
+    .replace(/\s+policy$/i, "")
+    .replace(/\s+service$/i, "");
+}
+
+function legendItem(label, className) {
+  const item = el("span", "legend-item");
+  item.append(el("i", `legend-swatch ${className}`), el("span", "", label));
+  return item;
 }
 
 function renderFilters() {
