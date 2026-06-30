@@ -1,6 +1,6 @@
 # OS-wide C Inventory
 
-Captured: 2026-06-29 19:49 CEST.
+Captured: 2026-06-30 CEST.
 
 This inventory gives the migration tracker an OS-wide baseline. It is not a
 claim that every C file is an independently translatable component. It separates
@@ -24,24 +24,25 @@ excluded unless `QSOE_INDEX_SEL4=1` is set.
 | `common` | 2 | 359 | Shared CPIO helper code. Rust CPIO parsing exists, but C remains for existing callers. |
 | `host_tools` | 2 | 781 | `qrvfs-tree` and `mkfs-qrv-rs` have Rust-default RC paths with C rollback. Tracked by #136. |
 | `libc` | 447 | 43,080 | Broad runtime, syscall, stdio, allocator, string, rtld, and QSOE wrapper surface. Not a wholesale Rust target. |
-| `libtaskman` | 22 | 2,864 | Best source of host-testable task-manager modules. `tm_procfs` is retired to Rust through the shared provider archive; `tm_cpio`, `tm_elf`, `tm_script`, `tm_syscfg`, and `tm_sysfs` are Rust-default RCs with C rollback; `tm_cred` and `tm_pathmgr` are Rust opt-in; remaining candidates are tracked in #153. |
+| `libtaskman` | 21 | 2,818 | Best source of host-testable task-manager modules. `tm_procfs` and `tm_script` are retired to Rust through the shared provider archive; `tm_cpio`, `tm_elf`, `tm_syscfg`, and `tm_sysfs` are Rust-default RCs with C rollback; `tm_cred` and `tm_pathmgr` are Rust opt-in; remaining candidates are tracked in #153. |
 | `lq` | 90 | 17,853 | seL4 task manager, LQ libc wrappers, process, capability, path, memory, syscall, and boot glue. Pure/diagnostic slices only are candidates; LQ sysmap is Rust-default RC, while FDT, pseudo-devices, and resource DB accounting remain Rust opt-in. |
 | `nq` | 125 | 25,053 | Kernel, NQ libc, and NQ taskman surface. Near-term linked Rust is deferred by policy; fixture-only candidates are tracked in #155. |
-| `quser` | 121 | 40,075 | Userland services, drivers, resource-server support, shell, tests, and utilities. `test_msgpass` is the first retired C helper; `slogger`, `pipe`, and `devb-virtio` are retired C production paths; several services have Rust pilots; many remain C. |
-| **Total** | **809** | **130,065** | QSOE-owned C/asm/linker surface in this checkout, excluding generated build outputs and vendor seL4. |
+| `quser` | 125 | 40,818 | Userland services, drivers, resource-server support, shell, tests, and utilities. `test_msgpass` is the first retired C helper; `slogger`, `pipe`, and `devb-virtio` are retired C production paths; several services have Rust pilots; many remain C. |
+| **Total** | **812** | **130,762** | QSOE-owned C/asm/linker surface in this checkout, excluding generated build outputs and vendor seL4. |
 
-By file type: `517` C files, `280` headers, `10` assembly files, and `2` linker
+By file type: `520` C files, `280` headers, `10` assembly files, and `2` linker
 scripts.
 
 ## Issue-backed Migration Ledger
 
 The canonical tracker is GitHub Issues filtered by `label:roadmap`. At this
-capture, the tracker contains 34 roadmap issues:
+capture, the tracker contains 38 roadmap issues:
 
 | Kind | Count | Meaning |
 | --- | ---: | --- |
 | Phase issues | 11 | Migration phases and policy gates from baseline through possible kernel reassessment. |
 | Component issues | 17 | Components with concrete Rust artifacts or RC evidence. |
+| Tooling issues | 4 | Workflow, memory, CI cache, and static-analysis gates that support the migration process. |
 | Backlog, retirement, and inventory issues | 6 | Remaining candidates, deferred areas, retirement gate, shared task-manager Rust archive work, and this inventory. |
 
 All roadmap issues carry parseable `qsoe-roadmap:v1` metadata for the dashboard.
@@ -58,7 +59,7 @@ Issue state, labels, and metadata are the source of truth for current progress.
 | `test_msgpass` | #140 | Retired C helper; Rust `test_msgpass-rs` is always staged as `/usr/bin/test_msgpass` in test images. |
 | `tm_procfs` | #141 | Retired C provider; Rust `qsoe-tm-procfs` is mandatory in taskman. |
 | `tm_cpio` | #142 | Rust-default RC provider with C rollback, focused runtime smoke, and explicit RC rollback smoke. |
-| `tm_script` | #143 | Rust-default RC provider with C rollback, focused runtime smoke, and explicit RC rollback smoke. |
+| `tm_script` | #143 | Retired C provider; Rust `qsoe-tm-script` is mandatory in taskman. |
 | `tm_elf` | #144 | Rust-default RC provider with C rollback, focused dynamic ELF spawn smoke, and explicit RC rollback smoke. |
 | `tm_fdt` | #146 | Rust opt-in LQ FDT parser provider with C rollback and focused `/chosen`/syscfg runtime smoke; not a Rust-default RC. |
 | `tm_syscfg` | #145 | Rust-default RC provider with C rollback, focused `/sys`/`sysinfo` runtime smoke, and explicit RC rollback smoke. |
@@ -72,7 +73,7 @@ Issue state, labels, and metadata are the source of truth for current progress.
 `test_msgpass` is the first tracked C implementation retired after an RC window
 and rollback drill. `slogger` is the first retired production service, followed
 by `pipe` and `devb-virtio`. `tm_procfs` is the first retired task-manager
-provider. Future retirements remain governed by #26 and must be separate
+provider; `tm_script` is the second retired task-manager provider. Future retirements remain governed by #26 and must be separate
 removal PRs after their own RC evidence.
 
 ## Remaining Candidate Buckets

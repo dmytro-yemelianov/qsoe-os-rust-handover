@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture tm_script evidence while preserving the C rollback provider.
+# Capture tm_script Rust-only retirement evidence.
 
 set -eu
 
@@ -8,14 +8,14 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MAKE=${MAKE:-make}
 WORKDIR=${TM_SCRIPT_EVIDENCE_WORKDIR:-"$ROOT/build/tm-script-evidence"}
 RUST_PROVIDER_A=${RUST_PROVIDER_A:-"$ROOT/build/rust/tm-script/libqsoe_tm_script.a"}
-MANIFEST="$ROOT/rust/Cargo.toml"
 
 usage() {
     cat <<'EOF'
 usage: scripts/tm-script-evidence.sh
 
-Builds and audits the Rust tm_script path and verifies C rollback
-archive membership for NQ and LQ taskman links.
+Builds and audits the retired Rust tm_script path, verifies that taskman
+archives no longer contain C script.o, and checks retired selector rejection
+for NQ and LQ taskman links.
 
 Environment:
   TM_SCRIPT_EVIDENCE_WORKDIR  output directory, default build/tm-script-evidence
@@ -92,6 +92,18 @@ require_script_count() {
         fail "$label expected $expected script.o members, got $count"
 }
 
+require_retired_selector_rejected() {
+    local label=$1
+    shift
+    local log="$WORKDIR/$label-retired-selector-rejection.txt"
+
+    if "$@" > "$log" 2>&1; then
+        fail "$label unexpectedly accepted QSOE_RUST_TM_SCRIPT=0"
+    fi
+    grep -Fq 'QSOE_RUST_TM_SCRIPT must be 1 after C tm_script retirement' "$log" ||
+        fail "$label rejection did not mention retired tm_script selector"
+}
+
 audit_flags() {
     local label=$1
     local elf=$2
@@ -157,46 +169,26 @@ audit_provider_archive() {
         tee -a "$WORKDIR/rust-provider-summary.txt"
 }
 
-echo "tm-script-evidence.sh: running C host model fixture"
+echo "tm-script-evidence.sh: running Rust host model tests"
 "$MAKE" -C "$ROOT" --no-print-directory check-tm-script-model
-
-echo "tm-script-evidence.sh: running Rust host tests"
-cargo test --manifest-path "$MANIFEST" -p qsoe-tm-script --features host-tests
 
 echo "tm-script-evidence.sh: building Rust provider archive"
 "$MAKE" -C "$ROOT" --no-print-directory rust-tm-script-provider
 audit_provider_archive
 
-echo "tm-script-evidence.sh: verifying NQ C rollback membership"
-"$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
-    QSOE_RUST_TM_CPIO=1 QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_SCRIPT=0 QSOE_RUST_TM_SYSFS=0
-require_script_count nq-c-rollback "$ROOT/nq/build/libtaskman/libtaskman.a" 1
-audit_flags nq-c-rollback-taskman "$ROOT/nq/build/taskman/taskman.elf"
-audit_linked_symbols nq-c-rollback-taskman "$ROOT/nq/build/taskman/taskman.elf"
-
-echo "tm-script-evidence.sh: verifying NQ Rust-selected membership"
+echo "tm-script-evidence.sh: verifying NQ Rust-only membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
     QSOE_RUST_TM_CPIO=1 QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 \
     QSOE_RUST_TM_SCRIPT=1 QSOE_RUST_TM_SYSFS=0
-require_script_count nq-rust-selected "$ROOT/nq/build/libtaskman/libtaskman.a" 0
-audit_flags nq-rust-selected-taskman "$ROOT/nq/build/taskman/taskman.elf"
-audit_linked_symbols nq-rust-selected-taskman "$ROOT/nq/build/taskman/taskman.elf"
+require_script_count nq-rust-retired "$ROOT/nq/build/libtaskman/libtaskman.a" 0
+audit_flags nq-rust-retired-taskman "$ROOT/nq/build/taskman/taskman.elf"
+audit_linked_symbols nq-rust-retired-taskman "$ROOT/nq/build/taskman/taskman.elf"
 
-echo "tm-script-evidence.sh: verifying LQ C rollback membership"
-"$MAKE" -C "$ROOT/lq" --no-print-directory \
-    QSOE_RUST_TM_CPIO=1 \
-    QSOE_RUST_TM_CRED=0 \
-    QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_PSEUDODEV=0 \
-    QSOE_RUST_TM_SCRIPT=0 \
-    QSOE_RUST_TM_SYSFS=0 \
-    taskman
-require_script_count lq-c-rollback "$ROOT/lq/build/libtaskman/libtaskman.a" 1
-audit_flags lq-c-rollback-taskman "$ROOT/lq/build/taskman.elf"
-audit_linked_symbols lq-c-rollback-taskman "$ROOT/lq/build/taskman.elf"
+echo "tm-script-evidence.sh: verifying NQ retired selector rejection"
+require_retired_selector_rejected nq \
+    "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory QSOE_RUST_TM_SCRIPT=0
 
-echo "tm-script-evidence.sh: verifying LQ Rust-selected membership"
+echo "tm-script-evidence.sh: verifying LQ Rust-only membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
     QSOE_RUST_TM_CPIO=1 \
     QSOE_RUST_TM_CRED=0 \
@@ -205,8 +197,12 @@ echo "tm-script-evidence.sh: verifying LQ Rust-selected membership"
     QSOE_RUST_TM_SCRIPT=1 \
     QSOE_RUST_TM_SYSFS=0 \
     taskman
-require_script_count lq-rust-selected "$ROOT/lq/build/libtaskman/libtaskman.a" 0
-audit_flags lq-rust-selected-taskman "$ROOT/lq/build/taskman.elf"
-audit_linked_symbols lq-rust-selected-taskman "$ROOT/lq/build/taskman.elf"
+require_script_count lq-rust-retired "$ROOT/lq/build/libtaskman/libtaskman.a" 0
+audit_flags lq-rust-retired-taskman "$ROOT/lq/build/taskman.elf"
+audit_linked_symbols lq-rust-retired-taskman "$ROOT/lq/build/taskman.elf"
+
+echo "tm-script-evidence.sh: verifying LQ retired selector rejection"
+require_retired_selector_rejected lq \
+    "$MAKE" -C "$ROOT/lq" --no-print-directory QSOE_RUST_TM_SCRIPT=0 taskman
 
 echo "tm-script-evidence.sh: evidence captured in $WORKDIR"

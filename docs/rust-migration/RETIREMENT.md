@@ -51,12 +51,13 @@ it must include evidence for all of these items:
 
 The live status matrix is `STATUS.md`. It records C default, Rust opt-in, Rust
 default, and retired status for every tracked migration component. At this
-capture, `test_msgpass`, `slogger`, `pipe`, and `devb-virtio` are the tracked
-components in `Retired` status. `test_msgpass` is the first retired helper;
-`slogger`, `pipe`, and `devb-virtio` are retired production paths. `tm_procfs`
-is the first retired task-manager provider. Remaining production services and
-task-manager providers still require their own separate removal PRs after RC
-evidence and rollback drills.
+capture, `test_msgpass`, `slogger`, `pipe`, `devb-virtio`, `tm_procfs`, and
+`tm_script` are the tracked components in `Retired` status. `test_msgpass` is
+the first retired helper; `slogger`, `pipe`, and `devb-virtio` are retired
+production paths. `tm_procfs` is the first retired task-manager provider,
+followed by `tm_script`. Remaining production services and task-manager
+providers still require their own separate removal PRs after RC evidence and
+rollback drills.
 
 ## Retired Components
 
@@ -67,6 +68,7 @@ evidence and rollback drills.
 | `pipe` | `PIPE_RETIREMENT.md` | `PIPE_RC.md`, `make pipe-rc-data-smoke`, previous `make pipe-rc-rollback-smoke` evidence | No C rollback target remains; Rust `pipe-rs` is staged as `/sbin/pipe` in NQ/LQ images. |
 | `devb-virtio` | `VIRTIO_RETIREMENT.md` | `VIRTIO_RC.md`, `make virtio-rc-file-smoke`, previous `make virtio-rc-rollback-smoke` evidence | No C rollback target remains; Rust `devb-virtio-rs` is staged as `/sbin/devb-virtio` in NQ/LQ images. |
 | `tm_procfs` | `TASK_MANAGER_PROCFS_RETIREMENT.md` | `TASK_MANAGER_PROCFS_RC.md`, `make tm-procfs-rc-smoke`, previous `make tm-procfs-rc-rollback-smoke` evidence | No C rollback target remains; Rust `qsoe-tm-procfs` is mandatory in taskman through the shared provider archive. |
+| `tm_script` | `TASK_MANAGER_SCRIPT_RETIREMENT.md` | `TASK_MANAGER_SCRIPT_RC.md`, `make tm-script-rc-smoke`, previous `make tm-script-rc-rollback-smoke` evidence | No C rollback target remains; Rust `qsoe-tm-script` is mandatory in taskman through the shared provider archive. |
 
 ## Removal PR Checklist
 

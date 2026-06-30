@@ -40,6 +40,20 @@ case "${QSOE_RUST_TM_PROCFS:-1}" in
         ;;
 esac
 
+case "${QSOE_RUST_TM_SCRIPT:-1}" in
+    1|true|TRUE|yes|YES)
+        QSOE_RUST_TM_SCRIPT=1
+        ;;
+    0|false|FALSE|no|NO)
+        echo "build-rust-tm-providers.sh: C tm_script is retired; QSOE_RUST_TM_SCRIPT must be 1" >&2
+        exit 2
+        ;;
+    *)
+        echo "build-rust-tm-providers.sh: QSOE_RUST_TM_SCRIPT must be 1 after C retirement" >&2
+        exit 2
+        ;;
+esac
+
 add_feature() {
     local var=$1
     local feature=$2

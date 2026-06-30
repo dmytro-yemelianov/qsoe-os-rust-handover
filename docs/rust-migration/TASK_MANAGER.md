@@ -24,7 +24,7 @@ no direct seL4 object manipulation, not automatically low risk.
 | Module | Files | Notes | Initial risk |
 | --- | --- | --- | --- |
 | CPIO archive model | `libtaskman/src/cpio.c`, `libtaskman/include/tm_cpio.h` | Pure `newc` walking, symlink resolution, directory iteration, and existence checks over caller-owned bytes. Rust opt-in provider exists behind `QSOE_RUST_TM_CPIO=1`; see `TASK_MANAGER_CPIO.md`. | Medium: boot archive lookup is spawn-adjacent. |
-| Shebang parser | `libtaskman/src/script.c`, `libtaskman/include/tm_script.h` | Single bounded parser used by `tm_spawn` when scripts are executed. Rust-default RC provider exists behind `QSOE_RUST_TM_SCRIPT=1`; C rollback remains `QSOE_RUST_TM_SCRIPT=0`; see `TASK_MANAGER_SCRIPT.md`. | Medium: pure parser but affects spawn fallback. |
+| Shebang parser | `rust/crates/qsoe-tm-script`, `libtaskman/include/tm_script.h` | Single bounded parser used by `tm_spawn` when scripts are executed. The C provider is retired; Rust `qsoe-tm-script` is mandatory and `QSOE_RUST_TM_SCRIPT=0` fails fast. See `TASK_MANAGER_SCRIPT.md`. | Medium: pure parser but affects spawn fallback. |
 | ELF view parser | `libtaskman/src/elf.c`, `libtaskman/include/tm_elf.h` | Read-only ELF64 program-header and interpreter parser. Rust-default RC provider exists behind `QSOE_RUST_TM_ELF=1`; C rollback remains `QSOE_RUST_TM_ELF=0`; see `TASK_MANAGER_ELF.md`. | High: pure parser, but used by relocation and loader flow. |
 | Syscfg TLV helpers | `libtaskman/src/syscfg.c`, `libtaskman/include/tm_syscfg.h` | Caller-owned TLV builder and walker. Rust-default RC provider exists behind `QSOE_RUST_TM_SYSCFG=1`; C rollback remains `QSOE_RUST_TM_SYSCFG=0`; see `TASK_MANAGER_SYSCFG.md`. | Medium: platform data reaches early boot decisions. |
 | FDT parser | `lq/taskman/sys/fdt.c`, `lq/taskman/sys/fdt.h` | Minimal big-endian device-tree scanner for `/chosen`, compatible strings, and properties. Rust opt-in provider exists behind `QSOE_RUST_TM_FDT=1`; see `TASK_MANAGER_FDT.md`. | Medium: boot config source. |
@@ -44,10 +44,10 @@ evidence required before implementation.
 
 Subsequent bounded providers now exist for `tm_cpio`, `tm_cred`, `tm_elf`,
 `tm_fdt`, `tm_pathmgr`, LQ pseudo-devices, `tm_rsrcdb`, `tm_script`,
-`tm_syscfg`, `tm_sysmap`, and `tm_sysfs`. `tm_cpio`, `tm_script`,
-`tm_syscfg`, `tm_sysmap`, `tm_sysfs`, and `tm_elf` are Rust-default RCs; the
-rest remain Rust opt-in only. Keep the `tm_elf` C rollback while its output
-continues to feed spawn, relocation, and loader admission.
+`tm_syscfg`, `tm_sysmap`, and `tm_sysfs`. `tm_script` is retired to Rust;
+`tm_cpio`, `tm_syscfg`, `tm_sysmap`, `tm_sysfs`, and `tm_elf` are Rust-default
+RCs; the rest remain Rust opt-in only. Keep the `tm_elf` C rollback while its
+output continues to feed spawn, relocation, and loader admission.
 
 Multiple task-manager Rust providers can now be selected together. NQ/LQ
 taskman links one shared `qsoe-tm-providers` static archive when any

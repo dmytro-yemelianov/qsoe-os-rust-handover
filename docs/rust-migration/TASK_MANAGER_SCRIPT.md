@@ -1,18 +1,9 @@
 # Task Manager Shebang Parser Provider
 
-Captured: 2026-06-29 CEST.
+Captured: 2026-06-30 CEST.
 
-`tm_script` is a bounded task-manager Rust provider for the portable POSIX
-shebang parser:
-
-```text
-libtaskman/src/script.c
-libtaskman/include/tm_script.h
-```
-
-## Scope
-
-The Rust provider exports the existing `tm_script.h` C ABI:
+`tm_script` is the retired Rust task-manager provider for the portable POSIX
+shebang parser. Taskman C code keeps consuming the public `tm_script.h` ABI:
 
 ```text
 int tm_script_parse_shebang(const uint8_t *data, unsigned size,
@@ -20,97 +11,61 @@ int tm_script_parse_shebang(const uint8_t *data, unsigned size,
                             char *arg, unsigned arg_cap);
 ```
 
-It owns only byte-level parsing of the first script line: `#!`, leading blanks,
-the interpreter path, and the optional single POSIX argument. It does not
-replace taskman spawn, interpreter loading, argv construction, CPIO lookup, ELF
-loading, relocation, process creation, or any seL4 object manipulation.
-
-The provider intentionally preserves the current C implementation behavior,
-including truncating into too-small output buffers instead of returning a hard
-error once parsing has started.
+The provider owns only byte-level parsing of the first script line: `#!`,
+leading blanks, the interpreter path, and the optional single POSIX argument.
+It does not replace taskman spawn orchestration, interpreter loading, argv
+construction, CPIO lookup, ELF loading, relocation, process creation, or seL4
+object manipulation.
 
 ## Selector
 
-Normal taskman builds are in a Rust-default RC window:
+`tm_script` is Rust-only after C provider retirement:
 
 ```text
-QSOE_RUST_TM_SCRIPT=1  -> Rust `qsoe-tm-script` provider is selected (default)
-QSOE_RUST_TM_SCRIPT=0  -> C `libtaskman/src/script.c` rollback is selected
+QSOE_RUST_TM_SCRIPT=1  -> Rust `qsoe-tm-script` provider is selected
+QSOE_RUST_TM_SCRIPT=0  -> rejected; C `libtaskman/src/script.c` is retired
 ```
 
-When Rust is selected, `libtaskman/Makefile` excludes `script.o` from
-`libtaskman.a`, and the NQ/LQ taskman links add:
+The C source `libtaskman/src/script.c` is removed. Normal NQ/LQ taskman links
+pull `tm_script_parse_shebang` from:
 
 ```text
 build/rust/tm-providers/libqsoe_tm_providers.a
 ```
 
 The archive is built for `riscv64imac-unknown-none-elf` so it matches
-taskman's soft-float ABI.
-
-Multiple taskman Rust providers may be selected together. The shared
-`qsoe-tm-providers` archive packages the selected provider crates behind one
-no-std panic handler. Legacy targets such as `make rust-tm-script-provider`
-still produce the historical single-provider output path for focused evidence.
+taskman's soft-float ABI. Multiple taskman Rust providers may be selected
+together through the same shared no-std provider archive.
 
 ## Evidence
 
-The C behavior baseline is covered by:
-
 ```sh
 make check-tm-script-model
-```
-
-That fixture verifies interpreter and single-argument parsing, CR/LF line
-termination, malformed-line rejection, output clearing, zero-capacity behavior,
-and current truncation behavior.
-
-The Rust provider has equivalent host coverage:
-
-```sh
-cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-script --features host-tests
-```
-
-The full opt-in evidence gate is:
-
-```sh
+make rust-tm-script-provider
 make tm-script-evidence
-```
-
-It runs the C fixture, Rust host tests, builds and audits the Rust staticlib,
-checks exported archive and linked taskman symbols, verifies all archive members
-are RVC soft-float, and links both NQ and LQ taskman in C rollback and
-Rust-selected modes. The gate also verifies `script.o` is present for
-`QSOE_RUST_TM_SCRIPT=0` and absent for `QSOE_RUST_TM_SCRIPT=1`.
-
-The focused runtime smoke is:
-
-```sh
 make tm-script-runtime-smoke
-```
-
-It rebuilds QSOE/L with `QSOE_RUST_TM_SCRIPT=1` and mandatory
-`QSOE_RUST_TM_PROCFS=1`, stages a temporary executable
-`/usr/bin/tm_script_probe` shell script in the virtio qrvfs image, injects a
-sysinit fragment that runs the probe directly, and verifies that the probe
-prints its marker and exits successfully. Running the script by path forces
-taskman spawn to parse the shebang before loading `/bin/sh`.
-
-The Rust-default RC and rollback smokes are:
-
-```sh
 make tm-script-rc-smoke
-make tm-script-rc-rollback-smoke
 ```
 
-The RC smoke first builds NQ and LQ taskman in the default selector mode and
-verifies C `script.o` is absent from `libtaskman.a`. The rollback smoke repeats
-the same archive-membership and live runtime checks with
-`QSOE_RUST_TM_SCRIPT=0`, where C `script.o` must be present.
+`make check-tm-script-model` runs the Rust host parser tests for interpreter and
+single-argument parsing, CR/LF line termination, malformed-line rejection,
+output clearing, zero-capacity behavior, and current truncation behavior.
 
-## Current State
+`make tm-script-evidence` builds and audits the Rust provider archive, verifies
+that NQ and LQ `libtaskman.a` contain no C `script.o`, checks that final
+taskman ELFs still export `tm_script_parse_shebang`, and verifies that
+`QSOE_RUST_TM_SCRIPT=0` fails fast in NQ and LQ taskman builds.
 
-`tm_script` is a Rust-default release candidate with C rollback still
-available. It has no C retirement approval. Keep `libtaskman/src/script.c` as
-the rollback implementation until the global retirement checklist is satisfied
-and a separate removal PR is reviewed.
+`make tm-script-runtime-smoke` boots QSOE/L with Rust `tm_script`, stages a
+temporary executable `/usr/bin/tm_script_probe` shell script in the virtio qrvfs
+image, injects a sysinit fragment that runs the probe directly, and verifies
+that the probe prints its marker and exits successfully. Running the script by
+path forces taskman spawn to parse the shebang before loading `/bin/sh`.
+
+`make tm-script-rc-smoke` remains as the compatibility smoke for the retired
+Rust path. `TM_SCRIPT_RC_ROLLBACK=1 scripts/tm-script-rc-smoke.sh` now fails
+fast because the C rollback path is retired.
+
+Historical Rust-default RC evidence and rollback drill details live in
+`TASK_MANAGER_SCRIPT_RC.md`. The retirement note is
+`TASK_MANAGER_SCRIPT_RETIREMENT.md`.

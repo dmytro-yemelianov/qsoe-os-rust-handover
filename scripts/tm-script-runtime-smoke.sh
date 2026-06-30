@@ -15,9 +15,8 @@ parse the script shebang before loading /bin/sh.
 
 Environment:
   TM_SCRIPT_RUNTIME_SMOKE_WORKDIR  output directory, default build/tm-script-runtime-smoke
-  QSOE_RUST_TM_SCRIPT              defaults to 1; set 0 only with rollback escape hatch
+  QSOE_RUST_TM_SCRIPT              must remain 1 after C tm_script retirement
   QSOE_RUST_TM_PROCFS              must remain 1 after C tm_procfs retirement
-  TM_SCRIPT_RUNTIME_ALLOW_C        internal RC rollback escape hatch
 EOF
 }
 
@@ -79,22 +78,14 @@ tm_script_mode=
 case "${QSOE_RUST_TM_SCRIPT:-1}" in
     1|true|TRUE|yes|YES)
         export QSOE_RUST_TM_SCRIPT=1
-        tm_script_mode=rust-selected
+        tm_script_mode=rust-retired
         ;;
     0|false|FALSE|no|NO)
-        case "${TM_SCRIPT_RUNTIME_ALLOW_C:-0}" in
-            1|true|TRUE|yes|YES)
-                export QSOE_RUST_TM_SCRIPT=0
-                tm_script_mode=c-rollback
-                ;;
-            *)
-                echo "tm-script-runtime-smoke.sh: this smoke validates QSOE_RUST_TM_SCRIPT=1" >&2
-                exit 2
-                ;;
-        esac
+        echo "tm-script-runtime-smoke.sh: C tm_script is retired; QSOE_RUST_TM_SCRIPT must be 1" >&2
+        exit 2
         ;;
     *)
-        echo "tm-script-runtime-smoke.sh: QSOE_RUST_TM_SCRIPT must be 1" >&2
+        echo "tm-script-runtime-smoke.sh: QSOE_RUST_TM_SCRIPT must be 1 after C retirement" >&2
         exit 2
         ;;
 esac
