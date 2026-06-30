@@ -1,6 +1,6 @@
 # Rust Migration Status
 
-Captured: 2026-06-29 CEST.
+Captured: 2026-06-30 CEST.
 
 This table tracks components whose current C implementation may be replaced by
 Rust. Link-smoke binaries, examples, and reusable parser crates are not listed
@@ -31,16 +31,17 @@ State meanings:
 | `tm_rsrcdb` | Yes: `lq/taskman/sys/rsrcdb.c` remains selected by default in normal LQ taskman builds and remains rollback. | Yes: `QSOE_RUST_TM_RSRCDB=1` excludes C `sys/rsrcdb.o`, links through the shared `qsoe-tm-providers` archive, passes `make tm-rsrcdb-evidence`, and boots through `make tm-rsrcdb-runtime-smoke`. | No | No | C host model tests, Rust host tests, LQ C-default/Rust-selected taskman links, soft-float Rust archive audit, exported symbol audit, live `rsrcdbmgr_*` create/attach/query/detach/destroy runtime smoke, and `TASK_MANAGER_RSRCDB.md`. | Decide whether to open a Rust-default RC window; keep C rollback until that separate RC decision exists. |
 | `tm_script` | No for normal builds: `QSOE_RUST_TM_SCRIPT=1` is the default. Yes as rollback: `QSOE_RUST_TM_SCRIPT=0` restores `libtaskman/src/script.c` and C `script.o`. | Yes: the selector excludes C `script.o`, links through the shared `qsoe-tm-providers` archive, passes `make tm-script-evidence`, and boots through `make tm-script-runtime-smoke`. | RC: normal NQ/LQ taskman builds select Rust `qsoe-tm-script`; `make tm-script-rc-smoke` proves default archive membership and runtime behavior, and `make tm-script-rc-rollback-smoke` preserves C rollback. | No | C host model tests, Rust host tests, selected NQ/LQ taskman links, soft-float Rust archive audit, exported symbol audit, LQ direct shebang-spawn runtime smoke, `TASK_MANAGER_SCRIPT.md`, and `TASK_MANAGER_SCRIPT_RC.md`. | Keep C rollback until #26's retirement checklist and a separate removal PR are satisfied. |
 | `tm_syscfg` | No for normal builds: `QSOE_RUST_TM_SYSCFG=1` is the default. Yes as rollback: `QSOE_RUST_TM_SYSCFG=0` restores `libtaskman/src/syscfg.c` and C `syscfg.o`. | Yes: the selector excludes C `syscfg.o`, links through the shared `qsoe-tm-providers` archive, passes `make tm-syscfg-evidence`, and boots through `make tm-syscfg-runtime-smoke`. | RC: normal NQ/LQ taskman builds select Rust `qsoe-tm-syscfg`; `make tm-syscfg-rc-smoke` proves default archive membership and runtime behavior, and `make tm-syscfg-rc-rollback-smoke` preserves C rollback. | No | C host model tests, Rust host tests, selected NQ/LQ taskman links, soft-float Rust archive audit, exported symbol audit, LQ `/sys` and `sysinfo` runtime smoke, `TASK_MANAGER_SYSCFG.md`, and `TASK_MANAGER_SYSCFG_RC.md`. | Keep C rollback until #26's retirement checklist and a separate removal PR are satisfied. |
-| `tm_sysmap` | Yes: `lq/taskman/sys/sysmap.c` remains selected by default in normal LQ taskman builds and remains rollback. | Yes: `QSOE_RUST_TM_SYSMAP=1` excludes C `sys/sysmap.o`, links through the shared `qsoe-tm-providers` archive, passes `make tm-sysmap-evidence`, and boots through `make tm-sysmap-runtime-smoke`. | No | No | C host model tests, Rust host tests, LQ C-default/Rust-selected taskman links, soft-float Rust archive audit, exported symbol audit, final taskman ELF audits, spawned-child `PSYS` page runtime smoke through `sysinfo` timebase/PLIC/PCI output, and `TASK_MANAGER_SYSMAP.md`. | Decide whether to open a Rust-default RC window; keep C rollback until that separate RC decision exists. |
+| `tm_sysmap` | No for normal LQ taskman builds: `QSOE_RUST_TM_SYSMAP=1` is the default. Yes as rollback: `QSOE_RUST_TM_SYSMAP=0` restores `lq/taskman/sys/sysmap.c` and C `sys/sysmap.o`. | Yes: the selector excludes C `sys/sysmap.o`, links through the shared `qsoe-tm-providers` archive, passes `make tm-sysmap-evidence`, and boots through `make tm-sysmap-runtime-smoke`. | RC: normal LQ taskman builds select Rust `qsoe-tm-sysmap`; `make tm-sysmap-rc-smoke` proves default link-plan membership and runtime behavior, and `make tm-sysmap-rc-rollback-smoke` preserves C rollback. | No | C host model tests, Rust host tests, LQ C-rollback/Rust-default taskman links, soft-float Rust archive audit, exported symbol audit, final taskman ELF audits, spawned-child `PSYS` page runtime smoke through `sysinfo` timebase/PLIC/PCI output, `TASK_MANAGER_SYSMAP.md`, and `TASK_MANAGER_SYSMAP_RC.md`. | Keep C rollback until #26's retirement checklist and a separate removal PR are satisfied. |
 | `tm_sysfs` | No for normal builds: `QSOE_RUST_TM_SYSFS=1` is the default. Yes as rollback: `QSOE_RUST_TM_SYSFS=0` restores `libtaskman/src/tm_sysfs.c` and C `tm_sysfs.o`. | Yes: the selector excludes C `tm_sysfs.o`, links through the shared `qsoe-tm-providers` archive, passes `make tm-sysfs-evidence`, and boots through `make tm-sysfs-runtime-smoke`. | RC: normal NQ/LQ taskman builds select Rust `qsoe-tm-sysfs`; `make tm-sysfs-rc-smoke` proves default archive membership and runtime behavior, and `make tm-sysfs-rc-rollback-smoke` preserves C rollback. | No | C host model tests, Rust host tests, selected NQ/LQ taskman links, soft-float Rust archive audit, exported symbol audit, LQ `/sys` readdir and all-file runtime smoke, `TASK_MANAGER_SYSFS.md`, and `TASK_MANAGER_SYSFS_RC.md`. | Keep C rollback until #26's retirement checklist and a separate removal PR are satisfied. |
 
 Host `treeqrvfs`, host `mkfs-qrv-rs`, and task-manager `tm_cpio`,
-`tm_script`, `tm_syscfg`, and `tm_sysfs` are Rust-default release-candidate paths with C rollback. `test_msgpass`,
+`tm_script`, `tm_syscfg`, `tm_sysmap`, and `tm_sysfs` are Rust-default
+release-candidate paths with C rollback. `test_msgpass`,
 `slogger`, `pipe`, `devb-virtio`, and `tm_procfs` have moved past RC into
 `Retired` status and are Rust-only in their image or taskman paths. `tm_cred`,
-`tm_elf`, `tm_fdt`, `tm_pathmgr`,
-`tm_pseudodev`, `tm_rsrcdb`, and `tm_sysmap` are Rust opt-in only. Selected taskman Rust providers now link
-through one shared `qsoe-tm-providers` archive when any `QSOE_RUST_TM_*`
-selector is enabled, so multi-provider evidence can be gathered without
-duplicate panic-handler symbols. C remains the rollback path for every
-non-retired current migration candidate.
+`tm_elf`, `tm_fdt`, `tm_pathmgr`, `tm_pseudodev`, and `tm_rsrcdb` are Rust
+opt-in only. Selected taskman Rust providers now link through one shared
+`qsoe-tm-providers` archive when any `QSOE_RUST_TM_*` selector is enabled, so
+multi-provider evidence can be gathered without duplicate panic-handler
+symbols. C remains the rollback path for every non-retired current migration
+candidate.

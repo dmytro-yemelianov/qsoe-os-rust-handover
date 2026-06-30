@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture LQ tm_sysmap Rust opt-in evidence without changing the default.
+# Capture LQ tm_sysmap Rust-default RC evidence and the C rollback path.
 
 set -eu
 
@@ -14,8 +14,8 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-sysmap-evidence.sh
 
-Builds and audits the Rust LQ taskman sysmap opt-in path and verifies that C
-remains the default rollback provider for sys/sysmap.c.
+Builds and audits the Rust LQ taskman sysmap default path and verifies that C
+remains the rollback provider for sys/sysmap.c.
 
 Environment:
   TM_SYSMAP_EVIDENCE_WORKDIR  output directory, default build/tm-sysmap-evidence
@@ -132,17 +132,17 @@ capture_lq_taskman_plan() {
     "$MAKE" -C "$ROOT/lq/taskman" --no-print-directory -B -n all \
         LIBTASKMAN_A="$ROOT/lq/build/libtaskman/libtaskman.a" \
         LIBTASKMAN_INC="$ROOT/libtaskman/include" \
-        QSOE_RUST_TM_CPIO=0 \
+        QSOE_RUST_TM_CPIO=1 \
         QSOE_RUST_TM_CRED=0 \
         QSOE_RUST_TM_ELF=0 \
         QSOE_RUST_TM_FDT=0 \
         QSOE_RUST_TM_PROCFS=1 \
         QSOE_RUST_TM_PSEUDODEV=0 \
         QSOE_RUST_TM_RSRCDB=0 \
-        QSOE_RUST_TM_SCRIPT=0 \
-        QSOE_RUST_TM_SYSCFG=0 \
+        QSOE_RUST_TM_SCRIPT=1 \
+        QSOE_RUST_TM_SYSCFG=1 \
         QSOE_RUST_TM_SYSMAP="$rust_selected" \
-        QSOE_RUST_TM_SYSFS=0 \
+        QSOE_RUST_TM_SYSFS=1 \
         > "$log"
 }
 
@@ -171,17 +171,17 @@ build_lq_taskman() {
 
     rm -f "$ROOT/lq/build/taskman.elf"
     "$MAKE" -C "$ROOT/lq" --no-print-directory \
-        QSOE_RUST_TM_CPIO=0 \
+        QSOE_RUST_TM_CPIO=1 \
         QSOE_RUST_TM_CRED=0 \
         QSOE_RUST_TM_ELF=0 \
         QSOE_RUST_TM_FDT=0 \
         QSOE_RUST_TM_PROCFS=1 \
         QSOE_RUST_TM_PSEUDODEV=0 \
         QSOE_RUST_TM_RSRCDB=0 \
-        QSOE_RUST_TM_SCRIPT=0 \
-        QSOE_RUST_TM_SYSCFG=0 \
+        QSOE_RUST_TM_SCRIPT=1 \
+        QSOE_RUST_TM_SYSCFG=1 \
         QSOE_RUST_TM_SYSMAP="$rust_selected" \
-        QSOE_RUST_TM_SYSFS=0 \
+        QSOE_RUST_TM_SYSFS=1 \
         taskman
     audit_flags "$label-taskman" "$ROOT/lq/build/taskman.elf"
 }
@@ -196,14 +196,14 @@ echo "tm-sysmap-evidence.sh: building Rust provider archive"
 "$MAKE" -C "$ROOT" --no-print-directory rust-tm-sysmap-provider
 audit_provider_archive
 
-echo "tm-sysmap-evidence.sh: verifying LQ C-default link plan"
-capture_lq_taskman_plan lq-c-default 0
-require_plan_contains lq-c-default '/sys/sysmap.o'
-require_plan_omits lq-c-default 'libqsoe_tm_sysmap.a'
-require_plan_contains lq-c-default 'libqsoe_tm_providers.a'
+echo "tm-sysmap-evidence.sh: verifying LQ C rollback link plan"
+capture_lq_taskman_plan lq-c-rollback 0
+require_plan_contains lq-c-rollback '/sys/sysmap.o'
+require_plan_omits lq-c-rollback 'libqsoe_tm_sysmap.a'
+require_plan_contains lq-c-rollback 'libqsoe_tm_providers.a'
 
-echo "tm-sysmap-evidence.sh: verifying LQ C-default taskman link"
-build_lq_taskman lq-c-default 0
+echo "tm-sysmap-evidence.sh: verifying LQ C rollback taskman link"
+build_lq_taskman lq-c-rollback 0
 
 echo "tm-sysmap-evidence.sh: verifying LQ Rust-selected link plan"
 capture_lq_taskman_plan lq-rust-selected 1

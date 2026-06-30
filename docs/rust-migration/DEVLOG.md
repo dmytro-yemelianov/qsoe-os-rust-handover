@@ -24,6 +24,56 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 08:36 CEST - tm_sysmap Rust-Default RC
+
+Scope:
+
+- Promoted the LQ `tm_sysmap` page builder to a Rust-default
+  release-candidate selector: `QSOE_RUST_TM_SYSMAP ?= 1` in the umbrella and
+  applied LQ component Makefiles.
+- Added component override patches that flip ignored LQ checkouts to the new
+  default while preserving `QSOE_RUST_TM_SYSMAP=0` as C rollback.
+- Added `make tm-sysmap-rc-smoke` and
+  `make tm-sysmap-rc-rollback-smoke`; both verify LQ taskman link-plan
+  membership before booting the live spawned-child `PSYS`/`sysinfo` consumer
+  probe.
+- Added CI wiring and `TASK_MANAGER_SYSMAP_RC.md` to record the RC window and
+  rollback drill. FDT parsing, syscfg construction, child VSpace mapping, and
+  seL4 object code remain C.
+
+Commands:
+
+- `bash -n scripts/tm-sysmap-rc-smoke.sh scripts/tm-sysmap-runtime-smoke.sh scripts/tm-sysmap-evidence.sh scripts/apply-component-overrides.sh scripts/boot-smoke.sh`
+- `make -n tm-sysmap-rc-smoke tm-sysmap-rc-rollback-smoke container-tm-sysmap-rc-smoke container-tm-sysmap-rc-rollback-smoke`
+- `patch -d lq --dry-run --fuzz=0 -p1 < patches/components/lq-makefile-rust-tm-sysmap-rc-default.patch`
+- `patch -d lq --dry-run --fuzz=0 -p1 < patches/components/lq-taskman-rust-tm-sysmap-rc-default.patch`
+- `./scripts/apply-component-overrides.sh`
+- `patch -d lq --reverse --dry-run --fuzz=0 -p1 < patches/components/lq-makefile-rust-tm-sysmap-rc-default.patch`
+- `patch -d lq --reverse --dry-run --fuzz=0 -p1 < patches/components/lq-taskman-rust-tm-sysmap-rc-default.patch`
+- `make tm-sysmap-rc-smoke`
+- `make tm-sysmap-rc-rollback-smoke`
+- `make tm-sysmap-evidence`
+- `make tm-sysmap-runtime-smoke`
+- `git diff --check`
+- `make check-qrvfs-rust-writer-production-root`
+- `make -C libtaskman --no-print-directory`
+
+Result:
+
+- `make tm-sysmap-rc-smoke` passed with the default Rust link plan omitting
+  `sys/sysmap.o`, then reached the live syscfg, sysmap, pci-server, and
+  `sysinfo` timebase/PLIC/PCI runtime markers.
+- `make tm-sysmap-rc-rollback-smoke` passed with C rollback selected and the
+  link plan containing `sys/sysmap.o`, then reached the same live runtime
+  markers under `QSOE_RUST_TM_SYSMAP=0`.
+- The existing `tm-sysmap-evidence` and `tm-sysmap-runtime-smoke` gates still
+  pass after the default flip.
+
+Follow-up:
+
+- Publish the PR, wait for trusted CI, merge, and update #147 to
+  `status:rc`.
+
 ## 2026-06-30 08:15 CEST - tm_syscfg Rust-Default RC
 
 Scope:

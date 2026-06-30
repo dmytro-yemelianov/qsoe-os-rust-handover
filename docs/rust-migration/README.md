@@ -99,18 +99,20 @@ Read in this order:
    and evidence gate.
 51. `TASK_MANAGER_FDT.md`: Rust opt-in LQ task-manager FDT parser provider and
    evidence gate.
-52. `TASK_MANAGER_SYSMAP.md`: Rust opt-in LQ task-manager sysmap page builder
+52. `TASK_MANAGER_SYSMAP.md`: Rust-default RC LQ task-manager sysmap page
+   builder and evidence gate.
+53. `TASK_MANAGER_SYSMAP_RC.md`: Rust-default `tm_sysmap` release-candidate
+   note and C rollback drill.
+54. `TASK_MANAGER_PATHMGR.md`: Rust opt-in task-manager path registry provider
    and evidence gate.
-53. `TASK_MANAGER_PATHMGR.md`: Rust opt-in task-manager path registry provider
-   and evidence gate.
-54. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+55. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
-55. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
-56. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+56. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
+57. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-57. `PLAN.md`: phased migration plan from baseline validation through possible
+58. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-58. `TASKS.md`: executable backlog with acceptance criteria.
+59. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust
