@@ -492,8 +492,7 @@ the QEMU timebase, PLIC, and PCI output emitted from the mapped `PSYS` page.
 
 ## Task Manager Credential Selection
 
-The Rust `tm_cred` provider is a Rust-default RC taskman provider with C
-rollback preserved:
+The Rust `tm_cred` provider is a retired/Rust-only taskman provider:
 
 ```sh
 make check-tm-cred-model
@@ -501,22 +500,21 @@ make rust-tm-cred-provider
 make tm-cred-evidence
 make tm-cred-runtime-smoke
 make tm-cred-rc-smoke
-make tm-cred-rc-rollback-smoke
 ```
 
-With the default `QSOE_RUST_TM_CRED=1`, NQ and LQ taskman omit C `cred.o`,
-build `qsoe-tm-cred` for `riscv64imac-unknown-none-elf`, and link the shared
-`libqsoe_tm_providers.a` archive into taskman. With `QSOE_RUST_TM_CRED=0`, NQ
-and LQ taskman link the existing C `cred.o` rollback path. Process-table
+With mandatory `QSOE_RUST_TM_CRED=1`, NQ and LQ taskman omit C `cred.o`, build
+`qsoe-tm-cred` for `riscv64imac-unknown-none-elf`, and link the shared
+`libqsoe_tm_providers.a` archive into taskman. `QSOE_RUST_TM_CRED=0` now fails
+fast because the C `cred.o` rollback provider is retired. Process-table
 ownership, IPC decoding, filesystem-backed path validation, and seL4 invocation
 code remain C.
 
 `make tm-cred-rc-smoke` boots QSOE/L with Rust `tm_cred` selected, verifies the
 selected `libtaskman.a` omits C `cred.o`, and runs `/usr/bin/cred_probe` from
-sysinit. `make tm-cred-rc-rollback-smoke` repeats the same live probe with the
-C rollback selected. The helper exercises live uid/gid mutation, held-id
-transitions, non-root `EPERM` rejection, cwd and umask state, and child spawn
-inheritance.
+sysinit. The helper exercises live uid/gid mutation, held-id transitions,
+non-root `EPERM` rejection, cwd and umask state, and child spawn inheritance.
+`TM_CRED_RC_ROLLBACK=1 scripts/tm-cred-rc-smoke.sh` now fails fast after
+retirement.
 
 ## Task Manager Pseudo-device Selection
 

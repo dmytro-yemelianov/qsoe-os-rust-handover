@@ -24,6 +24,58 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 22:20 CEST - tm_cred C Provider Retirement
+
+Scope:
+
+- Retired C `tm_cred` by removing `libtaskman/src/cred.c` and the old C host
+  fixture `tests/tm_cred_model_test.c`.
+- Made `QSOE_RUST_TM_CRED=1` mandatory in the umbrella, standalone
+  `libtaskman`, provider archive builder, and tracked NQ/LQ component override
+  patches.
+- Converted `tm-cred-*` evidence/smoke scripts from RC-with-rollback to
+  Rust-only retirement checks with retired selector rejection.
+- Added `TASK_MANAGER_CRED_RETIREMENT.md`, updated status/readme/inventory docs,
+  and moved issue #150 to open `status:retired` pending final PR/main CI
+  evidence.
+
+Commands:
+
+- `bash -n scripts/check-tm-cred-model.sh scripts/tm-cred-evidence.sh scripts/tm-cred-runtime-smoke.sh scripts/tm-cred-rc-smoke.sh scripts/build-rust-tm-providers.sh scripts/apply-component-overrides.sh`
+- `scripts/apply-component-overrides.sh`
+- `make -n tm-cred-rc-smoke`
+- `make -n tm-cred-rc-rollback-smoke`
+- `QSOE_RUST_TM_CRED=0 make -C libtaskman --no-print-directory`
+- `QSOE_RUST_TM_CRED=0 scripts/build-rust-tm-providers.sh build/tmp/libqsoe_tm_providers.a`
+- `TM_CRED_RC_ROLLBACK=1 scripts/tm-cred-rc-smoke.sh`
+- `make check-tm-cred-model`
+- `make tm-cred-evidence`
+- `make tm-cred-runtime-smoke`
+- `make tm-cred-rc-smoke`
+- `make tm-providers-evidence`
+- `make rust-quality`
+- `make roadmap-validate`
+- `make roadmap-component-gate COMPONENT=tm-cred`
+
+Result:
+
+- Rust host model tests passed, covering ABI layout, cwd/getcwd, umask, init,
+  self-info, and credential-change policy.
+- NQ and LQ taskman links omit C `cred.o`; final taskman ELFs retain the
+  exported `tm_cred_*` ABI from the Rust provider archive.
+- `QSOE_RUST_TM_CRED=0`, `TM_CRED_RC_ROLLBACK=1`, and the removed rollback make
+  target fail fast instead of selecting C.
+- QSOE/L runtime and retired compatibility smokes reached all credential probe
+  markers for root ids, cwd, umask, mutation, permission rejection, child
+  inheritance, and spawn inheritance.
+- Shared provider evidence still reports one Rust panic handler and passes the
+  shared-provider `/proc` boot smoke.
+
+Follow-up:
+
+- Open the retirement PR, wait for trusted PR and main CI, record final PR/main
+  evidence in #150, close #150, merge, and reindex codebase memory.
+
 ## 2026-06-30 20:50 CEST - tm_pseudodev Rust-Default RC
 
 Scope:

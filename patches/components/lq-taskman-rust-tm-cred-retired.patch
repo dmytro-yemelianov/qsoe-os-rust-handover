@@ -1,0 +1,12 @@
+diff --git a/taskman/Makefile b/taskman/Makefile
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -62,6 +62,9 @@ ifneq ($(QSOE_RUST_TM_CPIO),1)
+ $(error QSOE_RUST_TM_CPIO must be 1 after C tm_cpio retirement)
+ endif
++ifneq ($(QSOE_RUST_TM_CRED),1)
++$(error QSOE_RUST_TM_CRED must be 1 after C tm_cred retirement)
++endif
+ ifneq ($(QSOE_RUST_TM_ELF),1)
+ $(error QSOE_RUST_TM_ELF must be 1 after C tm_elf retirement)
+ endif

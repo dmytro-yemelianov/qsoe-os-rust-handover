@@ -133,7 +133,7 @@ capture_lq_taskman_plan() {
         LIBTASKMAN_A="$ROOT/lq/build/libtaskman/libtaskman.a" \
         LIBTASKMAN_INC="$ROOT/libtaskman/include" \
         QSOE_RUST_TM_CPIO=1 \
-        QSOE_RUST_TM_CRED=0 \
+        QSOE_RUST_TM_CRED=1 \
         QSOE_RUST_TM_ELF=1 \
         QSOE_RUST_TM_FDT=0 \
         QSOE_RUST_TM_PROCFS=1 \
@@ -172,7 +172,7 @@ build_lq_taskman() {
     rm -f "$ROOT/lq/build/taskman.elf"
     "$MAKE" -C "$ROOT/lq" --no-print-directory \
         QSOE_RUST_TM_CPIO=1 \
-        QSOE_RUST_TM_CRED=0 \
+        QSOE_RUST_TM_CRED=1 \
         QSOE_RUST_TM_ELF=1 \
         QSOE_RUST_TM_FDT=0 \
         QSOE_RUST_TM_PROCFS=1 \

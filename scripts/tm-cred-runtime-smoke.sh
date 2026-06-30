@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Boot QSOE/L and exercise live credential state through the selected tm_cred provider.
+# Boot QSOE/L and exercise live credential state through the retired Rust tm_cred provider.
 
 set -eu
 
@@ -9,16 +9,15 @@ usage() {
 usage: scripts/tm-cred-runtime-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
 Injects a temporary sysinit fragment that runs /usr/bin/cred_probe, rebuilds the
-virtio qrvfs image with that helper staged, and boots QSOE/L with the selected
-tm_cred provider. The default is the Rust provider.
+virtio qrvfs image with that helper staged, and boots QSOE/L with the retired
+Rust tm_cred provider.
 
 The helper exercises taskman-backed POSIX credential wrappers, cwd and umask
 state, non-root permission rejection, and spawn inheritance.
 
 Environment:
   TM_CRED_RUNTIME_SMOKE_WORKDIR  output directory, default build/tm-cred-runtime-smoke
-  QSOE_RUST_TM_CRED              1 for Rust default, 0 only with TM_CRED_RUNTIME_ALLOW_C=1
-  TM_CRED_RUNTIME_ALLOW_C        permit C rollback validation when QSOE_RUST_TM_CRED=0
+  QSOE_RUST_TM_CRED              must remain 1 after C tm_cred retirement
   QSOE_RUST_TM_PROCFS            must remain 1 after C tm_procfs retirement
 EOF
 }
@@ -81,25 +80,15 @@ case "${QSOE_RUST_TM_CRED:-1}" in
     1|true|TRUE|yes|YES)
         export QSOE_RUST_TM_CRED=1
         selected=1
-        mode=rust-default
+        mode=rust-retired
         expected_cred_count=0
         ;;
     0|false|FALSE|no|NO)
-        case "${TM_CRED_RUNTIME_ALLOW_C:-0}" in
-            1|true|TRUE|yes|YES)
-                export QSOE_RUST_TM_CRED=0
-                selected=0
-                mode=c-rollback
-                expected_cred_count=1
-                ;;
-            *)
-                echo "tm-cred-runtime-smoke.sh: QSOE_RUST_TM_CRED=0 is only allowed with TM_CRED_RUNTIME_ALLOW_C=1" >&2
-                exit 2
-                ;;
-        esac
+        echo "tm-cred-runtime-smoke.sh: C tm_cred is retired; QSOE_RUST_TM_CRED must be 1" >&2
+        exit 2
         ;;
     *)
-        echo "tm-cred-runtime-smoke.sh: QSOE_RUST_TM_CRED must be 0 or 1" >&2
+        echo "tm-cred-runtime-smoke.sh: QSOE_RUST_TM_CRED must be 1 after C retirement" >&2
         exit 2
         ;;
 esac
@@ -236,23 +225,21 @@ if [ "$cred_count" -ne "$expected_cred_count" ]; then
     exit 1
 fi
 
-if [ "$selected" -eq 1 ]; then
-    for symbol in \
-        tm_cred_init \
-        tm_cred_chdir \
-        tm_cred_getcwd \
-        tm_cred_umask \
-        tm_cred_set \
-        tm_cred_change_permitted \
-        tm_cred_self_info
-    do
-        if ! "$NM" -g --defined-only "$ROOT/build/rust/tm-providers/libqsoe_tm_providers.a" |
-            grep -Eq "[[:space:]]$symbol$"; then
-            echo "tm-cred-runtime-smoke.sh: Rust provider archive is missing $symbol" >&2
-            exit 1
-        fi
-    done
-fi
+for symbol in \
+    tm_cred_init \
+    tm_cred_chdir \
+    tm_cred_getcwd \
+    tm_cred_umask \
+    tm_cred_set \
+    tm_cred_change_permitted \
+    tm_cred_self_info
+do
+    if ! "$NM" -g --defined-only "$ROOT/build/rust/tm-providers/libqsoe_tm_providers.a" |
+        grep -Eq "[[:space:]]$symbol$"; then
+        echo "tm-cred-runtime-smoke.sh: Rust provider archive is missing $symbol" >&2
+        exit 1
+    fi
+done
 
 boot_args=(-k lq -t "$timeout_s" -o "$log")
 if [ "$keep_running" -eq 1 ]; then

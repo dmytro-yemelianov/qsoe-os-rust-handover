@@ -2,18 +2,18 @@
 
 Captured: 2026-06-30 CEST.
 
-`tm_cred` is in a Rust-default release-candidate window. Normal umbrella,
-standalone `libtaskman`, and applied NQ/LQ taskman builds select
-`QSOE_RUST_TM_CRED=1` by default. The C provider is not retired:
-`QSOE_RUST_TM_CRED=0` remains the rollback path and keeps
-`libtaskman/src/cred.c` linked as `cred.o`.
+Historical note: `tm_cred` passed through a Rust-default release-candidate
+window before C provider retirement. During that RC, normal umbrella,
+standalone `libtaskman`, and applied NQ/LQ taskman builds selected
+`QSOE_RUST_TM_CRED=1` by default while `QSOE_RUST_TM_CRED=0` preserved C
+rollback and kept `libtaskman/src/cred.c` linked as `cred.o`.
 
 ## Selector Contract
 
 ```text
 QSOE_RUST_TM_CRED=1      Rust `qsoe-tm-cred` selected; `cred.o` absent
-QSOE_RUST_TM_CRED=0      C rollback selected; `cred.o` present
-TM_CRED_RC_ROLLBACK=1    shorthand for the rollback smoke
+QSOE_RUST_TM_CRED=0      historical C rollback selected; `cred.o` present
+TM_CRED_RC_ROLLBACK=1    historical shorthand for the rollback smoke
 ```
 
 The RC does not change taskman ownership of process records, IPC decoding,
@@ -45,7 +45,7 @@ LQ `libtaskman.a` contain `cred.o`, and runs the same live probe with
 
 ## Retirement Boundary
 
-This RC is not C retirement approval. `libtaskman/src/cred.c` remains tracked
-and must stay buildable until the RC accumulates trusted CI evidence, the global
-retirement checklist is satisfied, and a separate removal PR explicitly retires
-the C provider.
+This RC was not itself C retirement approval. The separate retirement step is
+documented in `TASK_MANAGER_CRED_RETIREMENT.md`; after that step,
+`QSOE_RUST_TM_CRED=0`, `TM_CRED_RC_ROLLBACK=1`, and
+`make tm-cred-rc-rollback-smoke` are no longer supported.

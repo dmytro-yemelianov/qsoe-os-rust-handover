@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Validate the tm_cred Rust-default RC selector while keeping C rollback alive.
+# Validate the retired tm_cred Rust selector.
 
 set -eu
 
@@ -8,12 +8,12 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-cred-rc-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
-Builds NQ and LQ taskman with the tm_cred RC selection, verifies cred.o archive
-membership, then reuses the live tm_cred runtime smoke.
+Builds NQ and LQ taskman with the retired Rust tm_cred provider, verifies that
+C cred.o is absent, then reuses the live tm_cred runtime smoke.
 
 Environment:
-  TM_CRED_RC_ROLLBACK  set to 1 to validate the C rollback path
-  QSOE_RUST_TM_CRED    default 1 for Rust RC; set 0 only for rollback validation
+  TM_CRED_RC_ROLLBACK  unsupported after C tm_cred retirement
+  QSOE_RUST_TM_CRED    must remain 1 after C tm_cred retirement
   TM_CRED_RC_WORKDIR   output directory, default build/tm-cred-rc
 EOF
 }
@@ -87,40 +87,32 @@ mkdir -p "$workdir"
 
 case "$rollback" in
     0|false|FALSE|no|NO)
-        rollback=0
-        default_selected=1
-        ;;
-    1|true|TRUE|yes|YES)
-        rollback=1
-        default_selected=0
-        ;;
-    *)
-        echo "tm-cred-rc-smoke.sh: TM_CRED_RC_ROLLBACK must be 0 or 1" >&2
-        exit 2
-        ;;
-esac
-
-case "${QSOE_RUST_TM_CRED:-$default_selected}" in
-    1|true|TRUE|yes|YES)
-        selected=1
-        mode=rust-default
+        mode=rust-retired
         expected_cred_count=0
         ;;
-    0|false|FALSE|no|NO)
-        selected=0
-        mode=c-rollback
-        expected_cred_count=1
+    1|true|TRUE|yes|YES)
+        echo "tm-cred-rc-smoke.sh: C tm_cred rollback is retired" >&2
+        exit 2
         ;;
     *)
-        echo "tm-cred-rc-smoke.sh: QSOE_RUST_TM_CRED must be 0 or 1" >&2
+        echo "tm-cred-rc-smoke.sh: TM_CRED_RC_ROLLBACK must be 0 after C retirement" >&2
         exit 2
         ;;
 esac
 
-if [ "$rollback" -eq 1 ] && [ "$selected" -ne 0 ]; then
-    echo "tm-cred-rc-smoke.sh: TM_CRED_RC_ROLLBACK=1 requires QSOE_RUST_TM_CRED=0" >&2
-    exit 2
-fi
+case "${QSOE_RUST_TM_CRED:-1}" in
+    1|true|TRUE|yes|YES)
+        selected=1
+        ;;
+    0|false|FALSE|no|NO)
+        echo "tm-cred-rc-smoke.sh: C tm_cred is retired; QSOE_RUST_TM_CRED must be 1" >&2
+        exit 2
+        ;;
+    *)
+        echo "tm-cred-rc-smoke.sh: QSOE_RUST_TM_CRED must be 1 after C retirement" >&2
+        exit 2
+        ;;
+esac
 
 echo "tm-cred-rc-smoke.sh: mode=$mode rollback=$rollback"
 
@@ -145,8 +137,5 @@ fi
 export QSOE_RUST_TM_CRED="$selected"
 export QSOE_RUST_TM_PROCFS=1
 export TM_CRED_RUNTIME_SMOKE_WORKDIR="$workdir"
-if [ "$selected" -eq 0 ]; then
-    export TM_CRED_RUNTIME_ALLOW_C=1
-fi
 
 exec "$ROOT/scripts/tm-cred-runtime-smoke.sh" "${runtime_args[@]}"

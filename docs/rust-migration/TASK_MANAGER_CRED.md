@@ -2,12 +2,12 @@
 
 Captured: 2026-06-30 CEST.
 
-`tm_cred` is a bounded task-manager Rust-default RC provider.
-It covers only the portable credential, cwd, and umask state model:
+`tm_cred` is a bounded retired task-manager Rust provider. It covers only the
+portable credential, cwd, and umask state model:
 
 ```text
-libtaskman/src/cred.c
 libtaskman/include/tm_cred.h
+rust/crates/qsoe-tm-cred
 ```
 
 ## Scope
@@ -37,15 +37,15 @@ pointers into the portable provider.
 
 ## Selector
 
-Normal builds are Rust-default during the RC window, with C rollback preserved:
+Normal builds are Rust-only after C provider retirement:
 
 ```text
-QSOE_RUST_TM_CRED=1  -> Rust `qsoe-tm-cred` is selected by default
-QSOE_RUST_TM_CRED=0  -> C `libtaskman/src/cred.c` rollback remains selected
+QSOE_RUST_TM_CRED=1  -> Rust `qsoe-tm-cred` is selected
+QSOE_RUST_TM_CRED=0  -> rejected after C `tm_cred` retirement
 ```
 
-When Rust is selected, `libtaskman/Makefile` excludes `cred.o` from
-`libtaskman.a`, and the NQ/LQ taskman links add the shared provider archive:
+`libtaskman/Makefile` excludes `cred.o` from `libtaskman.a`, and the NQ/LQ
+taskman links add the shared provider archive:
 
 ```text
 build/rust/tm-providers/libqsoe_tm_providers.a
@@ -61,18 +61,19 @@ still produce the historical single-provider output path for focused evidence.
 
 ## Evidence
 
-The C behavior baseline is covered by:
+The Rust behavior model is covered by:
 
 ```sh
 make check-tm-cred-model
 ```
 
-That fixture verifies ABI layout, initialization semantics, absolute cwd
+That target runs the Rust crate host tests. The tests verify ABI layout,
+initialization semantics, absolute cwd
 updates, getcwd copy behavior without an added NUL, umask exchange/masking,
 `TM_CRED_KEEP` field preservation, self-info snapshots, and root/non-root
 credential-change policy.
 
-The Rust provider has equivalent host coverage:
+The direct command is:
 
 ```sh
 cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-cred --features host-tests
@@ -84,11 +85,10 @@ The full RC evidence gate is:
 make tm-cred-evidence
 ```
 
-It runs the C fixture, Rust host tests, builds and audits the Rust staticlib,
-checks exported symbols, verifies all archive members are RVC soft-float, and
-links both NQ and LQ taskman in C rollback and Rust-default modes. The gate also
-verifies `cred.o` is present for `QSOE_RUST_TM_CRED=0` and absent for
-`QSOE_RUST_TM_CRED=1`.
+It runs Rust host tests, builds and audits the Rust staticlib, checks exported
+symbols, verifies all archive members are RVC soft-float, links NQ and LQ
+taskman with `cred.o` absent, verifies final taskman ELF `tm_cred_*` symbols,
+and verifies retired selector rejection for `QSOE_RUST_TM_CRED=0`.
 
 The focused runtime gate is:
 
@@ -103,21 +103,20 @@ qrvfs image, and runs it from sysinit. The helper checks initial root ids, umask
 exchange, cwd round-trip through `/usr/conf`, held-id uid/gid transitions,
 non-root `setuid(0)` rejection, and inherited ids/cwd/umask in a spawned child.
 
-The RC gates are:
+The retired compatibility gate is:
 
 ```sh
 make tm-cred-rc-smoke
-make tm-cred-rc-rollback-smoke
 ```
 
-The default RC gate validates NQ and LQ archive membership with `cred.o` absent
-and then reuses the live runtime smoke. The rollback gate sets
-`TM_CRED_RC_ROLLBACK=1`, verifies `cred.o` remains present, and reuses the same
-live probe under an explicit `TM_CRED_RUNTIME_ALLOW_C=1` guard.
+The gate validates NQ and LQ archive membership with `cred.o` absent and then
+reuses the live runtime smoke. `TM_CRED_RC_ROLLBACK=1` now fails fast after
+retirement.
 
 ## Current State
 
-`tm_cred` is a Rust-default RC with C rollback. It has no C retirement approval.
-Keep `libtaskman/src/cred.c` as the rollback implementation until the RC has
-enough trusted evidence, the global retirement checklist is satisfied, and a
-separate removal PR is approved.
+`tm_cred` is retired to Rust. `libtaskman/src/cred.c` and the old C host fixture
+are removed, `QSOE_RUST_TM_CRED=0` fails fast, and the public
+`libtaskman/include/tm_cred.h` ABI remains the taskman boundary. Historical RC
+and rollback evidence lives in `TASK_MANAGER_CRED_RC.md`; retirement evidence
+lives in `TASK_MANAGER_CRED_RETIREMENT.md`.

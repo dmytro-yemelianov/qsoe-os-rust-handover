@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture tm_cred Rust-default RC evidence while preserving C rollback coverage.
+# Capture tm_cred Rust-only retirement evidence.
 
 set -eu
 
@@ -14,8 +14,9 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-cred-evidence.sh
 
-Builds and audits the Rust tm_cred default path and verifies C rollback archive
-membership for NQ and LQ taskman links.
+Builds and audits the retired Rust tm_cred path, verifies that taskman archives
+no longer contain C cred.o, and checks retired selector rejection for NQ and LQ
+taskman links.
 
 Environment:
   TM_CRED_EVIDENCE_WORKDIR  output directory, default build/tm-cred-evidence
@@ -92,6 +93,20 @@ require_cred_count() {
         fail "$label expected $expected cred.o members, got $count"
 }
 
+require_retired_selector_rejected() {
+    local label=$1
+    shift
+    local log="$WORKDIR/$label-retired-selector-rejection.txt"
+
+    if "$@" > "$log" 2>&1; then
+        fail "$label unexpectedly accepted QSOE_RUST_TM_CRED=0"
+    fi
+    if ! grep -Fq 'QSOE_RUST_TM_CRED must be 1 after C tm_cred retirement' "$log" &&
+        ! grep -Fq 'C tm_cred is retired; QSOE_RUST_TM_CRED must be 1' "$log"; then
+        fail "$label rejection did not mention retired tm_cred selector"
+    fi
+}
+
 audit_flags() {
     local label=$1
     local elf=$2
@@ -112,6 +127,28 @@ audit_flags() {
     if grep -Fq 'Dynamic section at offset' "$dynamic"; then
         fail "$label unexpectedly has a dynamic section"
     fi
+}
+
+audit_linked_symbols() {
+    local label=$1
+    local elf=$2
+    local symbols="$WORKDIR/$label-symbols.txt"
+
+    [ -f "$elf" ] || fail "missing ELF for $label: $elf"
+    "$NM" -g --defined-only "$elf" > "$symbols"
+
+    for symbol in \
+        tm_cred_init \
+        tm_cred_chdir \
+        tm_cred_getcwd \
+        tm_cred_umask \
+        tm_cred_set \
+        tm_cred_change_permitted \
+        tm_cred_self_info
+    do
+        grep -Eq "[[:space:]]$symbol$" "$symbols" ||
+            fail "$label is missing linked symbol $symbol"
+    done
 }
 
 audit_provider_archive() {
@@ -155,38 +192,41 @@ audit_provider_archive() {
         tee -a "$WORKDIR/rust-provider-summary.txt"
 }
 
-echo "tm-cred-evidence.sh: running C host model fixture"
+echo "tm-cred-evidence.sh: running Rust host model tests"
 "$MAKE" -C "$ROOT" --no-print-directory check-tm-cred-model
-
-echo "tm-cred-evidence.sh: running Rust host tests"
-cargo test --manifest-path "$MANIFEST" -p qsoe-tm-cred --features host-tests
 
 echo "tm-cred-evidence.sh: building Rust provider archive"
 "$MAKE" -C "$ROOT" --no-print-directory rust-tm-cred-provider
 audit_provider_archive
 
-echo "tm-cred-evidence.sh: verifying NQ C rollback membership"
-"$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
-    QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1
-require_cred_count nq-c-rollback "$ROOT/nq/build/libtaskman/libtaskman.a" 1
-audit_flags nq-c-rollback-taskman "$ROOT/nq/build/taskman/taskman.elf"
-
-echo "tm-cred-evidence.sh: verifying NQ Rust-default membership"
+echo "tm-cred-evidence.sh: verifying NQ Rust-only membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
     QSOE_RUST_TM_CRED=1 QSOE_RUST_TM_PROCFS=1
-require_cred_count nq-rust-default "$ROOT/nq/build/libtaskman/libtaskman.a" 0
-audit_flags nq-rust-default-taskman "$ROOT/nq/build/taskman/taskman.elf"
+require_cred_count nq-rust-retired "$ROOT/nq/build/libtaskman/libtaskman.a" 0
+audit_flags nq-rust-retired-taskman "$ROOT/nq/build/taskman/taskman.elf"
+audit_linked_symbols nq-rust-retired-taskman "$ROOT/nq/build/taskman/taskman.elf"
 
-echo "tm-cred-evidence.sh: verifying LQ C rollback membership"
-"$MAKE" -C "$ROOT/lq" --no-print-directory \
-    QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 taskman
-require_cred_count lq-c-rollback "$ROOT/lq/build/libtaskman/libtaskman.a" 1
-audit_flags lq-c-rollback-taskman "$ROOT/lq/build/taskman.elf"
+echo "tm-cred-evidence.sh: verifying NQ retired selector rejection"
+require_retired_selector_rejected nq \
+    "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory QSOE_RUST_TM_CRED=0
 
-echo "tm-cred-evidence.sh: verifying LQ Rust-default membership"
+echo "tm-cred-evidence.sh: verifying LQ Rust-only membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
     QSOE_RUST_TM_CRED=1 QSOE_RUST_TM_PROCFS=1 taskman
-require_cred_count lq-rust-default "$ROOT/lq/build/libtaskman/libtaskman.a" 0
-audit_flags lq-rust-default-taskman "$ROOT/lq/build/taskman.elf"
+require_cred_count lq-rust-retired "$ROOT/lq/build/libtaskman/libtaskman.a" 0
+audit_flags lq-rust-retired-taskman "$ROOT/lq/build/taskman.elf"
+audit_linked_symbols lq-rust-retired-taskman "$ROOT/lq/build/taskman.elf"
+
+echo "tm-cred-evidence.sh: verifying LQ retired selector rejection"
+require_retired_selector_rejected lq \
+    "$MAKE" -C "$ROOT/lq" --no-print-directory QSOE_RUST_TM_CRED=0 taskman
+
+echo "tm-cred-evidence.sh: verifying standalone libtaskman retired selector rejection"
+require_retired_selector_rejected libtaskman \
+    "$MAKE" -C "$ROOT/libtaskman" --no-print-directory QSOE_RUST_TM_CRED=0
+
+echo "tm-cred-evidence.sh: verifying provider archive retired selector rejection"
+require_retired_selector_rejected rust-providers \
+    env QSOE_RUST_TM_CRED=0 "$ROOT/scripts/build-rust-tm-providers.sh" "$WORKDIR/retired-selector/libqsoe_tm_providers.a"
 
 echo "tm-cred-evidence.sh: evidence captured in $WORKDIR"
