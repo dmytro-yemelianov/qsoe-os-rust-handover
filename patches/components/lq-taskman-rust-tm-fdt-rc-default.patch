@@ -1,0 +1,10 @@
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -46,7 +46,7 @@
+ QSOE_RUST_TM_CRED ?= 1
+ QSOE_RUST_TM_ELF ?= 1
+-QSOE_RUST_TM_FDT ?= 0
++QSOE_RUST_TM_FDT ?= 1
+ QSOE_RUST_TM_PATHMGR ?= 0
+ QSOE_RUST_TM_PSEUDODEV ?= 0
+ QSOE_RUST_TM_RSRCDB ?= 0

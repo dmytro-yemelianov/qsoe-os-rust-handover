@@ -387,24 +387,26 @@ logic remain C.
 
 ## Task Manager FDT Parser Selection
 
-The Rust LQ `tm_fdt` provider can be built as a soft-float taskman staticlib
-without changing the normal taskman default:
+The Rust LQ `tm_fdt` provider is the Rust-default RC path for the FDT parser:
 
 ```sh
 make check-tm-fdt-model
 make rust-tm-fdt-provider
 make tm-fdt-evidence
 make tm-fdt-runtime-smoke
+make tm-fdt-rc-smoke
+make tm-fdt-rc-rollback-smoke
 ```
 
-With the default `QSOE_RUST_TM_FDT=0`, LQ taskman links the existing C
-`sys/fdt.o`. With `QSOE_RUST_TM_FDT=1`, the component Makefile selector omits
-C `sys/fdt.o`, builds `qsoe-tm-fdt` for `riscv64imac-unknown-none-elf`, and
-links `libqsoe_tm_fdt.a` into taskman. FDT discovery, syscfg/sysmap policy,
-initrd handling, process tables, and seL4 invocation code remain C.
+With the default `QSOE_RUST_TM_FDT=1`, the component Makefile selector omits C
+`sys/fdt.o`, builds `qsoe-tm-fdt` for `riscv64imac-unknown-none-elf`, and links
+the shared `qsoe-tm-providers` archive into taskman. With
+`QSOE_RUST_TM_FDT=0`, LQ taskman links the existing C `sys/fdt.o` rollback.
+FDT discovery, syscfg/sysmap policy, initrd handling, process tables, and seL4
+invocation code remain C.
 
-`make tm-fdt-runtime-smoke` boots QSOE/L with Rust `tm_fdt` selected, verifies
-the Rust-selected LQ taskman link plan omits C `sys/fdt.o`, and checks the
+`make tm-fdt-rc-smoke` boots QSOE/L with Rust `tm_fdt` selected by default,
+verifies the Rust-default LQ taskman link plan omits C `sys/fdt.o`, and checks the
 booted FDT consumers through `/chosen` bootargs, syscfg/sysmap construction,
 `/sys/board`, `/sys/cmdline`, and `/usr/bin/sysinfo`.
 

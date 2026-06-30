@@ -387,12 +387,13 @@ The strict ELF audit showed:
   `libtaskman.a` and links through the shared taskman Rust provider archive.
   `make tm-elf-rc-smoke` covers the Rust-only archive selection plus dynamic
   ELF-backed `/usr/bin/sysinfo` spawn.
-- `tm_fdt` has a Rust opt-in provider behind `QSOE_RUST_TM_FDT=1`. The
+- `tm_fdt` is a Rust-default RC provider behind `QSOE_RUST_TM_FDT=1`. The
   selector removes LQ C `sys/fdt.o` and links through the shared taskman Rust
-  provider archive. `make tm-fdt-runtime-smoke` covers `/chosen` bootargs,
+  provider archive. `make tm-fdt-rc-smoke` covers `/chosen` bootargs,
   syscfg/sysmap construction, `/sys`, and `sysinfo` consumers with Rust
-  `tm_fdt` selected. C remains default and rollback until a separate RC
-  decision exists.
+  `tm_fdt` selected by default. `make tm-fdt-rc-rollback-smoke` keeps C
+  `sys/fdt.o` rollback live until broader PCI/memory-topology confidence and a
+  separate removal PR exist.
 - Tooling/process improvements are now tracked as roadmap tooling gates:
   #200 for a component gate harness and roadmap sync, #201 for CI cache and
   `sccache`, #202 for CodeQL/dependency-review/static security gates, and #203

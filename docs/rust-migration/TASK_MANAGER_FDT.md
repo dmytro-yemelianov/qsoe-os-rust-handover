@@ -4,7 +4,7 @@ Captured: 2026-06-29 CEST.
 
 ## Scope
 
-`qsoe-tm-fdt` is a Rust opt-in provider for the LQ task-manager device-tree
+`qsoe-tm-fdt` is a Rust-default RC provider for the LQ task-manager device-tree
 blob parser in:
 
 ```text
@@ -36,16 +36,16 @@ It does not replace:
 
 ## Selector
 
-Normal LQ builds keep C selected:
+Normal LQ builds select Rust:
+
+```sh
+make -C lq taskman
+```
+
+The explicit C rollback path is:
 
 ```sh
 QSOE_RUST_TM_FDT=0 make -C lq taskman
-```
-
-The Rust opt-in path is:
-
-```sh
-QSOE_RUST_TM_FDT=1 make -C lq taskman
 ```
 
 The top-level evidence target is:
@@ -53,6 +53,8 @@ The top-level evidence target is:
 ```sh
 make tm-fdt-evidence
 make tm-fdt-runtime-smoke
+make tm-fdt-rc-smoke
+make tm-fdt-rc-rollback-smoke
 ```
 
 Multiple taskman Rust providers may be selected together. The shared
@@ -86,24 +88,24 @@ make container-tm-fdt-evidence
 - Rust staticlib builds for `riscv64imac-unknown-none-elf`;
 - Rust provider archive members report RVC soft-float ABI;
 - Rust provider archive exports all nine `tm_fdt_*` ABI symbols;
-- LQ C-default taskman links with C `sys/fdt.o`;
-- LQ Rust-selected taskman omits `sys/fdt.o` and links
+- LQ Rust-default taskman omits `sys/fdt.o` and links
   the shared taskman Rust provider archive;
+- LQ C rollback taskman links with C `sys/fdt.o`;
 - linked taskman ELFs pass the evidence script's ELF flag and section audit.
 - the container-equivalent `tm_fdt` evidence target passes with the same
-  C-default/Rust-selected link checks.
+  Rust-default/C-rollback link checks.
 
 This evidence proves ABI compatibility, archive selection, rollback, and linked
 artifact shape.
 
-`make tm-fdt-runtime-smoke` verified the Rust-selected parser in a booted LQ
+`make tm-fdt-runtime-smoke` verified the Rust-default parser in a booted LQ
 image. The smoke:
 
-- captures a Rust-selected LQ taskman dry-run plan and rejects any remaining
+- captures a Rust-default LQ taskman dry-run plan and rejects any remaining
   `sys/fdt.o` link;
 - verifies the selected Rust provider archive exports all nine `tm_fdt_*`
   ABI symbols;
-- boots with `QSOE_RUST_TM_FDT=1` and mandatory `QSOE_RUST_TM_PROCFS=1`;
+- boots with default `QSOE_RUST_TM_FDT=1` and mandatory `QSOE_RUST_TM_PROCFS=1`;
 - waits for taskman's `/chosen` command-line marker plus `syscfg built from FDT`
   and `sysmap page built`;
 - checks `/sys/board`, `/sys/cmdline`, and `/usr/bin/sysinfo` from sysinit.
@@ -124,12 +126,13 @@ need for broader hardware PCI and memory-topology coverage before C removal.
 
 ## C Rollback
 
-C remains the default and rollback path:
+C remains the rollback path during the RC window:
 
-- `QSOE_RUST_TM_FDT=0` keeps `lq/taskman/sys/fdt.c`;
-- `QSOE_RUST_TM_FDT=1` excludes `sys/fdt.o` from LQ taskman and links
+- default `QSOE_RUST_TM_FDT=1` excludes `sys/fdt.o` from LQ taskman and links
   the shared taskman Rust provider archive.
+- `QSOE_RUST_TM_FDT=0` keeps `lq/taskman/sys/fdt.c`;
+- `make tm-fdt-rc-rollback-smoke` boots the C rollback path.
 
-Do not promote this provider to a Rust-default RC until runtime boot coverage
-and a separate RC decision accept the remaining PCI and memory-topology risk
-with C rollback.
+Do not retire C `sys/fdt.c` during this RC. C removal still requires broader
+PCI and memory-topology confidence, the global retirement checklist, and a
+separate removal PR.

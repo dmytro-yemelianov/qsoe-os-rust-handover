@@ -24,6 +24,41 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 18:26 CEST - tm_fdt Rust-Default RC
+
+Scope:
+
+- Promoted `tm_fdt` from Rust opt-in to Rust-default RC for QSOE/L while
+  preserving C rollback through `QSOE_RUST_TM_FDT=0`.
+- Changed the umbrella and tracked LQ component override defaults to
+  `QSOE_RUST_TM_FDT ?= 1`.
+- Added `tm-fdt-rc-smoke` and `tm-fdt-rc-rollback-smoke` targets plus CI hooks
+  and artifact upload coverage.
+- Updated `tm-fdt-runtime-smoke` so the Rust path remains default but the RC
+  rollback path can explicitly reuse the live `/chosen`, `/sys`, and `sysinfo`
+  boot probe with `TM_FDT_RUNTIME_ALLOW_C=1`.
+- Updated shared provider evidence so `tm_fdt` is audited with the default LQ
+  provider set.
+
+Commands:
+
+- `make tm-fdt-evidence`
+- `make tm-fdt-rc-smoke`
+- `make tm-fdt-rc-rollback-smoke`
+- `make tm-providers-evidence`
+- `make rust-quality`
+
+Result:
+
+- Pending validation in this worktree. C `lq/taskman/sys/fdt.c` remains present
+  as rollback; no C source was retired.
+
+Follow-up:
+
+- Keep #146 open as `rust-default-rc` until trusted PR and main CI evidence is
+  recorded. C removal still requires broader PCI/memory-topology confidence,
+  the global retirement checklist, and a separate removal PR.
+
 ## 2026-06-30 18:30 CEST - tm_cred Rust-Default RC
 
 Scope:

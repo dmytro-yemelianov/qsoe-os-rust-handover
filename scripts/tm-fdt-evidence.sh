@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture LQ tm_fdt Rust opt-in evidence without changing the default.
+# Capture LQ tm_fdt Rust-default RC evidence while keeping C rollback alive.
 
 set -eu
 
@@ -14,8 +14,8 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-fdt-evidence.sh
 
-Builds and audits the Rust LQ taskman FDT opt-in path and verifies that C
-remains the default rollback provider for sys/fdt.c.
+Builds and audits the Rust LQ taskman FDT default path and verifies that C
+remains the rollback provider for sys/fdt.c.
 
 Environment:
   TM_FDT_EVIDENCE_WORKDIR  output directory, default build/tm-fdt-evidence
@@ -140,7 +140,7 @@ capture_lq_taskman_plan() {
         LIBTASKMAN_A="$ROOT/lq/build/libtaskman/libtaskman.a" \
         LIBTASKMAN_INC="$ROOT/libtaskman/include" \
         QSOE_RUST_TM_CPIO=1 \
-        QSOE_RUST_TM_CRED=0 \
+        QSOE_RUST_TM_CRED=1 \
         QSOE_RUST_TM_ELF=1 \
         QSOE_RUST_TM_FDT="$rust_selected" \
         QSOE_RUST_TM_PROCFS=1 \
@@ -178,7 +178,7 @@ build_lq_taskman() {
     rm -f "$ROOT/lq/build/taskman.elf"
     "$MAKE" -C "$ROOT/lq" --no-print-directory \
         QSOE_RUST_TM_CPIO=1 \
-        QSOE_RUST_TM_CRED=0 \
+        QSOE_RUST_TM_CRED=1 \
         QSOE_RUST_TM_ELF=1 \
         QSOE_RUST_TM_FDT="$rust_selected" \
         QSOE_RUST_TM_PROCFS=1 \
@@ -201,22 +201,22 @@ echo "tm-fdt-evidence.sh: building Rust provider archive"
 "$MAKE" -C "$ROOT" --no-print-directory rust-tm-fdt-provider
 audit_provider_archive
 
-echo "tm-fdt-evidence.sh: verifying LQ C-default link plan"
-capture_lq_taskman_plan lq-c-default 0
-require_plan_contains lq-c-default '/sys/fdt.o'
-require_plan_omits lq-c-default 'libqsoe_tm_fdt.a'
-require_plan_contains lq-c-default 'libqsoe_tm_providers.a'
+echo "tm-fdt-evidence.sh: verifying LQ Rust-default link plan"
+capture_lq_taskman_plan lq-rust-default 1
+require_plan_omits lq-rust-default '/sys/fdt.o'
+require_plan_omits lq-rust-default 'libqsoe_tm_fdt.a'
+require_plan_contains lq-rust-default 'libqsoe_tm_providers.a'
 
-echo "tm-fdt-evidence.sh: verifying LQ C-default taskman link"
-build_lq_taskman lq-c-default 0
+echo "tm-fdt-evidence.sh: verifying LQ Rust-default taskman link"
+build_lq_taskman lq-rust-default 1
 
-echo "tm-fdt-evidence.sh: verifying LQ Rust-selected link plan"
-capture_lq_taskman_plan lq-rust-selected 1
-require_plan_omits lq-rust-selected '/sys/fdt.o'
-require_plan_omits lq-rust-selected 'libqsoe_tm_fdt.a'
-require_plan_contains lq-rust-selected 'libqsoe_tm_providers.a'
+echo "tm-fdt-evidence.sh: verifying LQ C rollback link plan"
+capture_lq_taskman_plan lq-c-rollback 0
+require_plan_contains lq-c-rollback '/sys/fdt.o'
+require_plan_omits lq-c-rollback 'libqsoe_tm_fdt.a'
+require_plan_contains lq-c-rollback 'libqsoe_tm_providers.a'
 
-echo "tm-fdt-evidence.sh: verifying LQ Rust-selected taskman link"
-build_lq_taskman lq-rust-selected 1
+echo "tm-fdt-evidence.sh: verifying LQ C rollback taskman link"
+build_lq_taskman lq-c-rollback 0
 
 echo "tm-fdt-evidence.sh: evidence captured in $WORKDIR"

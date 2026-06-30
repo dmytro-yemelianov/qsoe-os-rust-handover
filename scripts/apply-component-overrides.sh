@@ -231,7 +231,7 @@ apply_patch_if_possible_or_present lq lq-makefile-rust-tm-elf.patch \
     'QSOE_RUST_TM_ELF=$(QSOE_RUST_TM_ELF)'
 apply_patch_if_possible_or_present lq lq-makefile-rust-tm-fdt.patch \
     "$ROOT/lq/Makefile" \
-    'QSOE_RUST_TM_FDT ?= 0'
+    'QSOE_RUST_TM_FDT=$(QSOE_RUST_TM_FDT)'
 apply_patch_if_possible_or_present lq lq-makefile-rust-tm-sysmap.patch \
     "$ROOT/lq/Makefile" \
     'QSOE_RUST_TM_SYSMAP=$(QSOE_RUST_TM_SYSMAP)'
@@ -423,6 +423,12 @@ apply_patch_if_possible_or_present lq lq-makefile-rust-tm-cred-rc-default.patch 
 apply_patch_if_possible_or_present lq lq-taskman-rust-tm-cred-rc-default.patch \
     "$ROOT/lq/taskman/Makefile" \
     'QSOE_RUST_TM_CRED ?= 1'
+apply_patch_if_possible_or_present lq lq-makefile-rust-tm-fdt-rc-default.patch \
+    "$ROOT/lq/Makefile" \
+    'QSOE_RUST_TM_FDT ?= 1'
+apply_patch_if_possible_or_present lq lq-taskman-rust-tm-fdt-rc-default.patch \
+    "$ROOT/lq/taskman/Makefile" \
+    'QSOE_RUST_TM_FDT ?= 1'
 
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 1'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO must be 1 after C tm_cpio retirement'
@@ -510,7 +516,7 @@ require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSMAP must be 1 after C tm_sysma
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSFS must be 1 after C tm_sysfs retirement'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_CRED ?= 1'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_ELF ?= 1'
-require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_FDT ?= 0'
+require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_FDT ?= 1'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PATHMGR ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_PSEUDODEV ?= 0'
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_RSRCDB ?= 0'
@@ -586,7 +592,7 @@ require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SYSMAP must be 1 after C 
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SYSFS must be 1 after C tm_sysfs retirement'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_CRED ?= 1'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_ELF ?= 1'
-require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_FDT ?= 0'
+require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_FDT ?= 1'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PATHMGR ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_PSEUDODEV ?= 0'
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_RSRCDB ?= 0'

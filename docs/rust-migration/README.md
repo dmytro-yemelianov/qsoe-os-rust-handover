@@ -112,24 +112,26 @@ Read in this order:
 56. `TASK_MANAGER_ELF_RC.md`: historical Rust-default `tm_elf`
    release-candidate note.
 57. `TASK_MANAGER_ELF_RETIREMENT.md`: `tm_elf` C retirement evidence.
-58. `TASK_MANAGER_FDT.md`: Rust opt-in LQ task-manager FDT parser provider and
-   evidence gate.
-59. `TASK_MANAGER_SYSMAP.md`: retired Rust LQ task-manager sysmap page
-   builder and evidence gate.
-60. `TASK_MANAGER_SYSMAP_RC.md`: historical Rust-default `tm_sysmap`
-   release-candidate note and C rollback drill.
-61. `TASK_MANAGER_SYSMAP_RETIREMENT.md`: C provider retirement note for
-   `tm_sysmap`, including the Rust-only taskman path and removed rollback.
-62. `TASK_MANAGER_PATHMGR.md`: Rust opt-in task-manager path registry provider
+58. `TASK_MANAGER_FDT.md`: Rust-default RC LQ task-manager FDT parser provider
    and evidence gate.
-63. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
+59. `TASK_MANAGER_FDT_RC.md`: Rust-default `tm_fdt` release-candidate note and
+   C rollback drill.
+60. `TASK_MANAGER_SYSMAP.md`: retired Rust LQ task-manager sysmap page
+   builder and evidence gate.
+61. `TASK_MANAGER_SYSMAP_RC.md`: historical Rust-default `tm_sysmap`
+   release-candidate note and C rollback drill.
+62. `TASK_MANAGER_SYSMAP_RETIREMENT.md`: C provider retirement note for
+   `tm_sysmap`, including the Rust-only taskman path and removed rollback.
+63. `TASK_MANAGER_PATHMGR.md`: Rust opt-in task-manager path registry provider
+   and evidence gate.
+64. `KERNEL_CANDIDATES.md`: Phase 10 kernel candidate inventory, explicit
    exclusions, and fixture-only ranking.
-64. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
-65. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
+65. `KERNEL_ARTIFACT_AUDIT.md`: Phase 10 kernel Rust artifact audit needs.
+66. `SPEC.md`: technical constraints, allowed boundaries, runtime/linking rules,
    and acceptance standards.
-66. `PLAN.md`: phased migration plan from baseline validation through possible
+67. `PLAN.md`: phased migration plan from baseline validation through possible
    kernel reassessment.
-67. `TASKS.md`: executable backlog with acceptance criteria.
+68. `TASKS.md`: executable backlog with acceptance criteria.
 
 The first implementation milestone should not be a subsystem rewrite. It should
 be a reproducible baseline plus artifact audit, followed by a minimal Rust
