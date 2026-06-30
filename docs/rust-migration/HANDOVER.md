@@ -22,7 +22,7 @@ origin git@github.com:dmytro-yemelianov/qsoe-os-rust-handover.git
 Current main tip:
 
 ```text
-062ce1d2ba66ac12c7f63e2fddfdd88cb7e0ee78
+37ae162e01163673ad7de640109eb5523843feb9
 ```
 
 The local tree adds:
@@ -93,10 +93,9 @@ merged the `tm_sysmap` retirement into `main` at
 
 Current in-flight follow-up:
 
-- #148: `tm_sysfs` has moved past its Rust-default RC into C provider
-  retirement on the current branch. Rust `qsoe-tm-sysfs` is mandatory in
-  NQ/LQ taskman and standalone `libtaskman`, and `QSOE_RUST_TM_SYSFS=0` now
-  fails fast.
+- #151: `tm_rsrcdb` is moving from Rust opt-in into a Rust-default RC on the
+  current branch. Rust `qsoe-tm-rsrcdb` is selected by default in LQ taskman,
+  and `QSOE_RUST_TM_RSRCDB=0` remains the explicit C rollback path.
 
 The #96 Rust pipe data-path gate, #97 Rust `test_msgpass` gate, and #103
 `tm_procfs` opt-in gate are satisfied by trusted `main` CI run `28102250069` at
@@ -376,12 +375,13 @@ The strict ELF audit showed:
   repath, dynamic helper registration, duplicate rejection, MsgSend through
   the resolved binding, and unregister-on-exit cleanup. C remains default and
   rollback until a separate RC decision exists.
-- `tm_rsrcdb` has a Rust opt-in provider behind `QSOE_RUST_TM_RSRCDB=1`. The
-  selector removes LQ C `sys/rsrcdb.o` and links through the shared taskman
-  Rust provider archive. `make tm-rsrcdb-runtime-smoke` covers live
+- `tm_rsrcdb` is a Rust-default RC provider behind `QSOE_RUST_TM_RSRCDB=1`.
+  The selector removes LQ C `sys/rsrcdb.o` and links through the shared
+  taskman Rust provider archive. `make tm-rsrcdb-rc-smoke` covers live
   `rsrcdbmgr_*` create, attach, query, detach, and destroy calls with Rust
-  `tm_rsrcdb` selected. C remains default and rollback until a separate RC
-  decision exists.
+  `tm_rsrcdb` selected by default. `make tm-rsrcdb-rc-rollback-smoke` keeps C
+  `sys/rsrcdb.o` rollback live until trusted RC evidence and a separate
+  removal PR exist.
 - `tm_elf` is a retired C provider with `QSOE_RUST_TM_ELF=1` mandatory and
   `QSOE_RUST_TM_ELF=0` rejected. The selector removes C `elf.o` from
   `libtaskman.a` and links through the shared taskman Rust provider archive.

@@ -45,7 +45,7 @@ QSOE_RUST_TM_FDT=1
 QSOE_RUST_TM_PATHMGR=1
 QSOE_RUST_TM_PROCFS=1  # mandatory after C retirement
 QSOE_RUST_TM_PSEUDODEV=1
-QSOE_RUST_TM_RSRCDB=1
+QSOE_RUST_TM_RSRCDB=1  # Rust-default RC; 0 remains C rollback
 QSOE_RUST_TM_SCRIPT=1  # mandatory after C retirement
 QSOE_RUST_TM_SYSCFG=1  # mandatory after C retirement
 QSOE_RUST_TM_SYSFS=1   # mandatory after C retirement
@@ -70,13 +70,16 @@ The focused multi-provider gate is:
 make tm-providers-evidence
 ```
 
-The current gate selects `tm_cpio` and `tm_procfs` together. It verifies:
+The current gate selects the shared provider set including `tm_cpio`,
+`tm_cred`, `tm_fdt`, `tm_procfs`, and `tm_rsrcdb`. It verifies:
 
 - the shared archive builds for `riscv64imac-unknown-none-elf`;
 - archive members report the expected RVC soft-float ABI;
-- the archive exports symbols from both selected providers;
+- the archive exports symbols from the selected providers;
 - the archive contains no duplicate `rust_begin_unwind` symbol;
-- NQ and LQ taskman omit the selected C objects and link successfully;
+- NQ and LQ taskman omit the selected portable C objects and link successfully;
+- the LQ taskman ELF includes the selected LQ-only provider symbols such as
+  `tm_fdt_*` and `tm_rsrc_*`;
 - linked NQ/LQ taskman ELFs have no TLS, unwind, constructor, or dynamic
   sections;
 - a dual-provider `/proc` smoke reaches the expected boot and `/proc` read

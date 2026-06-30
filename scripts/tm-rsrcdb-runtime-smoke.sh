@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Boot QSOE/L with Rust tm_rsrcdb selected and exercise live rsrcdbmgr calls.
+# Boot QSOE/L with the selected tm_rsrcdb provider and exercise live rsrcdbmgr calls.
 
 set -eu
 
@@ -9,15 +9,16 @@ usage() {
 usage: scripts/tm-rsrcdb-runtime-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
 Injects a temporary sysinit fragment that runs /usr/bin/rsrcdb_probe, rebuilds
-the virtio qrvfs image with that helper staged, and boots QSOE/L with
-QSOE_RUST_TM_RSRCDB=1.
+the virtio qrvfs image with that helper staged, and boots QSOE/L with the
+selected tm_rsrcdb provider. The default is the Rust provider.
 
 The helper exercises public rsrcdbmgr_* create, attach, query, detach, and
-destroy calls against the Rust-selected taskman resource DB provider.
+destroy calls against the selected taskman resource DB provider.
 
 Environment:
   TM_RSRCDB_RUNTIME_SMOKE_WORKDIR  output directory, default build/tm-rsrcdb-runtime-smoke
-  QSOE_RUST_TM_RSRCDB              set to 1; this smoke validates the Rust selection
+  QSOE_RUST_TM_RSRCDB              1 for Rust default, 0 only with TM_RSRCDB_RUNTIME_ALLOW_C=1
+  TM_RSRCDB_RUNTIME_ALLOW_C        permit C rollback validation when QSOE_RUST_TM_RSRCDB=0
   QSOE_RUST_TM_PROCFS              must remain 1 after C tm_procfs retirement
 EOF
 }
@@ -79,13 +80,26 @@ fi
 case "${QSOE_RUST_TM_RSRCDB:-1}" in
     1|true|TRUE|yes|YES)
         export QSOE_RUST_TM_RSRCDB=1
+        selected=1
+        mode=rust-default
+        expected_rsrcdb_count=0
         ;;
     0|false|FALSE|no|NO)
-        echo "tm-rsrcdb-runtime-smoke.sh: this smoke validates QSOE_RUST_TM_RSRCDB=1" >&2
-        exit 2
+        case "${TM_RSRCDB_RUNTIME_ALLOW_C:-0}" in
+            1|true|TRUE|yes|YES)
+                export QSOE_RUST_TM_RSRCDB=0
+                selected=0
+                mode=c-rollback
+                expected_rsrcdb_count=2
+                ;;
+            *)
+                echo "tm-rsrcdb-runtime-smoke.sh: QSOE_RUST_TM_RSRCDB=0 is only allowed with TM_RSRCDB_RUNTIME_ALLOW_C=1" >&2
+                exit 2
+                ;;
+        esac
         ;;
     *)
-        echo "tm-rsrcdb-runtime-smoke.sh: QSOE_RUST_TM_RSRCDB must be 1" >&2
+        echo "tm-rsrcdb-runtime-smoke.sh: QSOE_RUST_TM_RSRCDB must be 0 or 1" >&2
         exit 2
         ;;
 esac
@@ -109,7 +123,7 @@ source_conf="$ROOT/quser/conf"
 source_sysinit="$source_conf/sysinit"
 fragment=
 lq_libc="$ROOT/lq/build/libc/libc.so"
-members_log="$workdir/lq-rust-selected-libtaskman-members.txt"
+plan_log="$workdir/lq-$mode-taskman-dry-run.txt"
 rsrcdb_probe_staged="$ROOT/build/fsqrv-root/bin/rsrcdb_probe"
 selected_msgpass="$ROOT/build/rust/selected/usr/bin/test_msgpass.elf"
 
@@ -147,10 +161,6 @@ find_tool() {
     return 1
 }
 
-AR=$(find_tool riscv64-linux-gnu-ar ar llvm-ar) || {
-    echo "tm-rsrcdb-runtime-smoke.sh: no ar tool found" >&2
-    exit 127
-}
 NM=$(find_tool riscv64-linux-gnu-nm nm llvm-nm) || {
     echo "tm-rsrcdb-runtime-smoke.sh: no nm tool found" >&2
     exit 127
@@ -186,7 +196,9 @@ EOF
 chmod 0644 "$fragment"
 
 echo "tm-rsrcdb-runtime-smoke.sh: building LQ runtime prerequisites"
-"$MAKE" -C "$ROOT/lq" libc rtld libtaskman --no-print-directory
+"$MAKE" -C "$ROOT/lq" libc rtld libtaskman --no-print-directory \
+    QSOE_RUST_TM_PROCFS=1 \
+    QSOE_RUST_TM_RSRCDB="$selected"
 
 echo "tm-rsrcdb-runtime-smoke.sh: rebuilding quser with LQ libc"
 "$MAKE" -C "$ROOT/quser" LIBC_SO="$lq_libc" --no-print-directory
@@ -207,33 +219,47 @@ if [ ! -x "$rsrcdb_probe_staged" ]; then
     exit 1
 fi
 
-echo "tm-rsrcdb-runtime-smoke.sh: rebuilding QSOE/L image with Rust tm_rsrcdb"
-"$MAKE" -C "$ROOT/lq" --no-print-directory \
+echo "tm-rsrcdb-runtime-smoke.sh: capturing $mode tm_rsrcdb LQ taskman link plan"
+"$MAKE" -C "$ROOT/lq/taskman" --no-print-directory -B -n all \
+    LIBTASKMAN_A="$ROOT/lq/build/libtaskman/libtaskman.a" \
+    LIBTASKMAN_INC="$ROOT/libtaskman/include" \
     QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_RSRCDB=1
+    QSOE_RUST_TM_RSRCDB="$selected" \
+    > "$plan_log"
 
-"$AR" t "$ROOT/lq/build/libtaskman/libtaskman.a" > "$members_log"
-if grep -Eq '(^|/)rsrcdb\.o$' "$members_log"; then
-    echo "tm-rsrcdb-runtime-smoke.sh: Rust-selected libtaskman still contains rsrcdb.o" >&2
+rsrcdb_count=$(grep -Fo '/sys/rsrcdb.o' "$plan_log" | wc -l | tr -d ' ')
+if [ "$rsrcdb_count" -ne "$expected_rsrcdb_count" ]; then
+    echo "tm-rsrcdb-runtime-smoke.sh: $mode expected $expected_rsrcdb_count sys/rsrcdb.o dry-run entries, got $rsrcdb_count" >&2
+    exit 1
+fi
+if [ "$selected" -eq 1 ] && ! grep -Fq 'libqsoe_tm_providers.a' "$plan_log"; then
+    echo "tm-rsrcdb-runtime-smoke.sh: Rust-default taskman link plan omits libqsoe_tm_providers.a" >&2
     exit 1
 fi
 
-for symbol in \
-    tm_rsrc_init \
-    tm_rsrc_create \
-    tm_rsrc_destroy \
-    tm_rsrc_attach \
-    tm_rsrc_detach \
-    tm_rsrc_query \
-    tm_rsrc_release_pid \
-    tm_rsrc_seed_from_syscfg
-do
-    if ! "$NM" -g --defined-only "$ROOT/build/rust/tm-providers/libqsoe_tm_providers.a" |
-        grep -Eq "[[:space:]]$symbol$"; then
-        echo "tm-rsrcdb-runtime-smoke.sh: Rust provider archive is missing $symbol" >&2
-        exit 1
-    fi
-done
+echo "tm-rsrcdb-runtime-smoke.sh: rebuilding QSOE/L image with $mode tm_rsrcdb"
+"$MAKE" -C "$ROOT/lq" --no-print-directory \
+    QSOE_RUST_TM_PROCFS=1 \
+    QSOE_RUST_TM_RSRCDB="$selected"
+
+if [ "$selected" -eq 1 ]; then
+    for symbol in \
+        tm_rsrc_init \
+        tm_rsrc_create \
+        tm_rsrc_destroy \
+        tm_rsrc_attach \
+        tm_rsrc_detach \
+        tm_rsrc_query \
+        tm_rsrc_release_pid \
+        tm_rsrc_seed_from_syscfg
+    do
+        if ! "$NM" -g --defined-only "$ROOT/build/rust/tm-providers/libqsoe_tm_providers.a" |
+            grep -Eq "[[:space:]]$symbol$"; then
+            echo "tm-rsrcdb-runtime-smoke.sh: Rust provider archive is missing $symbol" >&2
+            exit 1
+        fi
+    done
+fi
 
 boot_args=(-k lq -t "$timeout_s" -o "$log")
 if [ "$keep_running" -eq 1 ]; then
@@ -256,7 +282,7 @@ expected_markers=(
 )
 boot_extra_patterns=$(printf '%s\n' "${expected_markers[@]}")
 
-echo "tm-rsrcdb-runtime-smoke.sh: booting Rust tm_rsrcdb runtime smoke"
+echo "tm-rsrcdb-runtime-smoke.sh: booting $mode tm_rsrcdb runtime smoke"
 FSQRV_BINS="$fsqrv_bins" \
     QSOE_BOOT_VIRTIO_PATTERN="/dev/vblk0 ready" \
     QSOE_BOOT_EXTRA_PATTERNS="$boot_extra_patterns" \

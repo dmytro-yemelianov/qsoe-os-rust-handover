@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture LQ tm_rsrcdb Rust opt-in evidence without changing the default.
+# Capture LQ tm_rsrcdb Rust-default RC evidence while keeping C rollback alive.
 
 set -eu
 
@@ -14,8 +14,8 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-rsrcdb-evidence.sh
 
-Builds and audits the Rust LQ taskman resource-DB opt-in path and verifies
-that C remains the default rollback provider for sys/rsrcdb.c.
+Builds and audits the Rust LQ taskman resource-DB default path and verifies
+that C remains available as the explicit rollback provider for sys/rsrcdb.c.
 
 Environment:
   TM_RSRCDB_EVIDENCE_WORKDIR  output directory, default build/tm-rsrcdb-evidence
@@ -139,7 +139,7 @@ capture_lq_taskman_plan() {
         LIBTASKMAN_A="$ROOT/lq/build/libtaskman/libtaskman.a" \
         LIBTASKMAN_INC="$ROOT/libtaskman/include" \
         QSOE_RUST_TM_CPIO=1 \
-        QSOE_RUST_TM_CRED=0 \
+        QSOE_RUST_TM_CRED=1 \
         QSOE_RUST_TM_PROCFS=1 \
         QSOE_RUST_TM_PSEUDODEV=0 \
         QSOE_RUST_TM_RSRCDB="$rust_selected" \
@@ -172,10 +172,10 @@ build_lq_taskman() {
     local label=$1
     local rust_selected=$2
 
-    rm -f "$ROOT/lq/build/taskman.elf"
+        rm -f "$ROOT/lq/build/taskman.elf"
     "$MAKE" -C "$ROOT/lq" --no-print-directory \
         QSOE_RUST_TM_CPIO=1 \
-        QSOE_RUST_TM_CRED=0 \
+        QSOE_RUST_TM_CRED=1 \
         QSOE_RUST_TM_PROCFS=1 \
         QSOE_RUST_TM_PSEUDODEV=0 \
         QSOE_RUST_TM_RSRCDB="$rust_selected" \
@@ -196,22 +196,22 @@ echo "tm-rsrcdb-evidence.sh: building Rust provider archive"
 "$MAKE" -C "$ROOT" --no-print-directory rust-tm-rsrcdb-provider
 audit_provider_archive
 
-echo "tm-rsrcdb-evidence.sh: verifying LQ C-default link plan"
-capture_lq_taskman_plan lq-c-default 0
-require_plan_contains lq-c-default '/sys/rsrcdb.o'
-require_plan_omits lq-c-default 'libqsoe_tm_rsrcdb.a'
-require_plan_contains lq-c-default 'libqsoe_tm_providers.a'
+echo "tm-rsrcdb-evidence.sh: verifying LQ Rust-default link plan"
+capture_lq_taskman_plan lq-rust-default 1
+require_plan_omits lq-rust-default '/sys/rsrcdb.o'
+require_plan_omits lq-rust-default 'libqsoe_tm_rsrcdb.a'
+require_plan_contains lq-rust-default 'libqsoe_tm_providers.a'
 
-echo "tm-rsrcdb-evidence.sh: verifying LQ C-default taskman link"
-build_lq_taskman lq-c-default 0
+echo "tm-rsrcdb-evidence.sh: verifying LQ Rust-default taskman link"
+build_lq_taskman lq-rust-default 1
 
-echo "tm-rsrcdb-evidence.sh: verifying LQ Rust-selected link plan"
-capture_lq_taskman_plan lq-rust-selected 1
-require_plan_omits lq-rust-selected '/sys/rsrcdb.o'
-require_plan_omits lq-rust-selected 'libqsoe_tm_rsrcdb.a'
-require_plan_contains lq-rust-selected 'libqsoe_tm_providers.a'
+echo "tm-rsrcdb-evidence.sh: verifying LQ C-rollback link plan"
+capture_lq_taskman_plan lq-c-rollback 0
+require_plan_contains lq-c-rollback '/sys/rsrcdb.o'
+require_plan_omits lq-c-rollback 'libqsoe_tm_rsrcdb.a'
+require_plan_contains lq-c-rollback 'libqsoe_tm_providers.a'
 
-echo "tm-rsrcdb-evidence.sh: verifying LQ Rust-selected taskman link"
-build_lq_taskman lq-rust-selected 1
+echo "tm-rsrcdb-evidence.sh: verifying LQ C-rollback taskman link"
+build_lq_taskman lq-c-rollback 0
 
 echo "tm-rsrcdb-evidence.sh: evidence captured in $WORKDIR"

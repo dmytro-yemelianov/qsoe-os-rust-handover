@@ -24,6 +24,54 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 19:20 CEST - tm_rsrcdb Rust-Default RC
+
+Scope:
+
+- Promoted `tm_rsrcdb` from Rust opt-in to Rust-default RC for QSOE/L while
+  preserving C rollback through `QSOE_RUST_TM_RSRCDB=0`.
+- Changed the umbrella and tracked LQ component override defaults to
+  `QSOE_RUST_TM_RSRCDB ?= 1`.
+- Added `tm-rsrcdb-rc-smoke` and `tm-rsrcdb-rc-rollback-smoke` targets plus CI
+  hooks and artifact upload coverage.
+- Updated `tm-rsrcdb-runtime-smoke` so the Rust path remains default but the RC
+  rollback path can explicitly reuse the live `rsrcdb_probe` with
+  `TM_RSRCDB_RUNTIME_ALLOW_C=1`.
+- Updated shared provider evidence so `tm_rsrcdb` is audited with the default
+  LQ provider set.
+- Added `TASK_MANAGER_RSRCDB_RC.md`, updated status/docs/readmes, and moved
+  issue #151 to `status:rc` / `rust-default-rc`.
+
+Commands:
+
+- `bash -n scripts/check-tm-rsrcdb-model.sh scripts/build-rust-tm-rsrcdb-provider.sh scripts/tm-rsrcdb-evidence.sh scripts/tm-rsrcdb-runtime-smoke.sh scripts/tm-rsrcdb-rc-smoke.sh scripts/tm-providers-evidence.sh scripts/apply-component-overrides.sh`
+- `make tm-rsrcdb-evidence`
+- `make tm-rsrcdb-runtime-smoke`
+- `make tm-rsrcdb-rc-smoke`
+- `make tm-rsrcdb-rc-rollback-smoke`
+- `make tm-providers-evidence`
+- `make rust-quality`
+- `make roadmap-validate`
+- `make roadmap-component-gate COMPONENT=tm-rsrcdb`
+- `git diff --check`
+
+Result:
+
+- Rust-default selector omits C `sys/rsrcdb.o` from the LQ taskman dry-run
+  plan; C rollback includes two `sys/rsrcdb.o` dry-run entries.
+- Rust-default and C rollback boot smokes both reached the live
+  `rsrcdbmgr_*` create, query, attach, detach, destroy, and probe markers.
+- Shared provider evidence exported `tm_rsrc_*` symbols from the combined
+  archive and linked the LQ taskman with `tm_rsrcdb` selected.
+- C `lq/taskman/sys/rsrcdb.c` remains present as rollback; no C source was
+  retired.
+
+Follow-up:
+
+- Keep #151 open as `rust-default-rc` until trusted PR and main CI evidence is
+  recorded. C removal still requires #26, the global retirement checklist, and
+  a separate removal PR.
+
 ## 2026-06-30 18:26 CEST - tm_fdt Rust-Default RC
 
 Scope:
