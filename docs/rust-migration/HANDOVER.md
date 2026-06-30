@@ -393,6 +393,12 @@ The strict ELF audit showed:
   syscfg/sysmap construction, `/sys`, and `sysinfo` consumers with Rust
   `tm_fdt` selected. C remains default and rollback until a separate RC
   decision exists.
+- Tooling/process improvements are now tracked as roadmap tooling gates:
+  #200 for a component gate harness and roadmap sync, #201 for CI cache and
+  `sccache`, #202 for CodeQL/dependency-review/static security gates, and #203
+  for `cargo-nextest` plus parser fuzz/coverage workflow. These use
+  `kind: "tooling"` metadata and render in the Pages dashboard separately from
+  component candidates.
 
 ## Current Decisions
 

@@ -60,7 +60,8 @@ gate in `docs/rust-migration/RETIREMENT.md`.
 Detailed planning lives under `docs/rust-migration/`. Start with:
 
 - [Rust migration roadmap dashboard](https://dmytro-yemelianov.github.io/qsoe-os-rust-handover/)
-  for the issue-backed roadmap dashboard published through GitHub Pages.
+  for the issue-backed roadmap dashboard published through GitHub Pages,
+  including component state and tooling gates.
 - [GitHub Issues filtered by `roadmap`](https://github.com/dmytro-yemelianov/qsoe-os-rust-handover/issues?q=label%3Aroadmap)
   for the canonical migration tracker.
 - `docs/rust-migration/HANDOVER.md` for the current repository state and next
@@ -68,6 +69,8 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 - `docs/rust-migration/INVENTORY.md` for the OS-wide C inventory and remaining
   translation buckets.
 - `docs/rust-migration/STATUS.md` for component-by-component migration state.
+- `docs/rust-migration/WORKFLOW.md` for the quality tiers and issue-backed
+  tooling gates (#200 through #203).
 - `docs/rust-migration/RETIREMENT.md` for the gate before any C code removal.
 - `docs/rust-migration/DEVLOG.md` for command history and validation evidence.
 

@@ -24,6 +24,40 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 09:37 CEST - Issue-Backed Tooling Gates
+
+Scope:
+
+- Created `roadmap:tooling` tracking for migration process improvements.
+- Opened tooling roadmap issues:
+  - #200 component gate harness and roadmap sync;
+  - #201 CI cache and `sccache` acceleration;
+  - #202 CodeQL, dependency review, and static security gates;
+  - #203 `cargo-nextest`, parser fuzzing, and coverage workflow.
+- Extended the GitHub Pages roadmap dashboard to parse `kind: "tooling"` issue
+  metadata and render a separate Tooling Gates table.
+- Updated `WORKFLOW.md`, `README.md`, and `HANDOVER.md` so quality/speed
+  tooling is part of the normal migration process instead of an informal
+  recommendation list.
+
+Commands:
+
+- `gh label create roadmap:tooling --description 'Roadmap item for migration tooling and process automation' --color 5319e7`
+- `gh issue create ...` for #200, #201, #202, and #203
+- `gh issue list --label roadmap:tooling --state open --json number,title,labels,body`
+
+Result:
+
+- Tooling work now has issue-backed source-of-truth metadata and dashboard
+  visibility.
+- The process distinguishes non-blocking/new tooling gates from required
+  component migration gates until each tool has a clean baseline.
+
+Follow-up:
+
+- Implement #200 first so future component RC/retirement work can generate and
+  validate evidence checklists from issue metadata.
+
 ## 2026-06-30 09:00 CEST - tm_elf Rust-Default RC
 
 Scope:
