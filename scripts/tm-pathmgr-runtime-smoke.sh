@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Boot QSOE/L with the selected tm_pathmgr provider and exercise runtime namespace use.
+# Boot QSOE/L with the retired Rust tm_pathmgr provider and exercise runtime namespace use.
 
 set -eu
 
@@ -10,18 +10,17 @@ usage: scripts/tm-pathmgr-runtime-smoke.sh [-t seconds] [-o log] [--keep-running
 
 Injects a temporary sysinit fragment that enumerates /dev, follows the cpio
 /etc symlink, repaths /dev/console, and runs /usr/bin/pathmgr_probe.  It then
-rebuilds the virtio qrvfs image and boots QSOE/L with the selected
-QSOE_RUST_TM_PATHMGR provider.
+rebuilds the virtio qrvfs image and boots QSOE/L with the retired Rust
+tm_pathmgr provider.
 
-This validates the Rust-selected taskman path manager through real boot-time
+This validates the Rust taskman path manager through real boot-time
 device registrations, PMDIR readdir, cpio-root symlink expansion, explicit
 resolve/repath, duplicate registration rejection, MsgSend through a resolved
 external binding, and process-exit unregister cleanup.
 
 Environment:
   TM_PATHMGR_RUNTIME_SMOKE_WORKDIR  output directory, default build/tm-pathmgr-runtime-smoke
-  QSOE_RUST_TM_PATHMGR              default 1; set 0 only with TM_PATHMGR_RUNTIME_ALLOW_C=1
-  TM_PATHMGR_RUNTIME_ALLOW_C        set to 1 to validate the C rollback path
+  QSOE_RUST_TM_PATHMGR              must remain 1 after C tm_pathmgr retirement
   QSOE_RUST_TM_PROCFS               must remain 1 after C tm_procfs retirement
 EOF
 }
@@ -84,25 +83,15 @@ case "${QSOE_RUST_TM_PATHMGR:-1}" in
     1|true|TRUE|yes|YES)
         export QSOE_RUST_TM_PATHMGR=1
         selected=1
-        mode=rust-selected
+        mode=rust-retired
         expected_pathmgr_count=0
         ;;
     0|false|FALSE|no|NO)
-        case "${TM_PATHMGR_RUNTIME_ALLOW_C:-0}" in
-            1|true|TRUE|yes|YES)
-                export QSOE_RUST_TM_PATHMGR=0
-                selected=0
-                mode=c-rollback
-                expected_pathmgr_count=1
-                ;;
-            *)
-                echo "tm-pathmgr-runtime-smoke.sh: QSOE_RUST_TM_PATHMGR=0 requires TM_PATHMGR_RUNTIME_ALLOW_C=1" >&2
-                exit 2
-                ;;
-        esac
+        echo "tm-pathmgr-runtime-smoke.sh: C tm_pathmgr is retired; QSOE_RUST_TM_PATHMGR must be 1" >&2
+        exit 2
         ;;
     *)
-        echo "tm-pathmgr-runtime-smoke.sh: QSOE_RUST_TM_PATHMGR must be 0 or 1" >&2
+        echo "tm-pathmgr-runtime-smoke.sh: QSOE_RUST_TM_PATHMGR must be 1 after C retirement" >&2
         exit 2
         ;;
 esac
@@ -126,7 +115,7 @@ source_conf="$ROOT/quser/conf"
 source_sysinit="$source_conf/sysinit"
 fragment=
 lq_libc="$ROOT/lq/build/libc/libc.so"
-members_log="$workdir/lq-rust-selected-libtaskman-members.txt"
+members_log="$workdir/lq-$mode-libtaskman-members.txt"
 probe_staged="$ROOT/build/fsqrv-root/bin/pathmgr_probe"
 selected_msgpass="$ROOT/build/rust/selected/usr/bin/test_msgpass.elf"
 
@@ -223,7 +212,11 @@ EOF
 chmod 0644 "$fragment"
 
 echo "tm-pathmgr-runtime-smoke.sh: building LQ runtime prerequisites"
-"$MAKE" -C "$ROOT/lq" libc rtld libtaskman --no-print-directory
+"$MAKE" -C "$ROOT/lq" libc rtld libtaskman --no-print-directory \
+    QSOE_RUST_TM_PROCFS=1 \
+    QSOE_RUST_TM_PATHMGR="$selected" \
+    QSOE_RUST_TM_PSEUDODEV=1 \
+    QSOE_RUST_TM_RSRCDB=1
 
 echo "tm-pathmgr-runtime-smoke.sh: rebuilding quser with LQ libc"
 "$MAKE" -C "$ROOT/quser" LIBC_SO="$lq_libc" --no-print-directory
@@ -247,7 +240,9 @@ fi
 echo "tm-pathmgr-runtime-smoke.sh: rebuilding QSOE/L image with mode=$mode"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
     QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_PATHMGR="$selected"
+    QSOE_RUST_TM_PATHMGR="$selected" \
+    QSOE_RUST_TM_PSEUDODEV=1 \
+    QSOE_RUST_TM_RSRCDB=1
 
 "$AR" t "$ROOT/lq/build/libtaskman/libtaskman.a" > "$members_log"
 pathmgr_count=$(awk '$0 == "pathmgr.o" { n++ } END { print n + 0 }' "$members_log")

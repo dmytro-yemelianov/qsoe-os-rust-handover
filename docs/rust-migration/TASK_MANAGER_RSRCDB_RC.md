@@ -1,11 +1,15 @@
-# Task Manager Resource DB Rust-Default RC
+# Task Manager Resource DB Historical Rust-Default RC
 
 Captured: 2026-06-30 CEST.
 
-`tm_rsrcdb` is in a Rust-default release-candidate window for QSOE/L. Normal
-LQ taskman builds use `qsoe-tm-rsrcdb` through the shared
-`qsoe-tm-providers` archive. The C provider in `lq/taskman/sys/rsrcdb.c`
-remains available as explicit rollback with `QSOE_RUST_TM_RSRCDB=0`.
+This page records the Rust-default release-candidate path and C rollback drill
+that existed before C provider retirement. Current builds are Rust-only; see
+`TASK_MANAGER_RSRCDB_RETIREMENT.md` for the retired state.
+
+During the RC window, normal LQ taskman builds used `qsoe-tm-rsrcdb` through
+the shared `qsoe-tm-providers` archive. The C provider in
+`lq/taskman/sys/rsrcdb.c` remained available as explicit rollback with
+`QSOE_RUST_TM_RSRCDB=0`.
 
 ## Selectors
 
@@ -32,7 +36,10 @@ The RC covers the current live resource DB manager surface:
 - detach and adjacent free-range merge;
 - process-owned range cleanup through normal taskman runtime behavior.
 
-This RC does not retire C and does not change taskman's IPC dispatcher, public
-libc `rsrcdbmgr_*` wrappers, IRQ attach/detach plumbing, syscfg construction,
-or seL4 object management. C removal remains blocked on the global retirement
-checklist and a separate removal PR.
+This RC did not change taskman's IPC dispatcher, public libc `rsrcdbmgr_*`
+wrappers, IRQ attach/detach plumbing, syscfg construction, or seL4 object
+management. C is now retired: `lq/taskman/sys/rsrcdb.c` is removed by the
+tracked component override, `QSOE_RUST_TM_RSRCDB=0` fails fast, and
+`make tm-rsrcdb-rc-rollback-smoke` is no longer a current target. The current
+Rust-only evidence lives in `TASK_MANAGER_RSRCDB.md` and
+`TASK_MANAGER_RSRCDB_RETIREMENT.md`.

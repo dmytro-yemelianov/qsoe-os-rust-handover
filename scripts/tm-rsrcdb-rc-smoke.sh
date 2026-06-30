@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Validate the tm_rsrcdb Rust-default RC selector while keeping C rollback alive.
+# Validate the retired tm_rsrcdb Rust selector.
 
 set -eu
 
@@ -8,13 +8,13 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-rsrcdb-rc-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
-Builds LQ taskman with the tm_rsrcdb RC selection, verifies whether C
-sys/rsrcdb.o is present in the link plan, then reuses the live tm_rsrcdb
+Builds LQ taskman with the retired Rust tm_rsrcdb provider, verifies that C
+sys/rsrcdb.o is absent from the link plan, then reuses the live tm_rsrcdb
 runtime smoke.
 
 Environment:
-  TM_RSRCDB_RC_ROLLBACK  set to 1 to validate the C rollback path
-  QSOE_RUST_TM_RSRCDB    default 1 for Rust RC; set 0 only for rollback validation
+  TM_RSRCDB_RC_ROLLBACK  unsupported after C tm_rsrcdb retirement
+  QSOE_RUST_TM_RSRCDB    must remain 1 after C tm_rsrcdb retirement
   TM_RSRCDB_RC_WORKDIR   output directory, default build/tm-rsrcdb-rc
 EOF
 }
@@ -52,7 +52,9 @@ capture_lq_plan() {
     "$MAKE" -C "$ROOT/lq/taskman" --no-print-directory -B -n all \
         LIBTASKMAN_A="$ROOT/lq/build/libtaskman/libtaskman.a" \
         LIBTASKMAN_INC="$ROOT/libtaskman/include" \
+        QSOE_RUST_TM_PATHMGR=1 \
         QSOE_RUST_TM_PROCFS=1 \
+        QSOE_RUST_TM_PSEUDODEV=1 \
         QSOE_RUST_TM_RSRCDB="$selected" \
         > "$log"
 }
@@ -73,42 +75,38 @@ require_rsrcdb_plan() {
 mkdir -p "$workdir"
 "$ROOT/scripts/apply-component-overrides.sh"
 
+if [ -e "$ROOT/lq/taskman/sys/rsrcdb.c" ]; then
+    fail "lq/taskman/sys/rsrcdb.c should be retired"
+fi
+
 case "$rollback" in
     0|false|FALSE|no|NO)
-        rollback=0
-        default_selected=1
-        ;;
-    1|true|TRUE|yes|YES)
-        rollback=1
-        default_selected=0
-        ;;
-    *)
-        echo "tm-rsrcdb-rc-smoke.sh: TM_RSRCDB_RC_ROLLBACK must be 0 or 1" >&2
-        exit 2
-        ;;
-esac
-
-case "${QSOE_RUST_TM_RSRCDB:-$default_selected}" in
-    1|true|TRUE|yes|YES)
-        selected=1
-        mode=rust-default
+        mode=rust-retired
         expected_rsrcdb_count=0
         ;;
-    0|false|FALSE|no|NO)
-        selected=0
-        mode=c-rollback
-        expected_rsrcdb_count=2
+    1|true|TRUE|yes|YES)
+        echo "tm-rsrcdb-rc-smoke.sh: C tm_rsrcdb rollback is retired" >&2
+        exit 2
         ;;
     *)
-        echo "tm-rsrcdb-rc-smoke.sh: QSOE_RUST_TM_RSRCDB must be 0 or 1" >&2
+        echo "tm-rsrcdb-rc-smoke.sh: TM_RSRCDB_RC_ROLLBACK must be 0 after C retirement" >&2
         exit 2
         ;;
 esac
 
-if [ "$rollback" -eq 1 ] && [ "$selected" -ne 0 ]; then
-    echo "tm-rsrcdb-rc-smoke.sh: TM_RSRCDB_RC_ROLLBACK=1 requires QSOE_RUST_TM_RSRCDB=0" >&2
-    exit 2
-fi
+case "${QSOE_RUST_TM_RSRCDB:-1}" in
+    1|true|TRUE|yes|YES)
+        selected=1
+        ;;
+    0|false|FALSE|no|NO)
+        echo "tm-rsrcdb-rc-smoke.sh: C tm_rsrcdb is retired; QSOE_RUST_TM_RSRCDB must be 1" >&2
+        exit 2
+        ;;
+    *)
+        echo "tm-rsrcdb-rc-smoke.sh: QSOE_RUST_TM_RSRCDB must be 1 after C retirement" >&2
+        exit 2
+        ;;
+esac
 
 echo "tm-rsrcdb-rc-smoke.sh: mode=$mode rollback=$rollback"
 
@@ -119,7 +117,9 @@ require_rsrcdb_plan "lq-$mode" "$plan_log" "$expected_rsrcdb_count"
 
 echo "tm-rsrcdb-rc-smoke.sh: building LQ taskman selector"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
+    QSOE_RUST_TM_PATHMGR=1 \
     QSOE_RUST_TM_PROCFS=1 \
+    QSOE_RUST_TM_PSEUDODEV=1 \
     QSOE_RUST_TM_RSRCDB="$selected" \
     taskman
 
@@ -128,11 +128,10 @@ if [ "$has_log" -eq 0 ]; then
     runtime_args=(-o "$workdir/boot-smoke-lq-tm-rsrcdb-rc-$mode.log" "${runtime_args[@]}")
 fi
 
+export QSOE_RUST_TM_PATHMGR=1
 export QSOE_RUST_TM_PROCFS=1
+export QSOE_RUST_TM_PSEUDODEV=1
 export QSOE_RUST_TM_RSRCDB="$selected"
 export TM_RSRCDB_RUNTIME_SMOKE_WORKDIR="$workdir"
-if [ "$selected" -eq 0 ]; then
-    export TM_RSRCDB_RUNTIME_ALLOW_C=1
-fi
 
 exec "$ROOT/scripts/tm-rsrcdb-runtime-smoke.sh" "${runtime_args[@]}"

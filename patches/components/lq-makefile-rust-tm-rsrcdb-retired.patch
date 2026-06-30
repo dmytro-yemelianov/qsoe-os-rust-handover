@@ -1,0 +1,12 @@
+diff --git a/Makefile b/Makefile
+--- a/Makefile
++++ b/Makefile
+@@ -80,6 +80,9 @@ ifneq ($(QSOE_RUST_TM_PSEUDODEV),1)
+ $(error QSOE_RUST_TM_PSEUDODEV must be 1 after C tm_pseudodev retirement)
+ endif
++ifneq ($(QSOE_RUST_TM_RSRCDB),1)
++$(error QSOE_RUST_TM_RSRCDB must be 1 after C tm_rsrcdb retirement)
++endif
+ ifneq ($(QSOE_RUST_TM_SCRIPT),1)
+ $(error QSOE_RUST_TM_SCRIPT must be 1 after C tm_script retirement)
+ endif

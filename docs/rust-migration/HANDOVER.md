@@ -95,10 +95,11 @@ merged the `tm_sysmap` retirement into `main` at
 
 Current in-flight follow-up:
 
-- #152: `tm_pseudodev` is moving from Rust opt-in into a Rust-default RC on
-  the current branch. Rust `qsoe-tm-pseudodev` is selected by default in LQ
-  taskman, and `QSOE_RUST_TM_PSEUDODEV=0` remains the explicit C rollback
-  path.
+- #149, #151, and #152: `tm_pathmgr`, `tm_rsrcdb`, and `tm_pseudodev` are
+  moving from Rust-default RC into C provider retirement on the current branch.
+  Rust `qsoe-tm-pathmgr`, `qsoe-tm-rsrcdb`, and `qsoe-tm-pseudodev` are
+  mandatory through the shared taskman provider archive, and the old
+  `QSOE_RUST_TM_*=0` rollback selectors fail fast.
 
 The #96 Rust pipe data-path gate, #97 Rust `test_msgpass` gate, and #103
 `tm_procfs` opt-in gate are satisfied by trusted `main` CI run `28102250069` at
@@ -239,11 +240,15 @@ make check-elf-reloc-fixture
 make check-tm-procfs-model
 make rust-tm-procfs-provider
 make tm-providers-evidence
+make check-tm-pathmgr-model
+make tm-pathmgr-evidence
 make rust-tm-cred-provider
 make tm-cred-evidence
 make rust-tm-pseudodev-provider
 make tm-pseudodev-evidence
 make tm-pseudodev-runtime-smoke
+make check-tm-rsrcdb-model
+make tm-rsrcdb-evidence
 make check-tm-sysfs-model
 make rust-tm-sysfs-provider
 make tm-sysfs-evidence
@@ -334,12 +339,12 @@ The strict ELF audit showed:
   selector rejection and no `cred.o` archive membership; `make tm-cred-rc-smoke`
   covers live uid/gid mutation, cwd, umask, permission rejection, and spawn
   inheritance on the Rust-only path.
-- `tm_pseudodev` is moving to a Rust-default RC behind
-  `QSOE_RUST_TM_PSEUDODEV=1`, with `QSOE_RUST_TM_PSEUDODEV=0` and
-  `make tm-pseudodev-rc-rollback-smoke` preserving the C `sys/devnull.o` and
-  `sys/devzero.o` rollback path. `make tm-pseudodev-rc-smoke` reuses the
-  focused runtime coverage for live `/dev/null` and `/dev/zero` open, write,
-  read, and fstat calls.
+- `tm_pseudodev` is retired to Rust behind mandatory
+  `QSOE_RUST_TM_PSEUDODEV=1`. The C `sys/devnull.c` and `sys/devzero.c`
+  providers are removed by the tracked component override,
+  `QSOE_RUST_TM_PSEUDODEV=0` fails fast, and `make tm-pseudodev-rc-smoke`
+  reuses the focused runtime coverage for live `/dev/null` and `/dev/zero`
+  open, write, read, and fstat calls.
 - `tm_cpio` is retired to Rust behind mandatory `QSOE_RUST_TM_CPIO=1`. The C
   `libtaskman/src/cpio.c` provider is removed, `QSOE_RUST_TM_CPIO=0` fails
   fast, and taskman links `qsoe-tm-cpio` through the shared taskman Rust
@@ -373,21 +378,17 @@ The strict ELF audit showed:
   covers retired selector rejection and no `tm_sysfs.o` archive membership;
   `make tm-sysfs-rc-smoke` covers the Rust-only `/sys` readdir plus all five
   portable `/sys` file reads.
-- `tm_pathmgr` is a Rust-default RC provider behind `QSOE_RUST_TM_PATHMGR=1`.
-  The selector removes C `pathmgr.o` from `libtaskman.a` and links through the
-  shared taskman Rust provider archive. `make tm-pathmgr-rc-smoke` covers
+- `tm_pathmgr` is retired to Rust behind mandatory `QSOE_RUST_TM_PATHMGR=1`.
+  The C `libtaskman/src/pathmgr.c` provider is removed,
+  `QSOE_RUST_TM_PATHMGR=0` fails fast, and `make tm-pathmgr-rc-smoke` covers
   `/dev` PMDIR readdir, `/etc` cpio symlink file access, `/dev/console`
   repath, dynamic helper registration, duplicate rejection, MsgSend through
-  the resolved binding, and unregister-on-exit cleanup. `make
-  tm-pathmgr-rc-rollback-smoke` keeps C `pathmgr.o` rollback live until trusted
-  RC evidence and a separate removal PR exist.
-- `tm_rsrcdb` is a Rust-default RC provider behind `QSOE_RUST_TM_RSRCDB=1`.
-  The selector removes LQ C `sys/rsrcdb.o` and links through the shared
-  taskman Rust provider archive. `make tm-rsrcdb-rc-smoke` covers live
-  `rsrcdbmgr_*` create, attach, query, detach, and destroy calls with Rust
-  `tm_rsrcdb` selected by default. `make tm-rsrcdb-rc-rollback-smoke` keeps C
-  `sys/rsrcdb.o` rollback live until trusted RC evidence and a separate
-  removal PR exist.
+  the resolved binding, and unregister-on-exit cleanup on the Rust-only path.
+- `tm_rsrcdb` is retired to Rust behind mandatory `QSOE_RUST_TM_RSRCDB=1`.
+  The C `lq/taskman/sys/rsrcdb.c` provider is removed by the tracked component
+  override, `QSOE_RUST_TM_RSRCDB=0` fails fast, and `make tm-rsrcdb-rc-smoke`
+  covers live `rsrcdbmgr_*` create, attach, query, detach, and destroy calls on
+  the Rust-only path.
 - `tm_elf` is a retired C provider with `QSOE_RUST_TM_ELF=1` mandatory and
   `QSOE_RUST_TM_ELF=0` rejected. The selector removes C `elf.o` from
   `libtaskman.a` and links through the shared taskman Rust provider archive.
@@ -419,9 +420,10 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 
 ## Next Recommended Work
 
-1. Finish the #147 `tm_sysmap` C provider retirement PR, then update #147 to
-   `status:retired`.
+1. Finish the #149/#151/#152 C provider retirement PR, then update those issues
+   to `status:retired`.
 2. Keep the hosted runner healthy for new PRs; CodeRabbit usage-credit failures
    are non-blocking until the account is replenished.
-3. After #147 is merged and the roadmap issue is closed, the next natural
-   task-manager RC retirement candidate is #148 `tm_sysfs`.
+3. After #149, #151, and #152 are merged and closed, keep #146 `tm_fdt` under
+   RC observation until broader PCI/memory-topology confidence justifies a
+   separate retirement PR.

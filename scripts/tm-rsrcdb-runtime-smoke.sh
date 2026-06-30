@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Boot QSOE/L with the selected tm_rsrcdb provider and exercise live rsrcdbmgr calls.
+# Boot QSOE/L with the retired Rust tm_rsrcdb provider and exercise live rsrcdbmgr calls.
 
 set -eu
 
@@ -10,15 +10,14 @@ usage: scripts/tm-rsrcdb-runtime-smoke.sh [-t seconds] [-o log] [--keep-running]
 
 Injects a temporary sysinit fragment that runs /usr/bin/rsrcdb_probe, rebuilds
 the virtio qrvfs image with that helper staged, and boots QSOE/L with the
-selected tm_rsrcdb provider. The default is the Rust provider.
+retired Rust tm_rsrcdb provider.
 
 The helper exercises public rsrcdbmgr_* create, attach, query, detach, and
-destroy calls against the selected taskman resource DB provider.
+destroy calls against the Rust taskman resource DB provider.
 
 Environment:
   TM_RSRCDB_RUNTIME_SMOKE_WORKDIR  output directory, default build/tm-rsrcdb-runtime-smoke
-  QSOE_RUST_TM_RSRCDB              1 for Rust default, 0 only with TM_RSRCDB_RUNTIME_ALLOW_C=1
-  TM_RSRCDB_RUNTIME_ALLOW_C        permit C rollback validation when QSOE_RUST_TM_RSRCDB=0
+  QSOE_RUST_TM_RSRCDB              must remain 1 after C tm_rsrcdb retirement
   QSOE_RUST_TM_PROCFS              must remain 1 after C tm_procfs retirement
 EOF
 }
@@ -81,25 +80,15 @@ case "${QSOE_RUST_TM_RSRCDB:-1}" in
     1|true|TRUE|yes|YES)
         export QSOE_RUST_TM_RSRCDB=1
         selected=1
-        mode=rust-default
+        mode=rust-retired
         expected_rsrcdb_count=0
         ;;
     0|false|FALSE|no|NO)
-        case "${TM_RSRCDB_RUNTIME_ALLOW_C:-0}" in
-            1|true|TRUE|yes|YES)
-                export QSOE_RUST_TM_RSRCDB=0
-                selected=0
-                mode=c-rollback
-                expected_rsrcdb_count=2
-                ;;
-            *)
-                echo "tm-rsrcdb-runtime-smoke.sh: QSOE_RUST_TM_RSRCDB=0 is only allowed with TM_RSRCDB_RUNTIME_ALLOW_C=1" >&2
-                exit 2
-                ;;
-        esac
+        echo "tm-rsrcdb-runtime-smoke.sh: C tm_rsrcdb is retired; QSOE_RUST_TM_RSRCDB must be 1" >&2
+        exit 2
         ;;
     *)
-        echo "tm-rsrcdb-runtime-smoke.sh: QSOE_RUST_TM_RSRCDB must be 0 or 1" >&2
+        echo "tm-rsrcdb-runtime-smoke.sh: QSOE_RUST_TM_RSRCDB must be 1 after C retirement" >&2
         exit 2
         ;;
 esac
@@ -175,6 +164,11 @@ log_has_marker() {
 
 "$ROOT/scripts/apply-component-overrides.sh"
 
+if [ -e "$ROOT/lq/taskman/sys/rsrcdb.c" ]; then
+    echo "tm-rsrcdb-runtime-smoke.sh: lq/taskman/sys/rsrcdb.c should be retired" >&2
+    exit 1
+fi
+
 cleanup() {
     if [ -n "$fragment" ]; then
         rm -f "$fragment"
@@ -197,7 +191,9 @@ chmod 0644 "$fragment"
 
 echo "tm-rsrcdb-runtime-smoke.sh: building LQ runtime prerequisites"
 "$MAKE" -C "$ROOT/lq" libc rtld libtaskman --no-print-directory \
+    QSOE_RUST_TM_PATHMGR=1 \
     QSOE_RUST_TM_PROCFS=1 \
+    QSOE_RUST_TM_PSEUDODEV=1 \
     QSOE_RUST_TM_RSRCDB="$selected"
 
 echo "tm-rsrcdb-runtime-smoke.sh: rebuilding quser with LQ libc"
@@ -223,7 +219,9 @@ echo "tm-rsrcdb-runtime-smoke.sh: capturing $mode tm_rsrcdb LQ taskman link plan
 "$MAKE" -C "$ROOT/lq/taskman" --no-print-directory -B -n all \
     LIBTASKMAN_A="$ROOT/lq/build/libtaskman/libtaskman.a" \
     LIBTASKMAN_INC="$ROOT/libtaskman/include" \
+    QSOE_RUST_TM_PATHMGR=1 \
     QSOE_RUST_TM_PROCFS=1 \
+    QSOE_RUST_TM_PSEUDODEV=1 \
     QSOE_RUST_TM_RSRCDB="$selected" \
     > "$plan_log"
 
@@ -233,13 +231,15 @@ if [ "$rsrcdb_count" -ne "$expected_rsrcdb_count" ]; then
     exit 1
 fi
 if [ "$selected" -eq 1 ] && ! grep -Fq 'libqsoe_tm_providers.a' "$plan_log"; then
-    echo "tm-rsrcdb-runtime-smoke.sh: Rust-default taskman link plan omits libqsoe_tm_providers.a" >&2
+    echo "tm-rsrcdb-runtime-smoke.sh: Rust-retired taskman link plan omits libqsoe_tm_providers.a" >&2
     exit 1
 fi
 
 echo "tm-rsrcdb-runtime-smoke.sh: rebuilding QSOE/L image with $mode tm_rsrcdb"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
+    QSOE_RUST_TM_PATHMGR=1 \
     QSOE_RUST_TM_PROCFS=1 \
+    QSOE_RUST_TM_PSEUDODEV=1 \
     QSOE_RUST_TM_RSRCDB="$selected"
 
 if [ "$selected" -eq 1 ]; then

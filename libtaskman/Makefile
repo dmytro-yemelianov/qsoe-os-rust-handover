@@ -62,8 +62,8 @@ ifneq ($(QSOE_RUST_TM_ELF),1)
 $(error QSOE_RUST_TM_ELF must be 1 after C tm_elf retirement)
 endif
 
-ifneq ($(filter $(QSOE_RUST_TM_PATHMGR),0 1),$(QSOE_RUST_TM_PATHMGR))
-$(error QSOE_RUST_TM_PATHMGR must be 0 or 1)
+ifneq ($(QSOE_RUST_TM_PATHMGR),1)
+$(error QSOE_RUST_TM_PATHMGR must be 1 after C tm_pathmgr retirement)
 endif
 
 ifneq ($(QSOE_RUST_TM_PROCFS),1)

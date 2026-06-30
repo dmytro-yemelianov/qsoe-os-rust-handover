@@ -24,6 +24,57 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 23:40 CEST - tm_pathmgr, tm_pseudodev, and tm_rsrcdb C Provider Retirement
+
+Scope:
+
+- Retired C `tm_pathmgr` by removing `libtaskman/src/pathmgr.c` and the old C
+  host fixture `tests/tm_pathmgr_model_test.c`.
+- Retired LQ C `tm_pseudodev` by removing `lq/taskman/sys/devnull.c` and
+  `lq/taskman/sys/devzero.c` through tracked component overrides.
+- Retired LQ C `tm_rsrcdb` by removing `lq/taskman/sys/rsrcdb.c` through
+  tracked component overrides and removing `tests/tm_rsrcdb_model_test.c`.
+- Made `QSOE_RUST_TM_PATHMGR=1`, `QSOE_RUST_TM_PSEUDODEV=1`, and
+  `QSOE_RUST_TM_RSRCDB=1` mandatory in umbrella, component, and provider
+  builder paths.
+- Removed the three C rollback make targets and converted the RC smoke scripts
+  into retired selector checks plus Rust-only runtime coverage.
+- Added retirement notes for `tm_pathmgr`, `tm_pseudodev`, and `tm_rsrcdb`.
+
+Commands:
+
+- `bash -n scripts/check-tm-pathmgr-model.sh scripts/check-tm-rsrcdb-model.sh scripts/tm-pathmgr-evidence.sh scripts/tm-pathmgr-runtime-smoke.sh scripts/tm-pathmgr-rc-smoke.sh scripts/tm-pseudodev-evidence.sh scripts/tm-pseudodev-runtime-smoke.sh scripts/tm-pseudodev-rc-smoke.sh scripts/tm-rsrcdb-evidence.sh scripts/tm-rsrcdb-runtime-smoke.sh scripts/tm-rsrcdb-rc-smoke.sh scripts/build-rust-tm-providers.sh scripts/apply-component-overrides.sh`
+- `scripts/apply-component-overrides.sh`
+- `make check-tm-pathmgr-model`
+- `cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-pseudodev --features host-tests`
+- `make check-tm-rsrcdb-model`
+- `make tm-pathmgr-evidence`
+- `make tm-pseudodev-evidence`
+- `make tm-rsrcdb-evidence`
+- `QSOE_RUST_TM_PATHMGR=0 make -C libtaskman --no-print-directory`
+- `QSOE_RUST_TM_PATHMGR=0 scripts/build-rust-tm-providers.sh build/tmp/libqsoe_tm_providers.a`
+- `QSOE_RUST_TM_PSEUDODEV=0 scripts/build-rust-tm-providers.sh build/tmp/libqsoe_tm_providers.a`
+- `QSOE_RUST_TM_RSRCDB=0 scripts/build-rust-tm-providers.sh build/tmp/libqsoe_tm_providers.a`
+- `TM_PATHMGR_RC_ROLLBACK=1 scripts/tm-pathmgr-rc-smoke.sh`
+- `TM_PSEUDODEV_RC_ROLLBACK=1 scripts/tm-pseudodev-rc-smoke.sh`
+- `TM_RSRCDB_RC_ROLLBACK=1 scripts/tm-rsrcdb-rc-smoke.sh`
+
+Result:
+
+- Rust host model tests passed for all three providers.
+- NQ/LQ taskman links omit C `pathmgr.o`; LQ taskman links omit C
+  `sys/devnull.o`, `sys/devzero.o`, and `sys/rsrcdb.o`.
+- Final taskman ELFs retain the exported Rust ABI symbols through the shared
+  provider archive.
+- The retired selectors and old rollback flags fail fast instead of selecting
+  C.
+
+Follow-up:
+
+- Run roadmap gates, runtime/RC smokes, shared provider evidence, and Rust
+  quality checks; then update #149, #151, and #152 to retired and open the
+  retirement PR.
+
 ## 2026-06-30 22:20 CEST - tm_cred C Provider Retirement
 
 Scope:

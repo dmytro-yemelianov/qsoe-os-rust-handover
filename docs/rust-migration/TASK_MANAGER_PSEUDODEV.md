@@ -2,15 +2,19 @@
 
 Captured: 2026-06-30 CEST.
 
-`tm_pseudodev` is a bounded LQ task-manager Rust provider for the simple
+`tm_pseudodev` is a retired Rust-only LQ task-manager provider for the simple
 taskman-hosted character devices:
 
 ```text
-lq/taskman/sys/devnull.c
-lq/taskman/sys/devzero.c
+rust/crates/qsoe-tm-pseudodev
 lq/taskman/sys/devnull.h
 lq/taskman/sys/devzero.h
 ```
+
+The previous C providers `lq/taskman/sys/devnull.c` and
+`lq/taskman/sys/devzero.c` are removed by the tracked component override. The
+headers remain because LQ taskman's C path IO dispatcher still calls the
+`tm_devnull_*` and `tm_devzero_*` symbols exported by Rust.
 
 ## Scope
 
@@ -38,33 +42,31 @@ tests use an in-crate IPC buffer fixture.
 
 ## Selector
 
-Normal LQ taskman builds select Rust by default during the RC window:
+`tm_pseudodev` is mandatory after C provider retirement:
 
 ```text
-QSOE_RUST_TM_PSEUDODEV=1  -> Rust `qsoe-tm-pseudodev` provider is linked
-QSOE_RUST_TM_PSEUDODEV=0  -> C `devnull.o` and `devzero.o` rollback is selected
+QSOE_RUST_TM_PSEUDODEV=1  -> Rust `qsoe-tm-pseudodev` is linked
+QSOE_RUST_TM_PSEUDODEV=0  -> rejected; C rollback is retired
 ```
 
-When Rust is selected, `lq/taskman/Makefile` omits:
+LQ taskman omits:
 
 ```text
 build/taskman/sys/devnull.o
 build/taskman/sys/devzero.o
 ```
 
-and adds:
+and links:
 
 ```text
 build/rust/tm-providers/libqsoe_tm_providers.a
 ```
 
 The archive is built for `riscv64imac-unknown-none-elf` so it matches
-taskman's soft-float ABI.
-
-Multiple taskman Rust providers may be selected together. The shared
-`qsoe-tm-providers` archive packages the selected provider crates behind one
-no-std panic handler. Legacy targets such as `make rust-tm-pseudodev-provider`
-still produce the historical single-provider output path for focused evidence.
+taskman's soft-float ABI. The shared `qsoe-tm-providers` archive packages all
+selected taskman Rust providers behind one no-std panic handler. Legacy targets
+such as `make rust-tm-pseudodev-provider` still produce the historical focused
+archive path for evidence compatibility.
 
 ## Evidence
 
@@ -82,17 +84,15 @@ The focused evidence and runtime gates are:
 make tm-pseudodev-evidence
 make tm-pseudodev-runtime-smoke
 make tm-pseudodev-rc-smoke
-make tm-pseudodev-rc-rollback-smoke
 ```
 
-It runs the Rust host tests, builds and audits the Rust staticlib, checks the
-six exported symbols, verifies all archive members are RVC soft-float, verifies
-the LQ Rust-default dry-run link plan omits `devnull.o` and `devzero.o`, and
-verifies the LQ C rollback dry-run link plan includes those objects. It also
-links LQ taskman in both Rust-default and C rollback modes and audits the
-resulting ELF.
+`make tm-pseudodev-evidence` runs the Rust host tests, builds and audits the
+Rust provider archive, checks the six exported symbols, verifies all archive
+members are RVC soft-float, verifies LQ taskman link plans and taskman ELFs
+omit C `devnull.o` and `devzero.o`, and verifies retired selector rejection for
+LQ and the Rust provider builder.
 
-`make tm-pseudodev-runtime-smoke` boots LQ with Rust `tm_pseudodev` selected,
+`make tm-pseudodev-runtime-smoke` boots LQ with the Rust-only provider,
 verifies the selected LQ taskman dry-run link plan omits C `devnull.o` and
 `devzero.o`, verifies the shared Rust provider archive exports all six
 `tm_dev*` symbols, and runs a qrvfs-staged `/usr/bin/pseudodev_probe` helper.
@@ -100,13 +100,17 @@ The helper checks `/dev/null` write discard, `/dev/null` EOF reads,
 `/dev/zero` write discard, `/dev/zero` zero-filled reads, and fstat metadata
 for both character devices.
 
-`make tm-pseudodev-rc-rollback-smoke` sets `QSOE_RUST_TM_PSEUDODEV=0` and
-`TM_PSEUDODEV_RUNTIME_ALLOW_C=1`, verifies the C objects appear in the LQ
-taskman link plan, and runs the same live helper against the rollback path.
+## Rollback
+
+No C rollback target remains.
+
+- `QSOE_RUST_TM_PSEUDODEV=0` fails fast in taskman and provider-archive builds.
+- `TM_PSEUDODEV_RC_ROLLBACK=1 scripts/tm-pseudodev-rc-smoke.sh` fails fast.
+- Historical RC and rollback evidence is recorded in
+  `TASK_MANAGER_PSEUDODEV_RC.md`.
 
 ## Current State
 
-`tm_pseudodev` is a Rust-default release candidate. It has no C retirement
-approval. Keep `lq/taskman/sys/devnull.c` and `lq/taskman/sys/devzero.c` as
-rollback implementations until the global retirement checklist and a separate
-removal PR are satisfied.
+`tm_pseudodev` is retired to Rust. Normal LQ taskman builds use the Rust
+provider through the shared taskman Rust provider archive while keeping path
+dispatch, request decoding, process ownership, and seL4 object handling in C.

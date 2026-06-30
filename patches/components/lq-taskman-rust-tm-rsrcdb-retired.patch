@@ -1,0 +1,20 @@
+diff --git a/taskman/Makefile b/taskman/Makefile
+--- a/taskman/Makefile
++++ b/taskman/Makefile
+@@ -84,5 +84,8 @@ ifneq ($(QSOE_RUST_TM_PSEUDODEV),1)
+ $(error QSOE_RUST_TM_PSEUDODEV must be 1 after C tm_pseudodev retirement)
+ endif
++ifneq ($(QSOE_RUST_TM_RSRCDB),1)
++$(error QSOE_RUST_TM_RSRCDB must be 1 after C tm_rsrcdb retirement)
++endif
+ ifneq ($(QSOE_RUST_TM_SCRIPT),1)
+ $(error QSOE_RUST_TM_SCRIPT must be 1 after C tm_script retirement)
+ endif
+@@ -145,7 +148,3 @@ TASKMAN_PSEUDODEV_OBJS :=
+ TASKMAN_RSRCDB_OBJS :=
+-ifeq ($(QSOE_RUST_TM_RSRCDB),0)
+-TASKMAN_RSRCDB_OBJS += $(OBJDIR)/sys/rsrcdb.o
+-endif
+-
+ TASKMAN_FDT_OBJS :=
+ ifeq ($(QSOE_RUST_TM_FDT),0)

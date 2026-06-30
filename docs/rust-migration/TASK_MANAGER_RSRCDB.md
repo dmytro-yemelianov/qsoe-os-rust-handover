@@ -1,21 +1,22 @@
-# Task Manager Resource DB Rust-Default RC Provider
+# Task Manager Resource DB Provider
 
 Captured: 2026-06-30 CEST.
 
-## Scope
-
-`qsoe-tm-rsrcdb` is a Rust-default RC provider for the LQ task-manager resource
-database in:
+`qsoe-tm-rsrcdb` is the retired Rust-only provider for the LQ task-manager
+resource database:
 
 ```text
-lq/taskman/sys/rsrcdb.c
+rust/crates/qsoe-tm-rsrcdb
 lq/taskman/sys/rsrcdb.h
 ```
 
-It exports the existing `tm_rsrc_*` ABI used by `lq/taskman/main.c` for
-`TM_REQ_RSRC_*` requests.
+The previous C provider `lq/taskman/sys/rsrcdb.c` is removed by the tracked
+component override. The header remains because `lq/taskman/main.c` still calls
+the exported `tm_rsrc_*` ABI for `TM_REQ_RSRC_*` requests.
 
-It covers:
+## Scope
+
+The Rust provider covers:
 
 - fixed 256-entry resource pool initialization;
 - per-class sorted range lists;
@@ -38,80 +39,69 @@ It does not replace:
 
 ## Selector
 
-Normal LQ taskman builds use Rust by default:
+`tm_rsrcdb` is mandatory after C provider retirement:
 
-```sh
-QSOE_RUST_TM_RSRCDB=1 make -C lq taskman
+```text
+QSOE_RUST_TM_RSRCDB=1  -> Rust `qsoe-tm-rsrcdb` is linked
+QSOE_RUST_TM_RSRCDB=0  -> rejected; C rollback is retired
 ```
 
-The C rollback path remains explicit:
+LQ taskman omits C `sys/rsrcdb.o` and links:
 
-```sh
-QSOE_RUST_TM_RSRCDB=0 make -C lq taskman
+```text
+build/rust/tm-providers/libqsoe_tm_providers.a
 ```
 
-The top-level evidence and RC targets are:
-
-```sh
-make tm-rsrcdb-evidence
-make tm-rsrcdb-runtime-smoke
-make tm-rsrcdb-rc-smoke
-make tm-rsrcdb-rc-rollback-smoke
-```
-
-Multiple taskman Rust providers may be selected together. The shared
-`qsoe-tm-providers` archive packages the selected provider crates behind one
-no-std panic handler. Legacy targets such as `make rust-tm-rsrcdb-provider`
-still produce the historical single-provider output path for focused evidence.
+The archive is built for `riscv64imac-unknown-none-elf` so it matches
+taskman's soft-float ABI. The shared `qsoe-tm-providers` archive packages all
+selected taskman Rust providers behind one no-std panic handler. Legacy targets
+such as `make rust-tm-rsrcdb-provider` still produce the historical focused
+archive path for evidence compatibility.
 
 ## Evidence
 
-Local validation on 2026-06-30:
+The Rust provider has host coverage through:
 
 ```sh
 make check-tm-rsrcdb-model
 cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-rsrcdb --features host-tests
-cargo clippy --manifest-path rust/Cargo.toml -p qsoe-tm-rsrcdb --features host-tests -- -D warnings
-make rust-tm-rsrcdb-provider
+```
+
+The focused evidence and runtime gates are:
+
+```sh
 make tm-rsrcdb-evidence
 make tm-rsrcdb-runtime-smoke
 make tm-rsrcdb-rc-smoke
-make tm-rsrcdb-rc-rollback-smoke
 ```
 
-`make tm-rsrcdb-evidence` verified:
+`make tm-rsrcdb-evidence` runs the Rust host tests, builds and audits the Rust
+provider archive, checks all exported `tm_rsrc_*` symbols, verifies all archive
+members are RVC soft-float, verifies LQ taskman link plans and taskman ELFs
+omit C `sys/rsrcdb.o`, and verifies retired selector rejection for LQ and the
+Rust provider builder.
 
-- C host fixture passes against `lq/taskman/sys/rsrcdb.c`;
-- Rust host tests pass for exported ABI behavior;
-- Rust staticlib builds for `riscv64imac-unknown-none-elf`;
-- Rust provider archive members report RVC soft-float ABI;
-- Rust provider archive exports all `tm_rsrc_*` symbols;
-- LQ Rust-default dry-run and final taskman link omit C `sys/rsrcdb.o` and
-  link the shared taskman Rust provider archive.
-- LQ C-rollback dry-run and final taskman link include C `sys/rsrcdb.o`.
-- `make tm-rsrcdb-runtime-smoke` boots LQ with Rust `tm_rsrcdb` selected,
-  verifies the Rust-default taskman link plan omits C `sys/rsrcdb.o`, verifies
-  the shared Rust provider archive exports the `tm_rsrc_*` ABI, and exercises
-  live `rsrcdbmgr_*` create, attach, query, detach, and destroy calls through a
-  qrvfs-staged `/usr/bin/rsrcdb_probe` helper.
-- `make tm-rsrcdb-rc-smoke` repeats the Rust-default selector check and runtime
-  smoke under the RC target.
-- `make tm-rsrcdb-rc-rollback-smoke` sets `TM_RSRCDB_RC_ROLLBACK=1`, verifies
-  the C rollback link plan includes `sys/rsrcdb.o`, and runs the same live
-  probe with `TM_RSRCDB_RUNTIME_ALLOW_C=1`.
+`make tm-rsrcdb-runtime-smoke` boots LQ with the Rust-only provider, verifies
+the taskman link plan omits C `sys/rsrcdb.o`, verifies the shared Rust provider
+archive exports the `tm_rsrc_*` ABI, and exercises live `rsrcdbmgr_*` create,
+attach, query, detach, and destroy calls through a qrvfs-staged
+`/usr/bin/rsrcdb_probe` helper.
 
-The C and Rust fixtures also assert the real `rsrc_request_t` ABI size is 56
-bytes on RV64-style layouts. Taskman's dispatcher currently replies enough
-bytes for the mutated request fields; it does not need to echo the trailing
-name pointer.
+The Rust fixtures assert the real `rsrc_request_t` ABI size is 56 bytes on
+RV64-style layouts. Taskman's dispatcher currently replies enough bytes for the
+mutated request fields; it does not need to echo the trailing name pointer.
 
-## C Rollback
+## Rollback
 
-C remains the rollback path:
+No C rollback target remains.
 
-- `QSOE_RUST_TM_RSRCDB=0` keeps `lq/taskman/sys/rsrcdb.c`;
-- `QSOE_RUST_TM_RSRCDB=1` excludes `sys/rsrcdb.o` and links
-  the shared taskman Rust provider archive.
+- `QSOE_RUST_TM_RSRCDB=0` fails fast in taskman and provider-archive builds.
+- `TM_RSRCDB_RC_ROLLBACK=1 scripts/tm-rsrcdb-rc-smoke.sh` fails fast.
+- Historical RC and rollback evidence is recorded in `TASK_MANAGER_RSRCDB_RC.md`.
 
-This RC does not retire C. C removal remains blocked on #26's checklist and a
-separate removal PR after the Rust-default path has enough trusted evidence.
+## Current State
+
+`tm_rsrcdb` is retired to Rust. Normal LQ taskman builds use the Rust provider
+through the shared taskman Rust provider archive while keeping IPC dispatch,
+libc wrappers, IRQ handling, syscfg construction, process ownership, and seL4
+object handling in C.

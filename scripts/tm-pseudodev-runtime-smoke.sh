@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Boot QSOE/L with tm_pseudodev selected and exercise /dev/null+/dev/zero.
+# Boot QSOE/L with the retired Rust tm_pseudodev provider and exercise /dev/null+/dev/zero.
 
 set -eu
 
@@ -10,16 +10,14 @@ usage: scripts/tm-pseudodev-runtime-smoke.sh [-t seconds] [-o log] [--keep-runni
 
 Injects a temporary sysinit fragment that runs /usr/bin/pseudodev_probe,
 rebuilds the virtio qrvfs image with that helper staged, and boots QSOE/L with
-the selected tm_pseudodev provider. Rust is the default; C is accepted only
-when explicitly allowed for rollback validation.
+the retired Rust tm_pseudodev provider.
 
 The helper exercises live /dev/null and /dev/zero open, write, read, and fstat
-calls through the selected taskman pseudo-device provider.
+calls through the Rust taskman pseudo-device provider.
 
 Environment:
   TM_PSEUDODEV_RUNTIME_SMOKE_WORKDIR  output directory, default build/tm-pseudodev-runtime-smoke
-  QSOE_RUST_TM_PSEUDODEV              defaults to 1; set 0 only with TM_PSEUDODEV_RUNTIME_ALLOW_C=1
-  TM_PSEUDODEV_RUNTIME_ALLOW_C        set to 1 to permit C rollback validation
+  QSOE_RUST_TM_PSEUDODEV              must remain 1 after C tm_pseudodev retirement
   QSOE_RUST_TM_PROCFS                 must remain 1 after C tm_procfs retirement
 EOF
 }
@@ -78,28 +76,18 @@ if [ "$timeout_s" -le 0 ]; then
     exit 2
 fi
 
-allow_c=${TM_PSEUDODEV_RUNTIME_ALLOW_C:-0}
 case "${QSOE_RUST_TM_PSEUDODEV:-1}" in
     1|true|TRUE|yes|YES)
         export QSOE_RUST_TM_PSEUDODEV=1
         selected=1
-        mode=rust-selected
+        mode=rust-retired
         ;;
     0|false|FALSE|no|NO)
-        case "$allow_c" in
-            1|true|TRUE|yes|YES)
-                export QSOE_RUST_TM_PSEUDODEV=0
-                selected=0
-                mode=c-rollback
-                ;;
-            *)
-                echo "tm-pseudodev-runtime-smoke.sh: QSOE_RUST_TM_PSEUDODEV=0 requires TM_PSEUDODEV_RUNTIME_ALLOW_C=1" >&2
-                exit 2
-                ;;
-        esac
+        echo "tm-pseudodev-runtime-smoke.sh: C tm_pseudodev is retired; QSOE_RUST_TM_PSEUDODEV must be 1" >&2
+        exit 2
         ;;
     *)
-        echo "tm-pseudodev-runtime-smoke.sh: QSOE_RUST_TM_PSEUDODEV must be 0 or 1" >&2
+        echo "tm-pseudodev-runtime-smoke.sh: QSOE_RUST_TM_PSEUDODEV must be 1 after C retirement" >&2
         exit 2
         ;;
 esac
@@ -209,15 +197,15 @@ require_plan_omits() {
 }
 
 "$ROOT/scripts/apply-component-overrides.sh"
-capture_lq_taskman_plan
-if [ "$selected" -eq 1 ]; then
-    require_plan_omits '/sys/devnull.o'
-    require_plan_omits '/sys/devzero.o'
-    require_plan_contains 'libqsoe_tm_providers.a'
-else
-    require_plan_contains '/sys/devnull.o'
-    require_plan_contains '/sys/devzero.o'
+if [ -e "$ROOT/lq/taskman/sys/devnull.c" ] ||
+    [ -e "$ROOT/lq/taskman/sys/devzero.c" ]; then
+    echo "tm-pseudodev-runtime-smoke.sh: C tm_pseudodev sources should be retired" >&2
+    exit 1
 fi
+capture_lq_taskman_plan
+require_plan_omits '/sys/devnull.o'
+require_plan_omits '/sys/devzero.o'
+require_plan_contains 'libqsoe_tm_providers.a'
 
 cleanup() {
     if [ -n "$fragment" ]; then
@@ -240,7 +228,11 @@ EOF
 chmod 0644 "$fragment"
 
 echo "tm-pseudodev-runtime-smoke.sh: building LQ runtime prerequisites"
-"$MAKE" -C "$ROOT/lq" libc rtld libtaskman --no-print-directory
+"$MAKE" -C "$ROOT/lq" libc rtld libtaskman --no-print-directory \
+    QSOE_RUST_TM_PATHMGR=1 \
+    QSOE_RUST_TM_PROCFS=1 \
+    QSOE_RUST_TM_PSEUDODEV="$selected" \
+    QSOE_RUST_TM_RSRCDB=1
 
 echo "tm-pseudodev-runtime-smoke.sh: rebuilding quser with LQ libc"
 "$MAKE" -C "$ROOT/quser" LIBC_SO="$lq_libc" --no-print-directory
@@ -263,25 +255,25 @@ fi
 
 echo "tm-pseudodev-runtime-smoke.sh: rebuilding QSOE/L image with mode=$mode"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
+    QSOE_RUST_TM_PATHMGR=1 \
     QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_PSEUDODEV="$selected"
+    QSOE_RUST_TM_PSEUDODEV="$selected" \
+    QSOE_RUST_TM_RSRCDB=1
 
-if [ "$selected" -eq 1 ]; then
-    for symbol in \
-        tm_devnull_write \
-        tm_devnull_read \
-        tm_devnull_stat \
-        tm_devzero_write \
-        tm_devzero_read \
-        tm_devzero_stat
-    do
-        if ! "$NM" -g --defined-only "$ROOT/build/rust/tm-providers/libqsoe_tm_providers.a" |
-            grep -Eq "[[:space:]]$symbol$"; then
-            echo "tm-pseudodev-runtime-smoke.sh: Rust provider archive is missing $symbol" >&2
-            exit 1
-        fi
-    done
-fi
+for symbol in \
+    tm_devnull_write \
+    tm_devnull_read \
+    tm_devnull_stat \
+    tm_devzero_write \
+    tm_devzero_read \
+    tm_devzero_stat
+do
+    if ! "$NM" -g --defined-only "$ROOT/build/rust/tm-providers/libqsoe_tm_providers.a" |
+        grep -Eq "[[:space:]]$symbol$"; then
+        echo "tm-pseudodev-runtime-smoke.sh: Rust provider archive is missing $symbol" >&2
+        exit 1
+    fi
+done
 
 boot_args=(-k lq -t "$timeout_s" -o "$log")
 if [ "$keep_running" -eq 1 ]; then

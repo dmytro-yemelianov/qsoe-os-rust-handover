@@ -440,24 +440,26 @@ compatibility smoke; the LQ private runtime syscfg builder remains C.
 
 ## Task Manager Path Registry Selection
 
-The Rust `tm_pathmgr` provider can be built as a soft-float taskman staticlib
-without changing the normal taskman default:
+The Rust `tm_pathmgr` provider is the retired Rust-only implementation for the
+portable taskman path registry:
 
 ```sh
 make check-tm-pathmgr-model
 make rust-tm-pathmgr-provider
 make tm-pathmgr-evidence
 make tm-pathmgr-runtime-smoke
+make tm-pathmgr-rc-smoke
 ```
 
-With the default `QSOE_RUST_TM_PATHMGR=0`, NQ and LQ taskman link the existing
-C `pathmgr.o` in `libtaskman.a`. With `QSOE_RUST_TM_PATHMGR=1`, the component
-Makefile selector omits C `pathmgr.o`, builds `qsoe-tm-pathmgr` for
-`riscv64imac-unknown-none-elf`, and links `libqsoe_tm_pathmgr.a` into taskman.
+With mandatory `QSOE_RUST_TM_PATHMGR=1`, NQ and LQ taskman omit C
+`pathmgr.o`, build `qsoe-tm-pathmgr` for `riscv64imac-unknown-none-elf`, and
+link the shared `libqsoe_tm_providers.a` archive into taskman.
+`QSOE_RUST_TM_PATHMGR=0` and `TM_PATHMGR_RC_ROLLBACK=1` now fail fast because
+the C `pathmgr.o` rollback provider is retired.
 Path IO dispatch, FD ownership, CPIOFS/PROCFS/SYSFS serving, device-server
 registration policy, process tables, and seL4 invocation code remain C.
 
-`make tm-pathmgr-runtime-smoke` boots QSOE/L with Rust `tm_pathmgr` selected,
+`make tm-pathmgr-rc-smoke` boots QSOE/L with Rust `tm_pathmgr` selected,
 verifies C `pathmgr.o` is absent from the selected `libtaskman.a`, and checks
 runtime consumers through `/dev` readdir, `/etc` symlink file access,
 `/dev/console` repath, dynamic helper registration, duplicate registration
@@ -518,41 +520,44 @@ retirement.
 
 ## Task Manager Pseudo-device Selection
 
-The Rust LQ taskman pseudo-device provider can be built as a soft-float
-taskman staticlib without changing the normal taskman default:
+The Rust LQ taskman pseudo-device provider is the retired Rust-only
+implementation for `/dev/null` and `/dev/zero`:
 
 ```sh
 make rust-tm-pseudodev-provider
 make tm-pseudodev-evidence
 make tm-pseudodev-runtime-smoke
+make tm-pseudodev-rc-smoke
 ```
 
-With the default `QSOE_RUST_TM_PSEUDODEV=0`, LQ taskman links the existing C
-`devnull.o` and `devzero.o`. With `QSOE_RUST_TM_PSEUDODEV=1`, the component
-Makefile selector omits those two objects, builds `qsoe-tm-pseudodev` for
-`riscv64imac-unknown-none-elf`, and links `libqsoe_tm_pseudodev.a` into
-taskman. Path dispatch, fd ownership, request decoding, process tables, and
-seL4 invocation code remain C.
-The runtime smoke boots LQ with Rust `tm_pseudodev` selected and runs a staged
-`/usr/bin/pseudodev_probe` helper through live `/dev/null` and `/dev/zero`
-open, write, read, and fstat calls.
+With mandatory `QSOE_RUST_TM_PSEUDODEV=1`, LQ taskman omits C `devnull.o` and
+`devzero.o`, builds `qsoe-tm-pseudodev` for `riscv64imac-unknown-none-elf`,
+and links the shared `libqsoe_tm_providers.a` archive into taskman.
+`QSOE_RUST_TM_PSEUDODEV=0` and `TM_PSEUDODEV_RC_ROLLBACK=1` now fail fast
+because the C pseudo-device rollback providers are retired. Path dispatch, fd
+ownership, request decoding, process tables, and seL4 invocation code remain
+C. The runtime smoke boots LQ with Rust `tm_pseudodev` selected and runs a
+staged `/usr/bin/pseudodev_probe` helper through live `/dev/null` and
+`/dev/zero` open, write, read, and fstat calls.
 
 ## Task Manager Resource DB Selection
 
-The Rust LQ taskman resource DB provider can be built as a soft-float taskman
-staticlib without changing the normal taskman default:
+The Rust LQ taskman resource DB provider is the retired Rust-only
+implementation for LQ resource accounting:
 
 ```sh
 make check-tm-rsrcdb-model
 make rust-tm-rsrcdb-provider
 make tm-rsrcdb-evidence
 make tm-rsrcdb-runtime-smoke
+make tm-rsrcdb-rc-smoke
 ```
 
-With the default `QSOE_RUST_TM_RSRCDB=0`, LQ taskman links the existing C
-`sys/rsrcdb.o`. With `QSOE_RUST_TM_RSRCDB=1`, the component Makefile selector
-omits C `sys/rsrcdb.o`, builds `qsoe-tm-rsrcdb` for
-`riscv64imac-unknown-none-elf`, and links `libqsoe_tm_rsrcdb.a` into taskman.
+With mandatory `QSOE_RUST_TM_RSRCDB=1`, LQ taskman omits C `sys/rsrcdb.o`,
+builds `qsoe-tm-rsrcdb` for `riscv64imac-unknown-none-elf`, and links the
+shared `libqsoe_tm_providers.a` archive into taskman.
+`QSOE_RUST_TM_RSRCDB=0` and `TM_RSRCDB_RC_ROLLBACK=1` now fail fast because
+the C `sys/rsrcdb.o` rollback provider is retired.
 The libc `rsrcdbmgr_*` wrappers, taskman IPC dispatcher, IRQ handling, FDT and
 syscfg construction, process tables, and seL4 invocation code remain C.
 The runtime smoke boots LQ with Rust `tm_rsrcdb` selected and runs a staged

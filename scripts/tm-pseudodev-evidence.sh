@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture LQ tm_pseudodev Rust-default RC evidence with C rollback coverage.
+# Capture LQ tm_pseudodev Rust-only retirement evidence.
 
 set -eu
 
@@ -14,8 +14,10 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-pseudodev-evidence.sh
 
-Builds and audits the Rust LQ taskman pseudo-device default path and verifies
-that C remains the rollback provider for /dev/null and /dev/zero.
+Builds and audits the retired Rust LQ taskman pseudo-device path, verifies
+that the LQ taskman link plan no longer contains C sys/devnull.o or
+sys/devzero.o, and checks retired selector rejection for LQ taskman and
+provider archive builds.
 
 Environment:
   TM_PSEUDODEV_EVIDENCE_WORKDIR  output directory, default build/tm-pseudodev-evidence
@@ -66,6 +68,20 @@ fail() {
     exit 1
 }
 
+require_retired_selector_rejected() {
+    local label=$1
+    shift
+    local log="$WORKDIR/$label-retired-selector-rejection.txt"
+
+    if "$@" > "$log" 2>&1; then
+        fail "$label unexpectedly accepted QSOE_RUST_TM_PSEUDODEV=0"
+    fi
+    if ! grep -Fq 'QSOE_RUST_TM_PSEUDODEV must be 1 after C tm_pseudodev retirement' "$log" &&
+        ! grep -Fq 'C tm_pseudodev is retired; QSOE_RUST_TM_PSEUDODEV must be 1' "$log"; then
+        fail "$label rejection did not mention retired tm_pseudodev selector"
+    fi
+}
+
 audit_flags() {
     local label=$1
     local elf=$2
@@ -88,6 +104,34 @@ audit_flags() {
     fi
 }
 
+audit_symbols_file() {
+    local label=$1
+    local symbol_file=$2
+    local symbol
+
+    for symbol in \
+        tm_devnull_write \
+        tm_devnull_read \
+        tm_devnull_stat \
+        tm_devzero_write \
+        tm_devzero_read \
+        tm_devzero_stat
+    do
+        grep -Eq "[[:space:]]$symbol$" "$symbol_file" ||
+            fail "$label is missing symbol $symbol"
+    done
+}
+
+audit_linked_symbols() {
+    local label=$1
+    local elf=$2
+    local symbols="$WORKDIR/$label-symbols.txt"
+
+    [ -f "$elf" ] || fail "missing ELF for $label: $elf"
+    "$NM" -g --defined-only "$elf" > "$symbols"
+    audit_symbols_file "$label" "$symbols"
+}
+
 audit_provider_archive() {
     local header="$WORKDIR/rust-provider-archive-readelf-header.txt"
     local sections="$WORKDIR/rust-provider-archive-readelf-sections.txt"
@@ -106,17 +150,7 @@ audit_provider_archive() {
     [ "$total" -eq "$soft_float" ] ||
         fail "Rust provider archive has $soft_float/$total soft-float members"
 
-    for symbol in \
-        tm_devnull_write \
-        tm_devnull_read \
-        tm_devnull_stat \
-        tm_devzero_write \
-        tm_devzero_read \
-        tm_devzero_stat
-    do
-        grep -Eq "[[:space:]]$symbol$" "$symbols" ||
-            fail "Rust provider archive is missing symbol $symbol"
-    done
+    audit_symbols_file "Rust provider archive" "$symbols"
 
     if grep -Eq '(\.(tdata|tbss|init_array|fini_array|ctors|dtors|gcc_except_table)| TLS )' "$sections"; then
         fail "Rust provider archive contains unsupported TLS or constructor sections"
@@ -130,7 +164,6 @@ audit_provider_archive() {
 
 capture_lq_taskman_plan() {
     local label=$1
-    local rust_selected=$2
     local log="$WORKDIR/$label-taskman-dry-run.txt"
 
     "$MAKE" -C "$ROOT/lq/taskman" --no-print-directory -B -n all \
@@ -142,7 +175,7 @@ capture_lq_taskman_plan() {
         QSOE_RUST_TM_FDT=1 \
         QSOE_RUST_TM_PATHMGR=1 \
         QSOE_RUST_TM_PROCFS=1 \
-        QSOE_RUST_TM_PSEUDODEV="$rust_selected" \
+        QSOE_RUST_TM_PSEUDODEV=1 \
         QSOE_RUST_TM_RSRCDB=1 \
         QSOE_RUST_TM_SCRIPT=1 \
         QSOE_RUST_TM_SYSCFG=1 \
@@ -170,27 +203,10 @@ require_plan_omits() {
     fi
 }
 
-build_lq_taskman() {
-    local label=$1
-    local rust_selected=$2
-
-    rm -f "$ROOT/lq/build/taskman.elf"
-    "$MAKE" -C "$ROOT/lq" --no-print-directory \
-        QSOE_RUST_TM_CPIO=1 \
-        QSOE_RUST_TM_CRED=1 \
-        QSOE_RUST_TM_ELF=1 \
-        QSOE_RUST_TM_FDT=1 \
-        QSOE_RUST_TM_PATHMGR=1 \
-        QSOE_RUST_TM_PROCFS=1 \
-        QSOE_RUST_TM_PSEUDODEV="$rust_selected" \
-        QSOE_RUST_TM_RSRCDB=1 \
-        QSOE_RUST_TM_SCRIPT=1 \
-        QSOE_RUST_TM_SYSCFG=1 \
-        QSOE_RUST_TM_SYSMAP=1 \
-        QSOE_RUST_TM_SYSFS=1 \
-        taskman
-    audit_flags "$label-taskman" "$ROOT/lq/build/taskman.elf"
-}
+[ ! -e "$ROOT/lq/taskman/sys/devnull.c" ] ||
+    fail "lq/taskman/sys/devnull.c should be retired"
+[ ! -e "$ROOT/lq/taskman/sys/devzero.c" ] ||
+    fail "lq/taskman/sys/devzero.c should be retired"
 
 echo "tm-pseudodev-evidence.sh: running Rust host tests"
 cargo test --manifest-path "$MANIFEST" -p qsoe-tm-pseudodev --features host-tests
@@ -199,24 +215,32 @@ echo "tm-pseudodev-evidence.sh: building Rust provider archive"
 "$MAKE" -C "$ROOT" --no-print-directory rust-tm-pseudodev-provider
 audit_provider_archive
 
-echo "tm-pseudodev-evidence.sh: verifying LQ Rust-default link plan"
-capture_lq_taskman_plan lq-rust-default 1
-require_plan_omits lq-rust-default '/sys/devnull.o'
-require_plan_omits lq-rust-default '/sys/devzero.o'
-require_plan_omits lq-rust-default 'libqsoe_tm_pseudodev.a'
-require_plan_contains lq-rust-default 'libqsoe_tm_providers.a'
+echo "tm-pseudodev-evidence.sh: verifying LQ Rust-only link plan"
+capture_lq_taskman_plan lq-rust-retired
+require_plan_omits lq-rust-retired '/sys/devnull.o'
+require_plan_omits lq-rust-retired '/sys/devzero.o'
+require_plan_omits lq-rust-retired 'libqsoe_tm_pseudodev.a'
+require_plan_contains lq-rust-retired 'libqsoe_tm_providers.a'
 
-echo "tm-pseudodev-evidence.sh: verifying LQ Rust-default taskman link"
-build_lq_taskman lq-rust-default 1
+echo "tm-pseudodev-evidence.sh: verifying LQ Rust-only taskman link"
+"$MAKE" -C "$ROOT/lq" --no-print-directory \
+    QSOE_RUST_TM_PROCFS=1 \
+    QSOE_RUST_TM_PSEUDODEV=1 \
+    QSOE_RUST_TM_RSRCDB=1 \
+    taskman
+audit_flags lq-rust-retired-taskman "$ROOT/lq/build/taskman.elf"
+audit_linked_symbols lq-rust-retired-taskman "$ROOT/lq/build/taskman.elf"
 
-echo "tm-pseudodev-evidence.sh: verifying LQ C rollback link plan"
-capture_lq_taskman_plan lq-c-rollback 0
-require_plan_contains lq-c-rollback '/sys/devnull.o'
-require_plan_contains lq-c-rollback '/sys/devzero.o'
-require_plan_omits lq-c-rollback 'libqsoe_tm_pseudodev.a'
-require_plan_contains lq-c-rollback 'libqsoe_tm_providers.a'
+echo "tm-pseudodev-evidence.sh: verifying LQ retired selector rejection"
+require_retired_selector_rejected lq \
+    "$MAKE" -C "$ROOT/lq" --no-print-directory QSOE_RUST_TM_PSEUDODEV=0 taskman
 
-echo "tm-pseudodev-evidence.sh: verifying LQ C rollback taskman link"
-build_lq_taskman lq-c-rollback 0
+echo "tm-pseudodev-evidence.sh: verifying LQ taskman retired selector rejection"
+require_retired_selector_rejected lq-taskman \
+    "$MAKE" -C "$ROOT/lq/taskman" --no-print-directory QSOE_RUST_TM_PSEUDODEV=0
+
+echo "tm-pseudodev-evidence.sh: verifying provider archive retired selector rejection"
+require_retired_selector_rejected rust-providers \
+    env QSOE_RUST_TM_PSEUDODEV=0 "$ROOT/scripts/build-rust-tm-providers.sh" "$WORKDIR/retired-selector/libqsoe_tm_providers.a"
 
 echo "tm-pseudodev-evidence.sh: evidence captured in $WORKDIR"

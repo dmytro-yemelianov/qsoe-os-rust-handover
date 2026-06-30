@@ -32,10 +32,10 @@ no direct seL4 object manipulation, not automatically low risk.
 | `/proc` model | `rust/crates/qsoe-tm-procfs`, `libtaskman/include/tm_procfs.h` | Formats `/proc/<pid>/info`, resolves paths, and walks pid directories through callbacks. | Low: retired Rust provider; diagnostic surface, no initial process creation. |
 | `/proc` LQ glue | `lq/taskman/path/procfs.c`, `lq/taskman/path/procfs.h` | Connects the portable `/proc` model to LQ process-table accessors and connection context. | Low-medium: reads live process table but does not create caps. |
 | `/sys` model | `rust/crates/qsoe-tm-sysfs`, `libtaskman/include/tm_sysfs.h` | Read-only file model for board, cmdline, osname, version, and builddate. The C provider is retired; Rust `qsoe-tm-sysfs` is mandatory and `QSOE_RUST_TM_SYSFS=0` fails fast. See `TASK_MANAGER_SYSFS.md`. | Medium: `/sys/cmdline` can influence init's mainfs path. |
-| Path registry | `libtaskman/src/pathmgr.c`, `libtaskman/include/tm_pathmgr.h` | Fixed-pool namespace tree, path resolve, repath, symlink expansion, and child iteration. Rust-default RC provider exists behind `QSOE_RUST_TM_PATHMGR=1`, with `QSOE_RUST_TM_PATHMGR=0` preserving C rollback; see `TASK_MANAGER_PATHMGR.md` and `TASK_MANAGER_PATHMGR_RC.md`. | Medium-high: every open and device registration depends on it. |
+| Path registry | `rust/crates/qsoe-tm-pathmgr`, `libtaskman/include/tm_pathmgr.h` | Fixed-pool namespace tree, path resolve, repath, symlink expansion, and child iteration. The C provider is retired; Rust `qsoe-tm-pathmgr` is mandatory and `QSOE_RUST_TM_PATHMGR=0` fails fast. See `TASK_MANAGER_PATHMGR.md`. | Medium-high: every open and device registration depends on it. |
 | Credentials policy | `rust/crates/qsoe-tm-cred`, `libtaskman/include/tm_cred.h` | Pure cwd, umask, uid/gid mutation, and permission checks. The C provider is retired; Rust `qsoe-tm-cred` is mandatory and `QSOE_RUST_TM_CRED=0` fails fast. See `TASK_MANAGER_CRED.md`. | Low-medium: process semantics, not boot spawn. |
-| Resource DB accounting | `lq/taskman/sys/rsrcdb.c`, `lq/taskman/sys/rsrcdb.h` | Fixed-pool resource-range allocation, split/merge, rollback on partial attach. Rust-default RC provider exists behind `QSOE_RUST_TM_RSRCDB=1`, with `QSOE_RUST_TM_RSRCDB=0` preserving C rollback; see `TASK_MANAGER_RSRCDB.md` and `TASK_MANAGER_RSRCDB_RC.md`. | Low-medium: accounting table, but service-facing. |
-| Simple pseudo-devices | `lq/taskman/sys/devnull.c`, `lq/taskman/sys/devzero.c` | Small read/write/stat handlers. Rust-default RC provider exists behind `QSOE_RUST_TM_PSEUDODEV=1`, with `QSOE_RUST_TM_PSEUDODEV=0` preserving C rollback; see `TASK_MANAGER_PSEUDODEV.md` and `TASK_MANAGER_PSEUDODEV_RC.md`. | Low-medium: simple, but served through taskman's IO path. |
+| Resource DB accounting | `rust/crates/qsoe-tm-rsrcdb`, `lq/taskman/sys/rsrcdb.h` | Fixed-pool resource-range allocation, split/merge, rollback on partial attach. The C provider is retired; Rust `qsoe-tm-rsrcdb` is mandatory and `QSOE_RUST_TM_RSRCDB=0` fails fast. See `TASK_MANAGER_RSRCDB.md`. | Low-medium: accounting table, but service-facing. |
+| Simple pseudo-devices | `rust/crates/qsoe-tm-pseudodev`, `lq/taskman/sys/devnull.h`, `lq/taskman/sys/devzero.h` | Small read/write/stat handlers. The C providers are retired; Rust `qsoe-tm-pseudodev` is mandatory and `QSOE_RUST_TM_PSEUDODEV=0` fails fast. See `TASK_MANAGER_PSEUDODEV.md`. | Low-medium: simple, but served through taskman's IO path. |
 | Logging formatter | `libtaskman/src/log.c`, `lq/taskman/tm_log.c` | Freestanding format subset and seL4 debug-console sink. | Low: diagnostic path, but useful during failures. |
 
 The selected Phase 9 pilot candidate is the portable `/proc` model
@@ -45,9 +45,9 @@ evidence required before implementation.
 Subsequent bounded providers now exist for `tm_cpio`, `tm_cred`, `tm_elf`,
 `tm_fdt`, `tm_pathmgr`, LQ pseudo-devices, `tm_rsrcdb`, `tm_script`,
 `tm_syscfg`, `tm_sysmap`, and `tm_sysfs`. `tm_cpio`, `tm_script`, `tm_elf`,
-`tm_syscfg`, `tm_sysmap`, `tm_sysfs`, and `tm_cred` are retired to Rust;
-`tm_fdt`, `tm_pathmgr`, `tm_pseudodev`, and `tm_rsrcdb` are Rust-default RCs
-with C rollback. Keep broader loader and
+`tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_cred`, `tm_pathmgr`,
+`tm_pseudodev`, and `tm_rsrcdb` are retired to Rust; `tm_fdt` is a
+Rust-default RC with C rollback. Keep broader loader and
 relocation changes separate from the retired `tm_elf` parser provider because
 its output still feeds spawn, relocation, and loader admission.
 

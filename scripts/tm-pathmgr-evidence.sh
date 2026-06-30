@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture tm_pathmgr Rust-default RC evidence while keeping C rollback alive.
+# Capture tm_pathmgr Rust-only retirement evidence.
 
 set -eu
 
@@ -8,14 +8,14 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MAKE=${MAKE:-make}
 WORKDIR=${TM_PATHMGR_EVIDENCE_WORKDIR:-"$ROOT/build/tm-pathmgr-evidence"}
 RUST_PROVIDER_A=${RUST_PROVIDER_A:-"$ROOT/build/rust/tm-pathmgr/libqsoe_tm_pathmgr.a"}
-MANIFEST="$ROOT/rust/Cargo.toml"
 
 usage() {
     cat <<'EOF'
 usage: scripts/tm-pathmgr-evidence.sh
 
-Builds and audits the Rust tm_pathmgr default path and verifies C rollback
-archive membership for NQ and LQ taskman links.
+Builds and audits the retired Rust tm_pathmgr path, verifies that NQ/LQ
+taskman archives no longer contain C pathmgr.o, and checks retired selector
+rejection for NQ, LQ, standalone libtaskman, and provider archive builds.
 
 Environment:
   TM_PATHMGR_EVIDENCE_WORKDIR  output directory, default build/tm-pathmgr-evidence
@@ -92,6 +92,20 @@ require_pathmgr_count() {
         fail "$label expected $expected pathmgr.o members, got $count"
 }
 
+require_retired_selector_rejected() {
+    local label=$1
+    shift
+    local log="$WORKDIR/$label-retired-selector-rejection.txt"
+
+    if "$@" > "$log" 2>&1; then
+        fail "$label unexpectedly accepted QSOE_RUST_TM_PATHMGR=0"
+    fi
+    if ! grep -Fq 'QSOE_RUST_TM_PATHMGR must be 1 after C tm_pathmgr retirement' "$log" &&
+        ! grep -Fq 'C tm_pathmgr is retired; QSOE_RUST_TM_PATHMGR must be 1' "$log"; then
+        fail "$label rejection did not mention retired tm_pathmgr selector"
+    fi
+}
+
 audit_flags() {
     local label=$1
     local elf=$2
@@ -118,12 +132,25 @@ audit_linked_symbols() {
     local label=$1
     local elf=$2
     local symbols="$WORKDIR/$label-symbols.txt"
+    local symbol
 
     [ -f "$elf" ] || fail "missing ELF for $label: $elf"
     "$NM" -g --defined-only "$elf" > "$symbols"
 
-    grep -Eq '[[:space:]]tm_pathmgr_resolve$' "$symbols" ||
-        fail "$label is missing linked symbol tm_pathmgr_resolve"
+    for symbol in \
+        tm_pathmgr_init \
+        tm_pathmgr_register \
+        tm_pathmgr_unregister_pid \
+        tm_pathmgr_resolve \
+        tm_pathmgr_repath \
+        tm_pathmgr_symlink \
+        tm_pathmgr_expand_symlink_cpio \
+        tm_pathmgr_expand_symlink \
+        tm_pathmgr_child_at
+    do
+        grep -Eq "[[:space:]]$symbol$" "$symbols" ||
+            fail "$label is missing linked symbol $symbol"
+    done
 }
 
 audit_provider_archive() {
@@ -170,70 +197,49 @@ audit_provider_archive() {
         tee -a "$WORKDIR/rust-provider-summary.txt"
 }
 
-echo "tm-pathmgr-evidence.sh: running C host model fixture"
-"$MAKE" -C "$ROOT" --no-print-directory check-tm-pathmgr-model
+[ ! -e "$ROOT/libtaskman/src/pathmgr.c" ] ||
+    fail "libtaskman/src/pathmgr.c should be retired"
 
-echo "tm-pathmgr-evidence.sh: running Rust host tests"
-cargo test --manifest-path "$MANIFEST" -p qsoe-tm-pathmgr --features host-tests
+echo "tm-pathmgr-evidence.sh: running Rust host model tests"
+"$MAKE" -C "$ROOT" --no-print-directory check-tm-pathmgr-model
 
 echo "tm-pathmgr-evidence.sh: building Rust provider archive"
 "$MAKE" -C "$ROOT" --no-print-directory rust-tm-pathmgr-provider
 audit_provider_archive
 
-echo "tm-pathmgr-evidence.sh: verifying NQ Rust-default membership"
+echo "tm-pathmgr-evidence.sh: verifying NQ Rust-only membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
-    QSOE_RUST_TM_CPIO=1 QSOE_RUST_TM_CRED=1 QSOE_RUST_TM_ELF=1 \
-    QSOE_RUST_TM_PATHMGR=1 QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_SCRIPT=1 QSOE_RUST_TM_SYSCFG=1 QSOE_RUST_TM_SYSFS=1
-require_pathmgr_count nq-rust-default "$ROOT/nq/build/libtaskman/libtaskman.a" 0
-audit_flags nq-rust-default-taskman "$ROOT/nq/build/taskman/taskman.elf"
-audit_linked_symbols nq-rust-default-taskman "$ROOT/nq/build/taskman/taskman.elf"
+    QSOE_RUST_TM_PATHMGR=1 \
+    QSOE_RUST_TM_PROCFS=1
+require_pathmgr_count nq-rust-retired "$ROOT/nq/build/libtaskman/libtaskman.a" 0
+audit_flags nq-rust-retired-taskman "$ROOT/nq/build/taskman/taskman.elf"
+audit_linked_symbols nq-rust-retired-taskman "$ROOT/nq/build/taskman/taskman.elf"
 
-echo "tm-pathmgr-evidence.sh: verifying NQ C rollback membership"
-"$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
-    QSOE_RUST_TM_CPIO=1 QSOE_RUST_TM_CRED=1 QSOE_RUST_TM_ELF=1 \
-    QSOE_RUST_TM_PATHMGR=0 QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_SCRIPT=1 QSOE_RUST_TM_SYSCFG=1 QSOE_RUST_TM_SYSFS=1
-require_pathmgr_count nq-c-rollback "$ROOT/nq/build/libtaskman/libtaskman.a" 1
-audit_flags nq-c-rollback-taskman "$ROOT/nq/build/taskman/taskman.elf"
-audit_linked_symbols nq-c-rollback-taskman "$ROOT/nq/build/taskman/taskman.elf"
+echo "tm-pathmgr-evidence.sh: verifying NQ retired selector rejection"
+require_retired_selector_rejected nq \
+    "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory QSOE_RUST_TM_PATHMGR=0
 
-echo "tm-pathmgr-evidence.sh: verifying LQ Rust-default membership"
+echo "tm-pathmgr-evidence.sh: verifying LQ Rust-only membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
-    QSOE_RUST_TM_CPIO=1 \
-    QSOE_RUST_TM_CRED=1 \
-    QSOE_RUST_TM_ELF=1 \
-    QSOE_RUST_TM_FDT=1 \
     QSOE_RUST_TM_PATHMGR=1 \
     QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_PSEUDODEV=0 \
+    QSOE_RUST_TM_PSEUDODEV=1 \
     QSOE_RUST_TM_RSRCDB=1 \
-    QSOE_RUST_TM_SCRIPT=1 \
-    QSOE_RUST_TM_SYSCFG=1 \
-    QSOE_RUST_TM_SYSMAP=1 \
-    QSOE_RUST_TM_SYSFS=1 \
     taskman
-require_pathmgr_count lq-rust-default "$ROOT/lq/build/libtaskman/libtaskman.a" 0
-audit_flags lq-rust-default-taskman "$ROOT/lq/build/taskman.elf"
-audit_linked_symbols lq-rust-default-taskman "$ROOT/lq/build/taskman.elf"
+require_pathmgr_count lq-rust-retired "$ROOT/lq/build/libtaskman/libtaskman.a" 0
+audit_flags lq-rust-retired-taskman "$ROOT/lq/build/taskman.elf"
+audit_linked_symbols lq-rust-retired-taskman "$ROOT/lq/build/taskman.elf"
 
-echo "tm-pathmgr-evidence.sh: verifying LQ C rollback membership"
-"$MAKE" -C "$ROOT/lq" --no-print-directory \
-    QSOE_RUST_TM_CPIO=1 \
-    QSOE_RUST_TM_CRED=1 \
-    QSOE_RUST_TM_ELF=1 \
-    QSOE_RUST_TM_FDT=1 \
-    QSOE_RUST_TM_PATHMGR=0 \
-    QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_PSEUDODEV=0 \
-    QSOE_RUST_TM_RSRCDB=1 \
-    QSOE_RUST_TM_SCRIPT=1 \
-    QSOE_RUST_TM_SYSCFG=1 \
-    QSOE_RUST_TM_SYSMAP=1 \
-    QSOE_RUST_TM_SYSFS=1 \
-    taskman
-require_pathmgr_count lq-c-rollback "$ROOT/lq/build/libtaskman/libtaskman.a" 1
-audit_flags lq-c-rollback-taskman "$ROOT/lq/build/taskman.elf"
-audit_linked_symbols lq-c-rollback-taskman "$ROOT/lq/build/taskman.elf"
+echo "tm-pathmgr-evidence.sh: verifying LQ retired selector rejection"
+require_retired_selector_rejected lq \
+    "$MAKE" -C "$ROOT/lq" --no-print-directory QSOE_RUST_TM_PATHMGR=0 taskman
+
+echo "tm-pathmgr-evidence.sh: verifying standalone libtaskman retired selector rejection"
+require_retired_selector_rejected libtaskman \
+    "$MAKE" -C "$ROOT/libtaskman" --no-print-directory QSOE_RUST_TM_PATHMGR=0
+
+echo "tm-pathmgr-evidence.sh: verifying provider archive retired selector rejection"
+require_retired_selector_rejected rust-providers \
+    env QSOE_RUST_TM_PATHMGR=0 "$ROOT/scripts/build-rust-tm-providers.sh" "$WORKDIR/retired-selector/libqsoe_tm_providers.a"
 
 echo "tm-pathmgr-evidence.sh: evidence captured in $WORKDIR"

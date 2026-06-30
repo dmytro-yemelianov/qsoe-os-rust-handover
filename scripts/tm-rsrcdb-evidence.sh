@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture LQ tm_rsrcdb Rust-default RC evidence while keeping C rollback alive.
+# Capture LQ tm_rsrcdb Rust-only retirement evidence.
 
 set -eu
 
@@ -8,14 +8,14 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MAKE=${MAKE:-make}
 WORKDIR=${TM_RSRCDB_EVIDENCE_WORKDIR:-"$ROOT/build/tm-rsrcdb-evidence"}
 RUST_PROVIDER_A=${RUST_PROVIDER_A:-"$ROOT/build/rust/tm-rsrcdb/libqsoe_tm_rsrcdb.a"}
-MANIFEST="$ROOT/rust/Cargo.toml"
 
 usage() {
     cat <<'EOF'
 usage: scripts/tm-rsrcdb-evidence.sh
 
-Builds and audits the Rust LQ taskman resource-DB default path and verifies
-that C remains available as the explicit rollback provider for sys/rsrcdb.c.
+Builds and audits the retired Rust LQ taskman resource-DB path, verifies that
+the LQ taskman link plan no longer contains C sys/rsrcdb.o, and checks retired
+selector rejection for LQ taskman and provider archive builds.
 
 Environment:
   TM_RSRCDB_EVIDENCE_WORKDIR  output directory, default build/tm-rsrcdb-evidence
@@ -66,6 +66,20 @@ fail() {
     exit 1
 }
 
+require_retired_selector_rejected() {
+    local label=$1
+    shift
+    local log="$WORKDIR/$label-retired-selector-rejection.txt"
+
+    if "$@" > "$log" 2>&1; then
+        fail "$label unexpectedly accepted QSOE_RUST_TM_RSRCDB=0"
+    fi
+    if ! grep -Fq 'QSOE_RUST_TM_RSRCDB must be 1 after C tm_rsrcdb retirement' "$log" &&
+        ! grep -Fq 'C tm_rsrcdb is retired; QSOE_RUST_TM_RSRCDB must be 1' "$log"; then
+        fail "$label rejection did not mention retired tm_rsrcdb selector"
+    fi
+}
+
 audit_flags() {
     local label=$1
     local elf=$2
@@ -88,6 +102,36 @@ audit_flags() {
     fi
 }
 
+audit_symbols_file() {
+    local label=$1
+    local symbol_file=$2
+    local symbol
+
+    for symbol in \
+        tm_rsrc_init \
+        tm_rsrc_create \
+        tm_rsrc_destroy \
+        tm_rsrc_attach \
+        tm_rsrc_detach \
+        tm_rsrc_query \
+        tm_rsrc_release_pid \
+        tm_rsrc_seed_from_syscfg
+    do
+        grep -Eq "[[:space:]]$symbol$" "$symbol_file" ||
+            fail "$label is missing symbol $symbol"
+    done
+}
+
+audit_linked_symbols() {
+    local label=$1
+    local elf=$2
+    local symbols="$WORKDIR/$label-symbols.txt"
+
+    [ -f "$elf" ] || fail "missing ELF for $label: $elf"
+    "$NM" -g --defined-only "$elf" > "$symbols"
+    audit_symbols_file "$label" "$symbols"
+}
+
 audit_provider_archive() {
     local header="$WORKDIR/rust-provider-archive-readelf-header.txt"
     local sections="$WORKDIR/rust-provider-archive-readelf-sections.txt"
@@ -106,19 +150,7 @@ audit_provider_archive() {
     [ "$total" -eq "$soft_float" ] ||
         fail "Rust provider archive has $soft_float/$total soft-float members"
 
-    for symbol in \
-        tm_rsrc_init \
-        tm_rsrc_create \
-        tm_rsrc_destroy \
-        tm_rsrc_attach \
-        tm_rsrc_detach \
-        tm_rsrc_query \
-        tm_rsrc_release_pid \
-        tm_rsrc_seed_from_syscfg
-    do
-        grep -Eq "[[:space:]]$symbol$" "$symbols" ||
-            fail "Rust provider archive is missing symbol $symbol"
-    done
+    audit_symbols_file "Rust provider archive" "$symbols"
 
     if grep -Eq '(\.(tdata|tbss|init_array|fini_array|ctors|dtors|gcc_except_table)| TLS )' "$sections"; then
         fail "Rust provider archive contains unsupported TLS or constructor sections"
@@ -132,7 +164,6 @@ audit_provider_archive() {
 
 capture_lq_taskman_plan() {
     local label=$1
-    local rust_selected=$2
     local log="$WORKDIR/$label-taskman-dry-run.txt"
 
     "$MAKE" -C "$ROOT/lq/taskman" --no-print-directory -B -n all \
@@ -140,11 +171,15 @@ capture_lq_taskman_plan() {
         LIBTASKMAN_INC="$ROOT/libtaskman/include" \
         QSOE_RUST_TM_CPIO=1 \
         QSOE_RUST_TM_CRED=1 \
+        QSOE_RUST_TM_ELF=1 \
+        QSOE_RUST_TM_FDT=1 \
+        QSOE_RUST_TM_PATHMGR=1 \
         QSOE_RUST_TM_PROCFS=1 \
-        QSOE_RUST_TM_PSEUDODEV=0 \
-        QSOE_RUST_TM_RSRCDB="$rust_selected" \
+        QSOE_RUST_TM_PSEUDODEV=1 \
+        QSOE_RUST_TM_RSRCDB=1 \
         QSOE_RUST_TM_SCRIPT=1 \
         QSOE_RUST_TM_SYSCFG=1 \
+        QSOE_RUST_TM_SYSMAP=1 \
         QSOE_RUST_TM_SYSFS=1 \
         > "$log"
 }
@@ -168,50 +203,41 @@ require_plan_omits() {
     fi
 }
 
-build_lq_taskman() {
-    local label=$1
-    local rust_selected=$2
+[ ! -e "$ROOT/lq/taskman/sys/rsrcdb.c" ] ||
+    fail "lq/taskman/sys/rsrcdb.c should be retired"
 
-        rm -f "$ROOT/lq/build/taskman.elf"
-    "$MAKE" -C "$ROOT/lq" --no-print-directory \
-        QSOE_RUST_TM_CPIO=1 \
-        QSOE_RUST_TM_CRED=1 \
-        QSOE_RUST_TM_PROCFS=1 \
-        QSOE_RUST_TM_PSEUDODEV=0 \
-        QSOE_RUST_TM_RSRCDB="$rust_selected" \
-        QSOE_RUST_TM_SCRIPT=1 \
-        QSOE_RUST_TM_SYSCFG=1 \
-        QSOE_RUST_TM_SYSFS=1 \
-        taskman
-    audit_flags "$label-taskman" "$ROOT/lq/build/taskman.elf"
-}
-
-echo "tm-rsrcdb-evidence.sh: running C host model"
+echo "tm-rsrcdb-evidence.sh: running Rust host model tests"
 "$MAKE" -C "$ROOT" --no-print-directory check-tm-rsrcdb-model
-
-echo "tm-rsrcdb-evidence.sh: running Rust host tests"
-cargo test --manifest-path "$MANIFEST" -p qsoe-tm-rsrcdb --features host-tests
 
 echo "tm-rsrcdb-evidence.sh: building Rust provider archive"
 "$MAKE" -C "$ROOT" --no-print-directory rust-tm-rsrcdb-provider
 audit_provider_archive
 
-echo "tm-rsrcdb-evidence.sh: verifying LQ Rust-default link plan"
-capture_lq_taskman_plan lq-rust-default 1
-require_plan_omits lq-rust-default '/sys/rsrcdb.o'
-require_plan_omits lq-rust-default 'libqsoe_tm_rsrcdb.a'
-require_plan_contains lq-rust-default 'libqsoe_tm_providers.a'
+echo "tm-rsrcdb-evidence.sh: verifying LQ Rust-only link plan"
+capture_lq_taskman_plan lq-rust-retired
+require_plan_omits lq-rust-retired '/sys/rsrcdb.o'
+require_plan_omits lq-rust-retired 'libqsoe_tm_rsrcdb.a'
+require_plan_contains lq-rust-retired 'libqsoe_tm_providers.a'
 
-echo "tm-rsrcdb-evidence.sh: verifying LQ Rust-default taskman link"
-build_lq_taskman lq-rust-default 1
+echo "tm-rsrcdb-evidence.sh: verifying LQ Rust-only taskman link"
+"$MAKE" -C "$ROOT/lq" --no-print-directory \
+    QSOE_RUST_TM_PROCFS=1 \
+    QSOE_RUST_TM_PSEUDODEV=1 \
+    QSOE_RUST_TM_RSRCDB=1 \
+    taskman
+audit_flags lq-rust-retired-taskman "$ROOT/lq/build/taskman.elf"
+audit_linked_symbols lq-rust-retired-taskman "$ROOT/lq/build/taskman.elf"
 
-echo "tm-rsrcdb-evidence.sh: verifying LQ C-rollback link plan"
-capture_lq_taskman_plan lq-c-rollback 0
-require_plan_contains lq-c-rollback '/sys/rsrcdb.o'
-require_plan_omits lq-c-rollback 'libqsoe_tm_rsrcdb.a'
-require_plan_contains lq-c-rollback 'libqsoe_tm_providers.a'
+echo "tm-rsrcdb-evidence.sh: verifying LQ retired selector rejection"
+require_retired_selector_rejected lq \
+    "$MAKE" -C "$ROOT/lq" --no-print-directory QSOE_RUST_TM_RSRCDB=0 taskman
 
-echo "tm-rsrcdb-evidence.sh: verifying LQ C-rollback taskman link"
-build_lq_taskman lq-c-rollback 0
+echo "tm-rsrcdb-evidence.sh: verifying LQ taskman retired selector rejection"
+require_retired_selector_rejected lq-taskman \
+    "$MAKE" -C "$ROOT/lq/taskman" --no-print-directory QSOE_RUST_TM_RSRCDB=0
+
+echo "tm-rsrcdb-evidence.sh: verifying provider archive retired selector rejection"
+require_retired_selector_rejected rust-providers \
+    env QSOE_RUST_TM_RSRCDB=0 "$ROOT/scripts/build-rust-tm-providers.sh" "$WORKDIR/retired-selector/libqsoe_tm_providers.a"
 
 echo "tm-rsrcdb-evidence.sh: evidence captured in $WORKDIR"

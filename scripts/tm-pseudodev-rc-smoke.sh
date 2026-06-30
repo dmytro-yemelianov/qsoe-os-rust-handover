@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Validate the tm_pseudodev Rust-default RC selector while keeping C rollback alive.
+# Validate the retired tm_pseudodev Rust selector.
 
 set -eu
 
@@ -8,13 +8,13 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-pseudodev-rc-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
-Builds LQ taskman with the tm_pseudodev RC selection, verifies whether C
-sys/devnull.o and sys/devzero.o are present in the link plan, then reuses the
+Builds LQ taskman with the retired Rust tm_pseudodev provider, verifies that C
+sys/devnull.o and sys/devzero.o are absent from the link plan, then reuses the
 live LQ tm_pseudodev runtime smoke.
 
 Environment:
-  TM_PSEUDODEV_RC_ROLLBACK  set to 1 to validate the C rollback path
-  QSOE_RUST_TM_PSEUDODEV    default 1 for Rust RC; set 0 only for rollback validation
+  TM_PSEUDODEV_RC_ROLLBACK  unsupported after C tm_pseudodev retirement
+  QSOE_RUST_TM_PSEUDODEV    must remain 1 after C tm_pseudodev retirement
   TM_PSEUDODEV_RC_WORKDIR   output directory, default build/tm-pseudodev-rc
 EOF
 }
@@ -84,70 +84,64 @@ require_plan_omits() {
 mkdir -p "$workdir"
 "$ROOT/scripts/apply-component-overrides.sh"
 
+if [ -e "$ROOT/lq/taskman/sys/devnull.c" ] ||
+    [ -e "$ROOT/lq/taskman/sys/devzero.c" ]; then
+    fail "C tm_pseudodev sources should be retired"
+fi
+
 case "$rollback" in
     0|false|FALSE|no|NO)
-        rollback=0
-        default_selected=1
+        mode=rust-retired
         ;;
     1|true|TRUE|yes|YES)
-        rollback=1
-        default_selected=0
+        echo "tm-pseudodev-rc-smoke.sh: C tm_pseudodev rollback is retired" >&2
+        exit 2
         ;;
     *)
-        echo "tm-pseudodev-rc-smoke.sh: TM_PSEUDODEV_RC_ROLLBACK must be 0 or 1" >&2
+        echo "tm-pseudodev-rc-smoke.sh: TM_PSEUDODEV_RC_ROLLBACK must be 0 after C retirement" >&2
         exit 2
         ;;
 esac
 
-case "${QSOE_RUST_TM_PSEUDODEV:-$default_selected}" in
+case "${QSOE_RUST_TM_PSEUDODEV:-1}" in
     1|true|TRUE|yes|YES)
         selected=1
-        mode=rust-default
         ;;
     0|false|FALSE|no|NO)
-        selected=0
-        mode=c-rollback
+        echo "tm-pseudodev-rc-smoke.sh: C tm_pseudodev is retired; QSOE_RUST_TM_PSEUDODEV must be 1" >&2
+        exit 2
         ;;
     *)
-        echo "tm-pseudodev-rc-smoke.sh: QSOE_RUST_TM_PSEUDODEV must be 0 or 1" >&2
+        echo "tm-pseudodev-rc-smoke.sh: QSOE_RUST_TM_PSEUDODEV must be 1 after C retirement" >&2
         exit 2
         ;;
 esac
-
-if [ "$rollback" -eq 1 ] && [ "$selected" -ne 0 ]; then
-    echo "tm-pseudodev-rc-smoke.sh: TM_PSEUDODEV_RC_ROLLBACK=1 requires QSOE_RUST_TM_PSEUDODEV=0" >&2
-    exit 2
-fi
 
 plan_log="$workdir/lq-$mode-taskman-dry-run.txt"
 
 echo "tm-pseudodev-rc-smoke.sh: mode=$mode rollback=$rollback"
 echo "tm-pseudodev-rc-smoke.sh: verifying LQ taskman selector"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
+    QSOE_RUST_TM_PATHMGR=1 \
     QSOE_RUST_TM_PROCFS=1 \
     QSOE_RUST_TM_PSEUDODEV="$selected" \
+    QSOE_RUST_TM_RSRCDB=1 \
     taskman
 capture_lq_taskman_plan
 
-if [ "$selected" -eq 1 ]; then
-    require_plan_omits lq-rust-default '/sys/devnull.o'
-    require_plan_omits lq-rust-default '/sys/devzero.o'
-    require_plan_contains lq-rust-default 'libqsoe_tm_providers.a'
-else
-    require_plan_contains lq-c-rollback '/sys/devnull.o'
-    require_plan_contains lq-c-rollback '/sys/devzero.o'
-fi
+require_plan_omits lq-rust-retired '/sys/devnull.o'
+require_plan_omits lq-rust-retired '/sys/devzero.o'
+require_plan_contains lq-rust-retired 'libqsoe_tm_providers.a'
 
 runtime_args=("$@")
 if [ "$has_log" -eq 0 ]; then
     runtime_args=(-o "$workdir/boot-smoke-lq-tm-pseudodev-rc-$mode.log" "${runtime_args[@]}")
 fi
 
+export QSOE_RUST_TM_PATHMGR=1
 export QSOE_RUST_TM_PSEUDODEV="$selected"
 export QSOE_RUST_TM_PROCFS=1
+export QSOE_RUST_TM_RSRCDB=1
 export TM_PSEUDODEV_RUNTIME_SMOKE_WORKDIR="$workdir"
-if [ "$selected" -eq 0 ]; then
-    export TM_PSEUDODEV_RUNTIME_ALLOW_C=1
-fi
 
 exec "$ROOT/scripts/tm-pseudodev-runtime-smoke.sh" "${runtime_args[@]}"

@@ -195,7 +195,7 @@ echo "tm-sysfs-evidence.sh: verifying LQ Rust-only membership"
     QSOE_RUST_TM_CRED=1 \
     QSOE_RUST_TM_ELF=1 \
     QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_PSEUDODEV=0 \
+    QSOE_RUST_TM_PSEUDODEV=1 \
     QSOE_RUST_TM_SCRIPT=1 \
     QSOE_RUST_TM_SYSCFG=1 \
     QSOE_RUST_TM_SYSFS=1 \

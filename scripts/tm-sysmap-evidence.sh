@@ -137,8 +137,8 @@ capture_lq_taskman_plan() {
         QSOE_RUST_TM_ELF=1 \
         QSOE_RUST_TM_FDT=0 \
         QSOE_RUST_TM_PROCFS=1 \
-        QSOE_RUST_TM_PSEUDODEV=0 \
-        QSOE_RUST_TM_RSRCDB=0 \
+        QSOE_RUST_TM_PSEUDODEV=1 \
+        QSOE_RUST_TM_RSRCDB=1 \
         QSOE_RUST_TM_SCRIPT=1 \
         QSOE_RUST_TM_SYSCFG=1 \
         QSOE_RUST_TM_SYSMAP="$rust_selected" \
@@ -176,8 +176,8 @@ build_lq_taskman() {
         QSOE_RUST_TM_ELF=1 \
         QSOE_RUST_TM_FDT=0 \
         QSOE_RUST_TM_PROCFS=1 \
-        QSOE_RUST_TM_PSEUDODEV=0 \
-        QSOE_RUST_TM_RSRCDB=0 \
+        QSOE_RUST_TM_PSEUDODEV=1 \
+        QSOE_RUST_TM_RSRCDB=1 \
         QSOE_RUST_TM_SCRIPT=1 \
         QSOE_RUST_TM_SYSCFG=1 \
         QSOE_RUST_TM_SYSMAP="$rust_selected" \
