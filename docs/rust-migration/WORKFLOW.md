@@ -128,6 +128,43 @@ For current pilot work, the order is:
 4. Boot with an explicit Rust selection flag.
 5. Compare boot logs and service behavior against the C baseline.
 
+## Issue-Backed Tooling Gates
+
+Migration tooling is tracked in the same GitHub Issues roadmap metadata as
+components and phases. Tooling work should use `kind: "tooling"` and the
+`roadmap:tooling` label so the Pages dashboard can separate process
+improvements from C-to-Rust component candidates.
+
+| Issue | Gate | Workflow role |
+| --- | --- | --- |
+| #200 | Component gate harness and roadmap sync | Generate the per-component evidence/RC/rollback checklist from issue metadata and reject malformed roadmap state before dashboard publication. |
+| #201 | CI cache and sccache acceleration | Shorten repeated Rust/C taskman and smoke-test loops without caching stale release artifacts. |
+| #202 | Static analysis and supply-chain gates | Add CodeQL plus dependency-review pressure around C/C++/Rust security and dependency changes. |
+| #203 | Rust host test and parser fuzz workflow | Promote `cargo-nextest`, parser fuzzing, and coverage from optional deep tools into explicit gates for parser-heavy PRs. |
+
+Tooling gates become required only after they have a clean baseline and a
+rollback plan for false positives or cache invalidation. Until then, they may
+land as documented, non-blocking, or scheduled checks. A component migration
+PR should not be blocked on a brand-new tool the same PR introduces unless that
+tool's issue explicitly says the gate has been promoted.
+
+## Per-Component Operating Loop
+
+For each component status transition:
+
+1. Read the component's roadmap issue and docs before editing.
+2. Run the component evidence target, runtime smoke, RC smoke, and rollback
+   smoke required by the issue metadata.
+3. Update docs and the issue metadata in the same PR that changes selector
+   state.
+4. After merge, record the PR CI run, merge commit, and successful main CI run
+   in the roadmap issue.
+5. Keep the next gate explicit: opt-in, Rust-default RC, C retirement, or
+   deferral.
+
+Issue #200 should automate this loop. Until that harness exists, reviewers
+should enforce it manually.
+
 ## Optional Deep Tools
 
 `make rust-deep` runs the checks available in the local environment:

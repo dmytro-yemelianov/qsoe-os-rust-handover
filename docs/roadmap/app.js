@@ -49,6 +49,7 @@ const PHASE_SCORE = {
   "rust-default-rc": 75,
   "in-progress": 50,
   started: 30,
+  future: 15,
   deferred: 0
 };
 
@@ -78,6 +79,8 @@ const els = {
   componentCount: document.querySelector("#component-count"),
   phases: document.querySelector("#phases"),
   policies: document.querySelector("#policies"),
+  tooling: document.querySelector("#tooling"),
+  toolingCount: document.querySelector("#tooling-count"),
   backlog: document.querySelector("#backlog"),
   backlogCount: document.querySelector("#backlog-count"),
   generated: document.querySelector("#generated"),
@@ -156,6 +159,10 @@ function normalizeIssueRoadmap(issues) {
     .filter((item) => item.kind === "backlog")
     .map(normalizeBacklog)
     .sort(byOrderThenName);
+  const toolingGates = items
+    .filter((item) => item.kind === "tooling")
+    .map(normalizeTooling)
+    .sort(byOrderThenName);
   const generatedAt = latestIssueUpdate(items);
 
   return {
@@ -167,13 +174,15 @@ function normalizeIssueRoadmap(issues) {
       trackedComponents: components.length,
       rustDefaultRcComponents: components.filter((component) => component.rustDefault).length,
       rustOptInOnlyImplementations: components.filter(isRustOptInOnly).length,
-      retiredCComponents: components.filter((component) => component.retired).length
+      retiredCComponents: components.filter((component) => component.retired).length,
+      toolingGates: toolingGates.length
     },
     sourceIssueCount: items.length,
     sourceIssuesUrl: ROADMAP_ISSUES_URL,
     components,
     roadmapPhases,
     candidateBacklog,
+    toolingGates,
     policyGates: POLICY_GATES
   };
 }
@@ -242,11 +251,28 @@ function normalizeBacklog(item) {
   };
 }
 
+function normalizeTooling(item) {
+  const priority = item.priority || "unknown";
+  return {
+    ...item,
+    name: item.name,
+    area: item.area || "workflow",
+    status: item.status || "unknown",
+    priority,
+    risk: priority,
+    tools: item.tools || [],
+    acceptance: item.acceptance || [],
+    notes: item.notes || "",
+    nextGate: item.nextGate || ""
+  };
+}
+
 function bindControls() {
   els.search.addEventListener("input", (event) => {
     state.filters.search = event.target.value.trim().toLowerCase();
     renderComponents();
     renderBacklog();
+    renderTooling();
   });
 
   for (const [key, element] of [
@@ -258,6 +284,7 @@ function bindControls() {
       state.filters[key] = event.target.value;
       renderComponents();
       renderBacklog();
+      renderTooling();
     });
   }
 }
@@ -275,6 +302,7 @@ function render() {
   renderComponents();
   renderPhases();
   renderPolicies();
+  renderTooling();
   renderBacklog();
 }
 
@@ -284,7 +312,8 @@ function renderMetrics() {
     ["Tracked components", summary.trackedComponents],
     ["Rust-default RC components", summary.rustDefaultRcComponents],
     ["Opt-in implementations", summary.rustOptInOnlyImplementations],
-    ["Retired C components", summary.retiredCComponents]
+    ["Retired C components", summary.retiredCComponents],
+    ["Tooling gates", summary.toolingGates]
   ];
 
   els.metrics.replaceChildren(
@@ -308,17 +337,18 @@ function renderWhy() {
 }
 
 function renderProgressVisuals() {
-  const { components, roadmapPhases, candidateBacklog } = state.data;
+  const { components, roadmapPhases, candidateBacklog, toolingGates } = state.data;
   const componentReadiness = Math.round(avg(components.map(componentScore)));
   const phaseReadiness = Math.round(avg(roadmapPhases.map((phase) => PHASE_SCORE[phase.status] ?? 0)));
+  const toolingReadiness = Math.round(avg(toolingGates.map((gate) => PHASE_SCORE[gate.status] ?? 0)));
   const rustDefaultCount = components.filter((component) => component.rustDefault).length;
   const activeComponents = components.filter((component) => !component.retired);
   const rollbackCount = activeComponents.filter((component) => component.cRollback.length > 0).length;
   const retiredCount = components.filter((component) => component.retired).length;
-  const overallReadiness = Math.round(avg([componentReadiness, phaseReadiness]));
+  const overallReadiness = Math.round(avg([componentReadiness, phaseReadiness, toolingReadiness]));
 
   els.progressNote.textContent =
-    "Computed from roadmap issues: tracked components, active rollback coverage, phase status, and remaining backlog posture.";
+    "Computed from roadmap issues: tracked components, active rollback coverage, phase status, tooling gates, and remaining backlog posture.";
 
   els.progressGauges.replaceChildren(
     gauge("Overall readiness", overallReadiness, "Component posture + phase completion", "accent"),
@@ -328,21 +358,27 @@ function renderProgressVisuals() {
   );
 
   renderBarChart(els.stateChart, countBy(components, "currentState"));
-  renderBarChart(els.riskChart, countBy([...components, ...candidateBacklog], "risk"));
+  renderBarChart(els.riskChart, countBy([...components, ...candidateBacklog, ...toolingGates], "risk"));
   renderBarChart(els.phaseChart, countBy(roadmapPhases, "status"));
   renderBarChart(els.backlogChart, countBy(candidateBacklog, "posture"));
 }
 
 function renderFilters() {
   const components = state.data.components;
-  fillOptions(els.stateFilter, ["all", ...unique(components.map((item) => item.currentState))]);
+  const tooling = state.data.toolingGates;
+  fillOptions(els.stateFilter, ["all", ...unique([
+    ...components.map((item) => item.currentState),
+    ...tooling.map((item) => item.status)
+  ])]);
   fillOptions(els.areaFilter, ["all", ...unique([
     ...components.map((item) => item.area),
-    ...state.data.candidateBacklog.map((item) => item.area)
+    ...state.data.candidateBacklog.map((item) => item.area),
+    ...tooling.map((item) => item.area)
   ])]);
   fillOptions(els.riskFilter, ["all", ...unique([
     ...components.map((item) => item.risk),
-    ...state.data.candidateBacklog.map((item) => item.risk)
+    ...state.data.candidateBacklog.map((item) => item.risk),
+    ...tooling.map((item) => item.priority)
   ])]);
 }
 
@@ -405,6 +441,37 @@ function renderPolicies() {
       wrap([el("p", "", policy.description)])
     );
     return node;
+  }));
+}
+
+function renderTooling() {
+  const rows = state.data.toolingGates.filter(matchesToolingFilters);
+  els.toolingCount.textContent = `${rows.length} shown of ${state.data.toolingGates.length}`;
+
+  if (rows.length === 0) {
+    const tr = document.createElement("tr");
+    const td = document.createElement("td");
+    td.colSpan = 7;
+    td.className = "empty";
+    td.textContent = "No tooling gates match the current filters.";
+    tr.append(td);
+    els.tooling.replaceChildren(tr);
+    return;
+  }
+
+  els.tooling.replaceChildren(...rows.map((item) => {
+    const tr = document.createElement("tr");
+    tr.append(
+      cell(item.name),
+      cell(item.area),
+      cell(readable(item.priority), `risk-${slug(item.priority)}`),
+      cell(readable(item.status)),
+      cell(item.tools.join("\n"), "file-list"),
+      cell(item.acceptance.join("\n"), "file-list"),
+      issueCell(item.issue)
+    );
+    tr.title = item.notes;
+    return tr;
   }));
 }
 
@@ -504,6 +571,24 @@ function matchesBacklogFilters(item) {
     item.posture,
     item.notes,
     item.files.join(" "),
+    `#${item.issue.number}`,
+    item.issue.title
+  ]);
+}
+
+function matchesToolingFilters(item) {
+  const filterState = state.filters.state === "all" || item.status === state.filters.state;
+  const filterArea = state.filters.area === "all" || item.area === state.filters.area;
+  const filterPriority = state.filters.risk === "all" || item.priority === state.filters.risk;
+  return filterState && filterArea && filterPriority && matchesSearch(item, [
+    item.name,
+    item.area,
+    item.status,
+    item.priority,
+    item.notes,
+    item.nextGate,
+    item.tools.join(" "),
+    item.acceptance.join(" "),
     `#${item.issue.number}`,
     item.issue.title
   ]);
