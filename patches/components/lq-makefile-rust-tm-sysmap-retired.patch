@@ -1,0 +1,11 @@
+diff --git a/Makefile b/Makefile
+--- a/Makefile
++++ b/Makefile
+@@ -66,4 +66,7 @@ ifneq ($(QSOE_RUST_TM_SYSCFG),1)
+ $(error QSOE_RUST_TM_SYSCFG must be 1 after C tm_syscfg retirement)
+ endif
++ifneq ($(QSOE_RUST_TM_SYSMAP),1)
++$(error QSOE_RUST_TM_SYSMAP must be 1 after C tm_sysmap retirement)
++endif
+ 
+ QEMU    := qemu-system-riscv64

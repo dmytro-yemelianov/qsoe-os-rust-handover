@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture LQ tm_sysmap Rust-default RC evidence and the C rollback path.
+# Capture LQ tm_sysmap Rust-only retirement evidence.
 
 set -eu
 
@@ -8,14 +8,14 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 MAKE=${MAKE:-make}
 WORKDIR=${TM_SYSMAP_EVIDENCE_WORKDIR:-"$ROOT/build/tm-sysmap-evidence"}
 RUST_PROVIDER_A=${RUST_PROVIDER_A:-"$ROOT/build/rust/tm-sysmap/libqsoe_tm_sysmap.a"}
-MANIFEST="$ROOT/rust/Cargo.toml"
 
 usage() {
     cat <<'EOF'
 usage: scripts/tm-sysmap-evidence.sh
 
-Builds and audits the Rust LQ taskman sysmap default path and verifies that C
-remains the rollback provider for sys/sysmap.c.
+Builds and audits the retired Rust LQ taskman sysmap path, verifies that C
+sys/sysmap.o is absent from the taskman link plan, and checks retired selector
+rejection for LQ taskman links.
 
 Environment:
   TM_SYSMAP_EVIDENCE_WORKDIR  output directory, default build/tm-sysmap-evidence
@@ -186,32 +186,38 @@ build_lq_taskman() {
     audit_flags "$label-taskman" "$ROOT/lq/build/taskman.elf"
 }
 
-echo "tm-sysmap-evidence.sh: running C host model"
-"$MAKE" -C "$ROOT" --no-print-directory check-tm-sysmap-model
+require_retired_selector_rejected() {
+    local label=$1
+    shift
+    local log="$WORKDIR/$label-retired-selector-rejection.txt"
 
-echo "tm-sysmap-evidence.sh: running Rust host tests"
-cargo test --manifest-path "$MANIFEST" -p qsoe-tm-sysmap --features host-tests
+    if "$@" > "$log" 2>&1; then
+        fail "$label unexpectedly accepted QSOE_RUST_TM_SYSMAP=0"
+    fi
+    grep -Fq 'QSOE_RUST_TM_SYSMAP must be 1 after C tm_sysmap retirement' "$log" ||
+        fail "$label rejection did not mention retired tm_sysmap selector"
+}
+
+echo "tm-sysmap-evidence.sh: running Rust host model tests"
+"$MAKE" -C "$ROOT" --no-print-directory check-tm-sysmap-model
 
 echo "tm-sysmap-evidence.sh: building Rust provider archive"
 "$MAKE" -C "$ROOT" --no-print-directory rust-tm-sysmap-provider
 audit_provider_archive
 
-echo "tm-sysmap-evidence.sh: verifying LQ C rollback link plan"
-capture_lq_taskman_plan lq-c-rollback 0
-require_plan_contains lq-c-rollback '/sys/sysmap.o'
-require_plan_omits lq-c-rollback 'libqsoe_tm_sysmap.a'
-require_plan_contains lq-c-rollback 'libqsoe_tm_providers.a'
+echo "tm-sysmap-evidence.sh: verifying LQ Rust-only link plan"
+capture_lq_taskman_plan lq-rust-retired 1
+require_plan_omits lq-rust-retired '/sys/sysmap.o'
+require_plan_omits lq-rust-retired 'libqsoe_tm_sysmap.a'
+require_plan_contains lq-rust-retired 'libqsoe_tm_providers.a'
 
-echo "tm-sysmap-evidence.sh: verifying LQ C rollback taskman link"
-build_lq_taskman lq-c-rollback 0
+echo "tm-sysmap-evidence.sh: verifying LQ Rust-only taskman link"
+build_lq_taskman lq-rust-retired 1
 
-echo "tm-sysmap-evidence.sh: verifying LQ Rust-selected link plan"
-capture_lq_taskman_plan lq-rust-selected 1
-require_plan_omits lq-rust-selected '/sys/sysmap.o'
-require_plan_omits lq-rust-selected 'libqsoe_tm_sysmap.a'
-require_plan_contains lq-rust-selected 'libqsoe_tm_providers.a'
-
-echo "tm-sysmap-evidence.sh: verifying LQ Rust-selected taskman link"
-build_lq_taskman lq-rust-selected 1
+echo "tm-sysmap-evidence.sh: verifying LQ retired selector rejection"
+require_retired_selector_rejected lq \
+    "$MAKE" -C "$ROOT/lq" --no-print-directory QSOE_RUST_TM_SYSMAP=0 taskman
+require_retired_selector_rejected lq-taskman \
+    "$MAKE" -C "$ROOT/lq/taskman" --no-print-directory QSOE_RUST_TM_SYSMAP=0
 
 echo "tm-sysmap-evidence.sh: evidence captured in $WORKDIR"

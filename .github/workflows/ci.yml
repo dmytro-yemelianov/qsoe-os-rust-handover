@@ -180,7 +180,7 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-syscfg-rc-smoke
 
-      - name: Run tm_sysmap Rust opt-in evidence
+      - name: Run tm_sysmap Rust-only evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-sysmap-evidence
 
@@ -191,10 +191,6 @@ jobs:
       - name: Run tm_sysmap Rust-default RC smoke
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-sysmap-rc-smoke
-
-      - name: Run tm_sysmap C rollback RC smoke
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        run: make container-tm-sysmap-rc-rollback-smoke
 
       - name: Run tm_procfs Rust-only evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository

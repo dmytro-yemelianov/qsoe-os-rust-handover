@@ -24,6 +24,60 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 16:24 CEST - `tm_sysmap` C Provider Retirement
+
+Scope:
+
+- Removed the LQ C `tm_sysmap` provider implementation from
+  `lq/taskman/sys/sysmap.c` through the tracked component override patch.
+- Removed the C host model fixture `tests/tm_sysmap_model_test.c` and
+  `tests/tm_sysmap_model_prelude.h`; the Rust `qsoe-tm-sysmap` host tests are
+  now the canonical taskman sysmap model evidence.
+- Made `QSOE_RUST_TM_SYSMAP=1` mandatory in the top-level and LQ taskman
+  makefiles, Rust provider archive builder, and sysmap smoke/evidence scripts.
+- Removed the tm_sysmap C rollback smoke target and converted rollback
+  selector attempts into fail-fast configuration errors.
+- Updated adjacent taskman evidence (`tm_pathmgr`) so its link-plan setup uses
+  the retired Rust sysmap provider.
+- Updated docs, inventory/status summaries, and component patch overlays to
+  mark `tm_sysmap` as a retired C provider.
+
+Commands:
+
+- `mcp__codebase_memory_mcp.search_graph`
+- `bash -n scripts/build-rust-tm-providers.sh scripts/check-tm-sysmap-model.sh scripts/tm-sysmap-evidence.sh scripts/tm-sysmap-runtime-smoke.sh scripts/tm-sysmap-rc-smoke.sh scripts/apply-component-overrides.sh scripts/tm-pathmgr-evidence.sh`
+- `QSOE_RUST_TM_SYSMAP=0 scripts/build-rust-tm-providers.sh /tmp/should-not-build-tm-sysmap.a`
+- `TM_SYSMAP_RC_ROLLBACK=1 scripts/tm-sysmap-rc-smoke.sh`
+- `QSOE_RUST_TM_SYSMAP=0 scripts/tm-sysmap-rc-smoke.sh`
+- `QSOE_RUST_TM_SYSMAP=0 scripts/tm-sysmap-runtime-smoke.sh`
+- `scripts/apply-component-overrides.sh`
+- `make check-tm-sysmap-model`
+- `make tm-sysmap-evidence`
+- `timeout 300 make tm-sysmap-rc-smoke`
+- `make tm-pathmgr-evidence`
+- `scripts/c-index.sh files`
+
+Result:
+
+- C index now reports 808 tracked C/asm/linker files and 129,946 LOC after
+  removing the retired sysmap implementation from the LQ component overlay.
+- `qsoe-tm-sysmap` host tests pass for get-before-build, minimal END-only
+  syscfg, and timebase/PLIC/PCI/DesignWare syscfg page construction.
+- Rust provider archives still build with the required `tm-sysmap` feature, and
+  explicit `QSOE_RUST_TM_SYSMAP=0` use is rejected before archive builds or
+  smoke execution.
+- LQ taskman builds no longer include C `sys/sysmap.o`; the retained
+  `lq/taskman/sys/sysmap.h` ABI is still used by taskman glue.
+- `make tm-sysmap-rc-smoke` booted QSOE/L and observed `syscfg built from FDT`,
+  `sysmap page built`, `[pci-server] scan complete`, and spawned-child
+  `/usr/bin/sysinfo` output for QEMU timebase, PLIC, and PCI data.
+
+Follow-up:
+
+- Finish the PR, watch trusted CI, merge, then update and close roadmap issue
+  #147 as `status:retired`.
+- `tm_sysfs` remains the next task-manager Rust-default RC with C rollback.
+
 ## 2026-06-30 15:44 CEST - `tm_syscfg` C Provider Retirement
 
 Scope:

@@ -210,7 +210,7 @@ echo "tm-pathmgr-evidence.sh: verifying LQ C rollback membership"
     QSOE_RUST_TM_RSRCDB=0 \
     QSOE_RUST_TM_SCRIPT=1 \
     QSOE_RUST_TM_SYSCFG=1 \
-    QSOE_RUST_TM_SYSMAP=0 \
+    QSOE_RUST_TM_SYSMAP=1 \
     QSOE_RUST_TM_SYSFS=0 \
     taskman
 require_pathmgr_count lq-c-default "$ROOT/lq/build/libtaskman/libtaskman.a" 1
@@ -229,7 +229,7 @@ echo "tm-pathmgr-evidence.sh: verifying LQ Rust-selected membership"
     QSOE_RUST_TM_RSRCDB=0 \
     QSOE_RUST_TM_SCRIPT=1 \
     QSOE_RUST_TM_SYSCFG=1 \
-    QSOE_RUST_TM_SYSMAP=0 \
+    QSOE_RUST_TM_SYSMAP=1 \
     QSOE_RUST_TM_SYSFS=0 \
     taskman
 require_pathmgr_count lq-rust-selected "$ROOT/lq/build/libtaskman/libtaskman.a" 0

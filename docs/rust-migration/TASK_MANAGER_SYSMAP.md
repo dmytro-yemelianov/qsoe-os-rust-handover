@@ -1,21 +1,15 @@
-# Task Manager Sysmap Rust-Default RC Provider
+# Task Manager Sysmap Retired Rust Provider
 
 Captured: 2026-06-30 CEST.
 
 ## Scope
 
-`qsoe-tm-sysmap` is the Rust-default release-candidate provider for the LQ
-task-manager sysmap page builder in:
+`qsoe-tm-sysmap` is the mandatory Rust provider for the LQ task-manager sysmap
+page builder behind the existing `tm_sysmap_*` ABI declared by
+`lq/taskman/sys/sysmap.h`. The retired C provider was
+`lq/taskman/sys/sysmap.c`.
 
-```text
-lq/taskman/sys/sysmap.c
-lq/taskman/sys/sysmap.h
-```
-
-It exports the existing `tm_sysmap_*` ABI and preserves the C builder's
-little-endian `PSYS` TLV page layout.
-
-It covers:
+This covers:
 
 - cached 4 KiB sysmap page construction and `tm_sysmap_get`;
 - `QSOE_SYSMAP_MAGIC`, version, header length, and final `total_bytes`;
@@ -25,84 +19,74 @@ It covers:
   non-prefetchable MEM PCI window;
 - END sentinel emission and 8-byte TLV padding.
 
-It does not replace:
+This does not replace:
 
 - FDT parsing;
-- syscfg construction;
-- policy for which platform-data tags are emitted;
-- process spawn, sysmap page mapping into child VSpaces, capability ownership,
-  memory management, IRQ, or seL4 invocation code.
+- syscfg construction or platform-data tag policy;
+- process spawn;
+- sysmap page mapping into child VSpaces;
+- capability ownership, memory management, IRQ, or seL4 invocation code.
 
-## Selector
+## Selector State
 
-Normal LQ builds select Rust by default:
+`QSOE_RUST_TM_SYSMAP=1` is mandatory in umbrella and LQ taskman builds.
+`QSOE_RUST_TM_SYSMAP=0` now fails fast.
 
-```sh
-make -C lq taskman
-```
-
-C rollback remains available during the RC window:
+The rollback smoke target was removed:
 
 ```sh
-QSOE_RUST_TM_SYSMAP=0 make -C lq taskman
-```
-
-The top-level evidence and smoke targets are:
-
-```sh
-make tm-sysmap-evidence
-make tm-sysmap-runtime-smoke
-make tm-sysmap-rc-smoke
 make tm-sysmap-rc-rollback-smoke
+make container-tm-sysmap-rc-rollback-smoke
 ```
 
-Multiple taskman Rust providers may be selected together. The shared
-`qsoe-tm-providers` archive packages the selected provider crates behind one
-no-std panic handler. Legacy targets such as `make rust-tm-sysmap-provider`
-still produce the historical single-provider output path for focused evidence.
-
-## Evidence
-
-Local validation on 2026-06-30:
+The retained checks are:
 
 ```sh
 make check-tm-sysmap-model
-cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-sysmap --features host-tests --lib
-cargo clippy --manifest-path rust/Cargo.toml -p qsoe-tm-sysmap --features host-tests -- -D warnings
-bash -n scripts/check-tm-sysmap-model.sh scripts/build-rust-tm-sysmap-provider.sh scripts/tm-sysmap-evidence.sh scripts/tm-sysmap-runtime-smoke.sh scripts/tm-sysmap-rc-smoke.sh scripts/apply-component-overrides.sh scripts/rust-check.sh scripts/rust-workflow.sh
-./scripts/apply-component-overrides.sh
-make -n check-tm-sysmap-model rust-tm-sysmap-provider tm-sysmap-evidence tm-sysmap-runtime-smoke tm-sysmap-rc-smoke tm-sysmap-rc-rollback-smoke container-rust-tm-sysmap-provider container-tm-sysmap-evidence container-tm-sysmap-runtime-smoke container-tm-sysmap-rc-smoke container-tm-sysmap-rc-rollback-smoke
 make rust-tm-sysmap-provider
 make tm-sysmap-evidence
 make tm-sysmap-runtime-smoke
 make tm-sysmap-rc-smoke
-make tm-sysmap-rc-rollback-smoke
 ```
 
-`make tm-sysmap-evidence` verified:
+When a taskman link needs Rust providers, `qsoe-tm-sysmap` is packaged in the
+shared `build/rust/tm-providers/libqsoe_tm_providers.a` archive. The legacy
+`make rust-tm-sysmap-provider` target still produces the historical
+single-provider output path for focused evidence.
 
-- C host fixture passes against `lq/taskman/sys/sysmap.c`;
+## Evidence
+
+Validation commands:
+
+```sh
+make check-tm-sysmap-model
+cargo test --manifest-path rust/Cargo.toml -p qsoe-tm-sysmap --features host-tests --lib
+make rust-tm-sysmap-provider
+make tm-sysmap-evidence
+make tm-sysmap-runtime-smoke
+make tm-sysmap-rc-smoke
+```
+
+`make tm-sysmap-evidence` verifies:
+
 - Rust host tests pass for get-before-build, minimal END-only syscfg, and a
   full timebase/PLIC/PCI/DesignWare syscfg page;
 - Rust staticlib builds for `riscv64imac-unknown-none-elf`;
 - Rust provider archive members report RVC soft-float ABI;
 - Rust provider archive exports `tm_sysmap_build` and `tm_sysmap_get`;
-- LQ C-rollback taskman links with C `sys/sysmap.o`;
-- LQ Rust-default taskman omits `sys/sysmap.o` and links
-  the shared taskman Rust provider archive;
+- LQ taskman omits C `sys/sysmap.o`;
+- LQ taskman links the shared taskman Rust provider archive;
+- LQ top-level and LQ taskman reject `QSOE_RUST_TM_SYSMAP=0`;
 - linked taskman ELFs pass the evidence script's ELF flag and section audit.
 
-This evidence proves ABI compatibility, archive selection, rollback, and linked
-artifact shape.
+`make tm-sysmap-runtime-smoke` verifies the Rust-only taskman build in a
+booted LQ image. The smoke:
 
-`make tm-sysmap-runtime-smoke` verified the Rust-default builder in a booted
-LQ image. The smoke:
-
-- captures a Rust-default LQ taskman dry-run plan and rejects any remaining
+- captures a Rust-only LQ taskman dry-run plan and rejects any remaining
   `sys/sysmap.o` link;
 - verifies the selected Rust provider archive exports `tm_sysmap_build` and
   `tm_sysmap_get`;
-- boots with default `QSOE_RUST_TM_SYSMAP=1` and mandatory
+- boots with mandatory `QSOE_RUST_TM_SYSMAP=1` and
   `QSOE_RUST_TM_PROCFS=1`;
 - waits for taskman's `syscfg built from FDT` and `sysmap page built` markers;
 - waits for pci-server's scan-complete marker, proving its `hwi_init` path
@@ -122,13 +106,7 @@ interrupts: PLIC at
 PCI:       buses 0..
 ```
 
-## C Rollback
+## Reintroduction Rule
 
-C remains the rollback path:
-
-- `QSOE_RUST_TM_SYSMAP=1` is the normal LQ taskman default and links through
-  the shared taskman Rust provider archive.
-- `QSOE_RUST_TM_SYSMAP=0` keeps `lq/taskman/sys/sysmap.c` and links
-  `sys/sysmap.o`.
-
-Do not retire C until #26 is satisfied in a separate removal PR.
+Do not reintroduce C `tm_sysmap` rollback without a new issue, explicit
+rollback justification, and fresh PR evidence.

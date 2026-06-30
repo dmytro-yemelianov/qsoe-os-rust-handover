@@ -50,6 +50,9 @@ endif
 ifneq ($(QSOE_RUST_TM_SYSCFG),1)
 $(error QSOE_RUST_TM_SYSCFG must be 1 after C tm_syscfg retirement)
 endif
+ifneq ($(QSOE_RUST_TM_SYSMAP),1)
+$(error QSOE_RUST_TM_SYSMAP must be 1 after C tm_sysmap retirement)
+endif
 
 SELECTED_SLOGGER_ELF ?= build/rust/selected/sbin/slogger.elf
 SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
@@ -83,7 +86,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         rust-tm-rsrcdb-provider rust-tm-script-provider rust-tm-syscfg-provider rust-tm-sysmap-provider rust-tm-sysfs-provider \
         rust-tm-pseudodev-provider rust-tm-providers \
         tm-cpio-evidence tm-cpio-runtime-smoke tm-cpio-rc-smoke tm-cred-evidence tm-cred-runtime-smoke tm-elf-evidence tm-elf-runtime-smoke tm-elf-rc-smoke tm-fdt-evidence tm-fdt-runtime-smoke tm-pathmgr-evidence tm-pathmgr-runtime-smoke tm-procfs-evidence tm-providers-evidence tm-rsrcdb-evidence tm-rsrcdb-runtime-smoke tm-script-evidence tm-script-runtime-smoke tm-script-rc-smoke \
-        tm-syscfg-evidence tm-syscfg-runtime-smoke tm-syscfg-rc-smoke tm-sysmap-evidence tm-sysmap-runtime-smoke tm-sysmap-rc-smoke tm-sysmap-rc-rollback-smoke tm-sysfs-evidence tm-sysfs-runtime-smoke tm-sysfs-rc-smoke tm-sysfs-rc-rollback-smoke tm-pseudodev-evidence tm-pseudodev-runtime-smoke \
+        tm-syscfg-evidence tm-syscfg-runtime-smoke tm-syscfg-rc-smoke tm-sysmap-evidence tm-sysmap-runtime-smoke tm-sysmap-rc-smoke tm-sysfs-evidence tm-sysfs-runtime-smoke tm-sysfs-rc-smoke tm-sysfs-rc-rollback-smoke tm-pseudodev-evidence tm-pseudodev-runtime-smoke \
         rust-slogger-boot-smoke \
         rust-virtio-boot-smoke rust-virtio-file-smoke \
         virtio-rc-file-smoke \
@@ -110,7 +113,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-tm-pseudodev-provider container-rust-tm-providers \
         container-tm-cpio-evidence container-tm-cpio-runtime-smoke container-tm-cpio-rc-smoke container-tm-cred-evidence container-tm-cred-runtime-smoke container-tm-elf-evidence container-tm-elf-runtime-smoke container-tm-elf-rc-smoke container-tm-fdt-evidence container-tm-fdt-runtime-smoke container-tm-pathmgr-evidence container-tm-pathmgr-runtime-smoke container-tm-procfs-evidence container-tm-providers-evidence \
         container-tm-rsrcdb-evidence container-tm-rsrcdb-runtime-smoke container-tm-script-evidence container-tm-script-runtime-smoke container-tm-script-rc-smoke container-tm-syscfg-evidence container-tm-syscfg-runtime-smoke container-tm-syscfg-rc-smoke \
-        container-tm-sysmap-evidence container-tm-sysmap-runtime-smoke container-tm-sysmap-rc-smoke container-tm-sysmap-rc-rollback-smoke container-tm-sysfs-evidence container-tm-sysfs-runtime-smoke container-tm-sysfs-rc-smoke container-tm-sysfs-rc-rollback-smoke container-tm-pseudodev-evidence container-tm-pseudodev-runtime-smoke \
+        container-tm-sysmap-evidence container-tm-sysmap-runtime-smoke container-tm-sysmap-rc-smoke container-tm-sysfs-evidence container-tm-sysfs-runtime-smoke container-tm-sysfs-rc-smoke container-tm-sysfs-rc-rollback-smoke container-tm-pseudodev-evidence container-tm-pseudodev-runtime-smoke \
         container-rust-virtio-boot-smoke \
         container-virtio-rc-file-smoke \
         container-rust-mkfs-qrv-live-smoke \
@@ -575,9 +578,6 @@ tm-sysmap-runtime-smoke:
 tm-sysmap-rc-smoke:
 	@scripts/tm-sysmap-rc-smoke.sh
 
-tm-sysmap-rc-rollback-smoke:
-	@TM_SYSMAP_RC_ROLLBACK=1 scripts/tm-sysmap-rc-smoke.sh
-
 tm-sysfs-evidence:
 	@scripts/tm-sysfs-evidence.sh
 
@@ -840,9 +840,6 @@ container-tm-sysmap-runtime-smoke:
 
 container-tm-sysmap-rc-smoke:
 	@scripts/container-toolchain.sh run make tm-sysmap-rc-smoke
-
-container-tm-sysmap-rc-rollback-smoke:
-	@scripts/container-toolchain.sh run make tm-sysmap-rc-rollback-smoke
 
 container-tm-sysfs-evidence:
 	@scripts/container-toolchain.sh run make tm-sysfs-evidence

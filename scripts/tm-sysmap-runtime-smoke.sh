@@ -18,9 +18,8 @@ also covers pci-server's hwi_init path derived from the same page.
 
 Environment:
   TM_SYSMAP_RUNTIME_SMOKE_WORKDIR  output directory, default build/tm-sysmap-runtime-smoke
-  QSOE_RUST_TM_SYSMAP              defaults to 1; set 0 only with rollback escape hatch
+  QSOE_RUST_TM_SYSMAP              must remain 1 after C tm_sysmap retirement
   QSOE_RUST_TM_PROCFS              must remain 1 after C tm_procfs retirement
-  TM_SYSMAP_RUNTIME_ALLOW_C        internal RC rollback escape hatch
 EOF
 }
 
@@ -85,19 +84,11 @@ case "${QSOE_RUST_TM_SYSMAP:-1}" in
         tm_sysmap_mode=rust-selected
         ;;
     0|false|FALSE|no|NO)
-        case "${TM_SYSMAP_RUNTIME_ALLOW_C:-0}" in
-            1|true|TRUE|yes|YES)
-                export QSOE_RUST_TM_SYSMAP=0
-                tm_sysmap_mode=c-rollback
-                ;;
-            *)
-                echo "tm-sysmap-runtime-smoke.sh: this smoke validates QSOE_RUST_TM_SYSMAP=1" >&2
-                exit 2
-                ;;
-        esac
+        echo "tm-sysmap-runtime-smoke.sh: C tm_sysmap is retired; QSOE_RUST_TM_SYSMAP must be 1" >&2
+        exit 2
         ;;
     *)
-        echo "tm-sysmap-runtime-smoke.sh: QSOE_RUST_TM_SYSMAP must be 0 or 1" >&2
+        echo "tm-sysmap-runtime-smoke.sh: QSOE_RUST_TM_SYSMAP must be 1 after C retirement" >&2
         exit 2
         ;;
 esac
@@ -212,39 +203,27 @@ echo "tm-sysmap-runtime-smoke.sh: capturing $tm_sysmap_mode tm_sysmap LQ taskman
     QSOE_RUST_TM_SYSMAP="$QSOE_RUST_TM_SYSMAP" \
     > "$plan_log"
 
-case "$QSOE_RUST_TM_SYSMAP" in
-    1)
-        if grep -Fq '/sys/sysmap.o' "$plan_log"; then
-            echo "tm-sysmap-runtime-smoke.sh: Rust-selected taskman link plan still contains sys/sysmap.o" >&2
-            exit 1
-        fi
-        if ! grep -Fq 'libqsoe_tm_providers.a' "$plan_log"; then
-            echo "tm-sysmap-runtime-smoke.sh: Rust-selected taskman link plan omits libqsoe_tm_providers.a" >&2
-            exit 1
-        fi
-        ;;
-    0)
-        if ! grep -Fq '/sys/sysmap.o' "$plan_log"; then
-            echo "tm-sysmap-runtime-smoke.sh: C rollback taskman link plan omits sys/sysmap.o" >&2
-            exit 1
-        fi
-        ;;
-esac
+if grep -Fq '/sys/sysmap.o' "$plan_log"; then
+    echo "tm-sysmap-runtime-smoke.sh: Rust-selected taskman link plan still contains sys/sysmap.o" >&2
+    exit 1
+fi
+if ! grep -Fq 'libqsoe_tm_providers.a' "$plan_log"; then
+    echo "tm-sysmap-runtime-smoke.sh: Rust-selected taskman link plan omits libqsoe_tm_providers.a" >&2
+    exit 1
+fi
 
 echo "tm-sysmap-runtime-smoke.sh: rebuilding QSOE/L image with $tm_sysmap_mode tm_sysmap"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
     QSOE_RUST_TM_PROCFS=1 \
     QSOE_RUST_TM_SYSMAP="$QSOE_RUST_TM_SYSMAP"
 
-if [ "$QSOE_RUST_TM_SYSMAP" -eq 1 ]; then
-    for symbol in tm_sysmap_build tm_sysmap_get; do
-        if ! "$NM" -g --defined-only "$ROOT/build/rust/tm-providers/libqsoe_tm_providers.a" |
-            grep -Eq "[[:space:]]$symbol$"; then
-            echo "tm-sysmap-runtime-smoke.sh: Rust provider archive is missing $symbol" >&2
-            exit 1
-        fi
-    done
-fi
+for symbol in tm_sysmap_build tm_sysmap_get; do
+    if ! "$NM" -g --defined-only "$ROOT/build/rust/tm-providers/libqsoe_tm_providers.a" |
+        grep -Eq "[[:space:]]$symbol$"; then
+        echo "tm-sysmap-runtime-smoke.sh: Rust provider archive is missing $symbol" >&2
+        exit 1
+    fi
+done
 
 boot_args=(-k lq -t "$timeout_s" -o "$log")
 if [ "$keep_running" -eq 1 ]; then

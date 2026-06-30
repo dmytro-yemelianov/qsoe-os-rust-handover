@@ -1,6 +1,6 @@
 # QSOE Migration Handover
 
-Last updated: 2026-06-29 CEST.
+Last updated: 2026-06-30 CEST.
 
 This handover captures the current QSOE Rust migration and workflow work so it
 can move from the macOS/container setup to a native Linux development machine.
@@ -22,7 +22,7 @@ origin git@github.com:dmytro-yemelianov/qsoe-os-rust-handover.git
 Current main tip:
 
 ```text
-8b0df722de62718287407f9593a95cfdaa8c50d4
+34b96e8d8663378eff856904b8ea021820acfda8
 ```
 
 The local tree adds:
@@ -86,14 +86,15 @@ added the Rust opt-in `tm_pathmgr` provider, PR #175 retired the C
 dashboard. PR #177 retired the C `slogger` service, PR #178 retired the C
 `pipe` service, PR #180 retired the C `devb-virtio` block driver, PR #181
 added the shared taskman Rust provider archive, and PR #182 retired the C
-`tm_procfs` task-manager provider. The current `main` tip is
-`343642de2d0dbd95d56441a8b4b172f18d2b5b44`.
+`tm_procfs` task-manager provider. Subsequent retirement PRs retired
+`tm_cpio`, `tm_script`, `tm_elf`, and `tm_syscfg`. The current `main` tip is
+`34b96e8d8663378eff856904b8ea021820acfda8`.
 
-Current open follow-ups:
+Current in-flight follow-up:
 
-- #142: `tm_cpio` has moved past its Rust-default RC into C provider
-  retirement. Rust `qsoe-tm-cpio` is mandatory in taskman, and
-  `QSOE_RUST_TM_CPIO=0` now fails fast.
+- #147: `tm_sysmap` has moved past its Rust-default RC into C provider
+  retirement on the current branch. Rust `qsoe-tm-sysmap` is mandatory in LQ
+  taskman, and `QSOE_RUST_TM_SYSMAP=0` now fails fast.
 
 The #96 Rust pipe data-path gate, #97 Rust `test_msgpass` gate, and #103
 `tm_procfs` opt-in gate are satisfied by trusted `main` CI run `28102250069` at
@@ -290,8 +291,9 @@ The strict ELF audit showed:
 - Debian Trixie QEMU `10.0.8` is acceptable for QSOE/L PLIC/virtio boot smoke.
 - QSOE/N AIA MSI/MSI-X experiments still need QEMU `11.0.1+`.
 - The current Rust userland artifacts remain `no_std`, `panic=abort`, no TLS,
-  and no unwind. Retired `test_msgpass`, `slogger`, and `pipe` are now Rust-only
-  image paths; non-retired pilots keep C rollback.
+  and no unwind. Retired `test_msgpass`, `slogger`, `pipe`, `devb-virtio`, and
+  retired task-manager providers are now Rust-only image or taskman paths;
+  non-retired pilots keep C rollback.
 - Non-retired C implementations remain the rollback path until a Rust service
   has host tests, fixture parity, ELF audit, boot evidence, documented
   differences, and a separate retirement PR.
@@ -316,13 +318,11 @@ The strict ELF audit showed:
   registration, round-trip, EOF, and helper-exit markers. The current branch
   removes the C service from tracked `quser` source/image paths and rejects old
   rollback flags.
-- `tm_procfs` is being retired to Rust-only on the current branch. The public
-  `tm_procfs.h` ABI remains, but `libtaskman/src/tm_procfs.c` is removed and
-  `QSOE_RUST_TM_PROCFS=0` is rejected. `make tm-procfs-evidence` audits the
-  Rust provider archive, checks NQ/LQ taskman contain no `tm_procfs.o`, verifies
-  retired selector rejection, and runs the Rust-only `/proc` smoke. CI includes
-  `container-tm-procfs-evidence` on the configured `[self-hosted, X64]` runner
-  for trusted PRs and pushes.
+- `tm_procfs` is retired to Rust-only. The public `tm_procfs.h` ABI remains,
+  but `libtaskman/src/tm_procfs.c` is removed and `QSOE_RUST_TM_PROCFS=0` is
+  rejected. `make tm-procfs-evidence` audits the Rust provider archive, checks
+  NQ/LQ taskman contain no `tm_procfs.o`, verifies retired selector rejection,
+  and runs the Rust-only `/proc` smoke.
 - `tm_cred` has a Rust opt-in provider behind `QSOE_RUST_TM_CRED=1`. It is
   merged on `main` through PR #162 with `make tm-cred-evidence` and
   `make container-source-build` evidence, and now has `make tm-cred-runtime-smoke`
@@ -354,13 +354,13 @@ The strict ELF audit showed:
   rejection and no `syscfg.o` archive membership; `make tm-syscfg-rc-smoke`
   covers the Rust-only `/sys` and `sysinfo` consumer path while LQ's private
   FDT-backed runtime syscfg builder remains C.
-- `tm_sysmap` is in a Rust-default RC behind `QSOE_RUST_TM_SYSMAP=1`. The
-  selector removes LQ C `sys/sysmap.o` and links through the shared taskman
-  Rust provider archive. `QSOE_RUST_TM_SYSMAP=0` remains C rollback.
-  `make tm-sysmap-rc-smoke` covers default Rust link-plan selection and
-  spawned-child `sysinfo` output for nonzero timebase, PLIC, and PCI data from
-  the mapped `PSYS` page; `make tm-sysmap-rc-rollback-smoke` repeats the same
-  path with C rollback.
+- `tm_sysmap` is retired to Rust behind mandatory `QSOE_RUST_TM_SYSMAP=1`. The
+  C `lq/taskman/sys/sysmap.c` provider is removed, `QSOE_RUST_TM_SYSMAP=0`
+  fails fast, and taskman links `qsoe-tm-sysmap` through the shared taskman
+  Rust provider archive. `make tm-sysmap-evidence` covers retired selector
+  rejection and no `sys/sysmap.o` link-plan membership; `make
+  tm-sysmap-rc-smoke` covers the Rust-only spawned-child `sysinfo` path for
+  nonzero timebase, PLIC, and PCI data from the mapped `PSYS` page.
 - `tm_pathmgr` has a Rust opt-in provider behind `QSOE_RUST_TM_PATHMGR=1`. The
   selector removes C `pathmgr.o` from `libtaskman.a` and links through the
   shared taskman Rust provider archive. `make tm-pathmgr-runtime-smoke` covers
@@ -410,9 +410,9 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 
 ## Next Recommended Work
 
-1. Finish the #141 `tm_procfs` C provider retirement PR, then update #141 to
+1. Finish the #147 `tm_sysmap` C provider retirement PR, then update #147 to
    `status:retired`.
 2. Keep the hosted runner healthy for new PRs; CodeRabbit usage-credit failures
    are non-blocking until the account is replenished.
-3. Do not start any further C retirement until the release-candidate gate in
-   `RETIREMENT.md` is satisfied; see #26.
+3. After #147 is merged and the roadmap issue is closed, the next natural
+   task-manager RC retirement candidate is #148 `tm_sysfs`.
