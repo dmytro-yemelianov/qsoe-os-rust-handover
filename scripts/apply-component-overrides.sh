@@ -307,6 +307,7 @@ apply_patch_if_possible_or_present quser quser-pseudodev-probe.patch \
     "$ROOT/quser/Makefile" \
     'test/pseudodev_probe'
 apply_patch_if_possible quser quser-msgpass-lq-no-reply-skip.patch
+apply_patch_if_possible quser quser-sync-unowned-unlock-public-abi.patch
 
 apply_patch_if_possible_or_present nq nq-taskman-rust-tm-cpio-rc-default.patch \
     "$ROOT/nq/taskman/Makefile" \
@@ -578,5 +579,6 @@ require_line "$ROOT/quser/Makefile" '              test/pseudodev_probe \'
 require_line "$ROOT/quser/test/pseudodev_probe/Makefile" 'PROGRAM := pseudodev_probe'
 require_line "$ROOT/quser/test/pseudodev_probe/main.c" 'tm-pseudodev-runtime-smoke: pseudodev probe ok'
 require_line "$ROOT/quser/test/suite/msgpass_test.c" '(void) ProcessTerminate(nr_pid, 0);'
+require_line "$ROOT/quser/test/suite/sync.c" 'rc_unlock == EOK || (rc_unlock == -1 && errno == EPERM)'
 
 echo "apply-component-overrides.sh: component overrides ready"

@@ -96,15 +96,10 @@ pub extern "C" fn main(argc: isize, argv: *const *const u8, _envp: *const *const
         Ok(service) => service,
         Err(()) => return 1,
     };
-    debug_write(b"[test_msgpass-rs] /dev/msgpass registered\n");
 
     let buf = buffer.as_mut_slice();
-    debug_write(b"[test_msgpass-rs] calling receive_bytes\n");
     let message = match service.receive_bytes(buf) {
-        Ok(Receive::Message(message)) => {
-            debug_write(b"[test_msgpass-rs] receive_bytes succeeded\n");
-            message
-        }
+        Ok(Receive::Message(message)) => message,
         Ok(Receive::Pulse(_)) => {
             debug_write(b"[test_msgpass-rs] unexpected pulse\n");
             return 1;

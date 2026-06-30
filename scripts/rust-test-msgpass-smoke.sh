@@ -77,7 +77,7 @@ QSOE_RUST_TEST_MSGPASS=${QSOE_RUST_TEST_MSGPASS:-1}
 case "$QSOE_RUST_TEST_MSGPASS" in
     1|true|TRUE|yes|YES)
         msgpass_mode=rust
-        helper_string="[test_msgpass-rs] /dev/msgpass registered"
+        helper_string="[test_msgpass-rs] alive"
         ;;
     0|false|FALSE|no|NO)
         echo "rust-test-msgpass-smoke.sh: C test_msgpass is retired; use Rust test_msgpass-rs" >&2
@@ -181,7 +181,7 @@ expected_markers=(
     "PASS  msgpass: payload halfword-swapped" \
     "PASS  msgpass: server exited clean" \
     "SKIP  msgpass: no-reply exit -> ESRVRFAULT" \
-    "rust-test-msgpass-smoke: suite exited"
+    "rust-test-msgpass-smoke: suite exited 0"
 )
 boot_extra_patterns=$(printf '%s\n' "${expected_markers[@]}")
 

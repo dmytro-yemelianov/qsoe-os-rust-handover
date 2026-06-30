@@ -1,0 +1,18 @@
+diff --git a/test/suite/sync.c b/test/suite/sync.c
+index e3cd04b..f40f50e 100644
+--- a/test/suite/sync.c
++++ b/test/suite/sync.c
+@@ -219,10 +219,11 @@ static void test_mutex_unlock_unowned(void)
+      * succeeds when the mutex isn't held (verified in openqnx
+      * ker_sync.c, 2026-06-07), and QSOE matches: EOK no-op.  EPERM
+      * stays accepted in case an error-check attr path appears later. */
++    errno = 0;
+     int rc_unlock = SyncMutexUnlock(&s);
+-    check(rc_unlock == EPERM || rc_unlock == EOK,
++    check(rc_unlock == EOK || (rc_unlock == -1 && errno == EPERM),
+           "SyncMutexUnlock (never locked, errorcheck)",
+-          "expected EPERM or EOK");
++          "expected EOK or -1/EPERM");
+ 
+     (void)SyncDestroy(&s);
+ }
