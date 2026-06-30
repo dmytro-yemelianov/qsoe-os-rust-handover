@@ -467,27 +467,30 @@ unregister-on-exit cleanup.
 
 ## Task Manager Sysmap Selection
 
-The Rust LQ `tm_sysmap` provider can be built as a soft-float taskman staticlib
-without changing the normal taskman default:
+The Rust LQ `tm_sysmap` provider is the default release-candidate provider for
+normal LQ taskman builds:
 
 ```sh
 make check-tm-sysmap-model
 make rust-tm-sysmap-provider
 make tm-sysmap-evidence
 make tm-sysmap-runtime-smoke
+make tm-sysmap-rc-smoke
+make tm-sysmap-rc-rollback-smoke
 ```
 
-With the default `QSOE_RUST_TM_SYSMAP=0`, LQ taskman links the existing C
-`sys/sysmap.o`. With `QSOE_RUST_TM_SYSMAP=1`, the component Makefile selector
-omits C `sys/sysmap.o`, builds `qsoe-tm-sysmap` for
-`riscv64imac-unknown-none-elf`, and links `libqsoe_tm_sysmap.a` into taskman.
-FDT parsing, syscfg construction, process-table ownership, child VSpace
-mapping, and seL4 invocation code remain C.
+With the default `QSOE_RUST_TM_SYSMAP=1`, LQ taskman omits C
+`sys/sysmap.o`, builds `qsoe-tm-sysmap` for `riscv64imac-unknown-none-elf`,
+and links the shared `libqsoe_tm_providers.a` archive into taskman. With
+`QSOE_RUST_TM_SYSMAP=0`, LQ taskman links the existing C `sys/sysmap.o` as the
+RC rollback path. FDT parsing, syscfg construction, process-table ownership,
+child VSpace mapping, and seL4 invocation code remain C.
 
-`make tm-sysmap-runtime-smoke` boots QSOE/L with Rust `tm_sysmap` selected,
-verifies the Rust-selected LQ taskman link plan omits C `sys/sysmap.o`, and
-checks a spawned `/usr/bin/sysinfo` child for the QEMU timebase, PLIC, and PCI
-output emitted from the mapped `PSYS` page.
+`make tm-sysmap-rc-smoke` verifies the default LQ taskman link plan omits C
+`sys/sysmap.o`, boots QSOE/L, and checks a spawned `/usr/bin/sysinfo` child for
+the QEMU timebase, PLIC, and PCI output emitted from the mapped `PSYS` page.
+`make tm-sysmap-rc-rollback-smoke` repeats the same runtime path with the C
+rollback selected.
 
 ## Task Manager Credential Selection
 

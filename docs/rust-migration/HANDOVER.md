@@ -355,12 +355,13 @@ The strict ELF audit showed:
   plus `/sys` and `sysinfo` consumers while LQ's private runtime syscfg builder
   remains C; `make tm-syscfg-rc-rollback-smoke` repeats the same path with C
   rollback.
-- `tm_sysmap` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSMAP=1`. The
+- `tm_sysmap` is in a Rust-default RC behind `QSOE_RUST_TM_SYSMAP=1`. The
   selector removes LQ C `sys/sysmap.o` and links through the shared taskman
-  Rust provider archive. `make tm-sysmap-runtime-smoke` boots LQ with Rust
-  `tm_sysmap` selected and checks spawned-child `sysinfo` output for nonzero
-  timebase, PLIC, and PCI data from the mapped `PSYS` page. C remains default
-  and rollback until a separate RC decision exists.
+  Rust provider archive. `QSOE_RUST_TM_SYSMAP=0` remains C rollback.
+  `make tm-sysmap-rc-smoke` covers default Rust link-plan selection and
+  spawned-child `sysinfo` output for nonzero timebase, PLIC, and PCI data from
+  the mapped `PSYS` page; `make tm-sysmap-rc-rollback-smoke` repeats the same
+  path with C rollback.
 - `tm_pathmgr` has a Rust opt-in provider behind `QSOE_RUST_TM_PATHMGR=1`. The
   selector removes C `pathmgr.o` from `libtaskman.a` and links through the
   shared taskman Rust provider archive. `make tm-pathmgr-runtime-smoke` covers
