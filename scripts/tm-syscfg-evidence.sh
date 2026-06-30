@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Capture tm_syscfg Rust opt-in evidence without changing the default provider.
+# Capture tm_syscfg Rust-default RC evidence and the C rollback path.
 
 set -eu
 
@@ -14,7 +14,7 @@ usage() {
     cat <<'EOF'
 usage: scripts/tm-syscfg-evidence.sh
 
-Builds and audits the Rust tm_syscfg opt-in path and verifies C rollback
+Builds and audits the Rust tm_syscfg default path and verifies C rollback
 archive membership for NQ and LQ taskman links.
 
 Environment:
@@ -170,40 +170,40 @@ audit_provider_archive
 
 echo "tm-syscfg-evidence.sh: verifying NQ C rollback membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
-    QSOE_RUST_TM_CPIO=0 QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_SCRIPT=0 QSOE_RUST_TM_SYSCFG=0 QSOE_RUST_TM_SYSFS=0
-require_syscfg_count nq-c-default "$ROOT/nq/build/libtaskman/libtaskman.a" 1
-audit_flags nq-c-default-taskman "$ROOT/nq/build/taskman/taskman.elf"
+    QSOE_RUST_TM_CPIO=1 QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 \
+    QSOE_RUST_TM_SCRIPT=1 QSOE_RUST_TM_SYSCFG=0 QSOE_RUST_TM_SYSFS=1
+require_syscfg_count nq-c-rollback "$ROOT/nq/build/libtaskman/libtaskman.a" 1
+audit_flags nq-c-rollback-taskman "$ROOT/nq/build/taskman/taskman.elf"
 
 echo "tm-syscfg-evidence.sh: verifying NQ Rust-selected membership"
 "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory \
-    QSOE_RUST_TM_CPIO=0 QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 \
-    QSOE_RUST_TM_SCRIPT=0 QSOE_RUST_TM_SYSCFG=1 QSOE_RUST_TM_SYSFS=0
+    QSOE_RUST_TM_CPIO=1 QSOE_RUST_TM_CRED=0 QSOE_RUST_TM_PROCFS=1 \
+    QSOE_RUST_TM_SCRIPT=1 QSOE_RUST_TM_SYSCFG=1 QSOE_RUST_TM_SYSFS=1
 require_syscfg_count nq-rust-selected "$ROOT/nq/build/libtaskman/libtaskman.a" 0
 audit_flags nq-rust-selected-taskman "$ROOT/nq/build/taskman/taskman.elf"
 
 echo "tm-syscfg-evidence.sh: verifying LQ C rollback membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
-    QSOE_RUST_TM_CPIO=0 \
+    QSOE_RUST_TM_CPIO=1 \
     QSOE_RUST_TM_CRED=0 \
     QSOE_RUST_TM_PROCFS=1 \
     QSOE_RUST_TM_PSEUDODEV=0 \
-    QSOE_RUST_TM_SCRIPT=0 \
+    QSOE_RUST_TM_SCRIPT=1 \
     QSOE_RUST_TM_SYSCFG=0 \
-    QSOE_RUST_TM_SYSFS=0 \
+    QSOE_RUST_TM_SYSFS=1 \
     taskman
-require_syscfg_count lq-c-default "$ROOT/lq/build/libtaskman/libtaskman.a" 1
-audit_flags lq-c-default-taskman "$ROOT/lq/build/taskman.elf"
+require_syscfg_count lq-c-rollback "$ROOT/lq/build/libtaskman/libtaskman.a" 1
+audit_flags lq-c-rollback-taskman "$ROOT/lq/build/taskman.elf"
 
 echo "tm-syscfg-evidence.sh: verifying LQ Rust-selected membership"
 "$MAKE" -C "$ROOT/lq" --no-print-directory \
-    QSOE_RUST_TM_CPIO=0 \
+    QSOE_RUST_TM_CPIO=1 \
     QSOE_RUST_TM_CRED=0 \
     QSOE_RUST_TM_PROCFS=1 \
     QSOE_RUST_TM_PSEUDODEV=0 \
-    QSOE_RUST_TM_SCRIPT=0 \
+    QSOE_RUST_TM_SCRIPT=1 \
     QSOE_RUST_TM_SYSCFG=1 \
-    QSOE_RUST_TM_SYSFS=0 \
+    QSOE_RUST_TM_SYSFS=1 \
     taskman
 require_syscfg_count lq-rust-selected "$ROOT/lq/build/libtaskman/libtaskman.a" 0
 audit_flags lq-rust-selected-taskman "$ROOT/lq/build/taskman.elf"

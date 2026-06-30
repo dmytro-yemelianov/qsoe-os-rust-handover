@@ -348,12 +348,13 @@ The strict ELF audit showed:
   rollback. `make tm-script-rc-smoke` covers the default Rust archive selection
   and direct shebang-backed script spawn; `make tm-script-rc-rollback-smoke`
   repeats the same path with C rollback.
-- `tm_syscfg` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSCFG=1`. The
+- `tm_syscfg` is in a Rust-default RC behind `QSOE_RUST_TM_SYSCFG=1`. The
   selector removes C `syscfg.o` from `libtaskman.a` and links through the
-  shared taskman Rust provider archive. `make tm-syscfg-runtime-smoke` boots
-  LQ with Rust `tm_syscfg` selected and checks `/sys` plus `sysinfo`
-  consumers while LQ's private runtime syscfg builder remains C. C remains
-  default and rollback until a separate RC decision accepts that boundary.
+  shared taskman Rust provider archive. `QSOE_RUST_TM_SYSCFG=0` remains C
+  rollback. `make tm-syscfg-rc-smoke` covers default Rust archive selection
+  plus `/sys` and `sysinfo` consumers while LQ's private runtime syscfg builder
+  remains C; `make tm-syscfg-rc-rollback-smoke` repeats the same path with C
+  rollback.
 - `tm_sysmap` has a Rust opt-in provider behind `QSOE_RUST_TM_SYSMAP=1`. The
   selector removes LQ C `sys/sysmap.o` and links through the shared taskman
   Rust provider archive. `make tm-sysmap-runtime-smoke` boots LQ with Rust

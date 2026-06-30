@@ -410,20 +410,22 @@ booted FDT consumers through `/chosen` bootargs, syscfg/sysmap construction,
 
 ## Task Manager Syscfg Selection
 
-The Rust `tm_syscfg` provider can be built as a soft-float taskman staticlib
-without changing the normal taskman default:
+The Rust `tm_syscfg` provider is the Rust-default RC implementation for the
+portable taskman syscfg TLV helpers:
 
 ```sh
 make check-tm-syscfg-model
 make rust-tm-syscfg-provider
 make tm-syscfg-evidence
 make tm-syscfg-runtime-smoke
+make tm-syscfg-rc-smoke
+make tm-syscfg-rc-rollback-smoke
 ```
 
-With the default `QSOE_RUST_TM_SYSCFG=0`, NQ and LQ taskman link the existing
-C `syscfg.o` in `libtaskman.a`. With `QSOE_RUST_TM_SYSCFG=1`, the component
-Makefile selector omits C `syscfg.o`, builds `qsoe-tm-syscfg` for
-`riscv64imac-unknown-none-elf`, and links `libqsoe_tm_syscfg.a` into taskman.
+With the default `QSOE_RUST_TM_SYSCFG=1`, NQ and LQ taskman omit C
+`syscfg.o`, build `qsoe-tm-syscfg` for `riscv64imac-unknown-none-elf`, and
+link it through the shared `qsoe-tm-providers` archive. With
+`QSOE_RUST_TM_SYSCFG=0`, taskman links the existing C `syscfg.o` as rollback.
 LQ's private FDT-backed `lq/taskman/sys/syscfg.c`, sysmap construction, boot
 platform-data policy, `/sys` serving, process tables, and seL4 invocation code
 remain C.
@@ -431,8 +433,11 @@ remain C.
 `make tm-syscfg-runtime-smoke` boots QSOE/L with Rust `tm_syscfg` selected,
 verifies the C `syscfg.o` is absent from the selected `libtaskman.a`, and
 checks syscfg-backed runtime consumers through `/sys/board`, `/sys/cmdline`,
-and `/usr/bin/sysinfo`. This is a boot-consumer compatibility smoke; the LQ
-private runtime syscfg builder remains C.
+and `/usr/bin/sysinfo`. `make tm-syscfg-rc-smoke` verifies the default Rust
+archive membership plus the same runtime path, and
+`make tm-syscfg-rc-rollback-smoke` repeats it with C `syscfg.o` selected. This
+is a boot-consumer compatibility smoke; the LQ private runtime syscfg builder
+remains C.
 
 ## Task Manager Path Registry Selection
 

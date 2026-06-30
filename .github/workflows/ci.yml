@@ -148,13 +148,21 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-rsrcdb-runtime-smoke
 
-      - name: Run tm_syscfg Rust opt-in evidence
+      - name: Run tm_syscfg Rust-default evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-syscfg-evidence
 
       - name: Run tm_syscfg Rust runtime smoke
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-syscfg-runtime-smoke
+
+      - name: Run tm_syscfg Rust-default RC smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-tm-syscfg-rc-smoke
+
+      - name: Run tm_syscfg C rollback RC smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-tm-syscfg-rc-rollback-smoke
 
       - name: Run tm_sysmap Rust opt-in evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -237,6 +245,9 @@ jobs:
             build/tm-syscfg-evidence/**/*.log
             build/tm-syscfg-evidence/**/*.txt
             build/tm-syscfg-runtime-smoke/*.log
+            build/tm-syscfg-runtime-smoke/*.txt
+            build/tm-syscfg-rc/*.log
+            build/tm-syscfg-rc/*.txt
             build/tm-sysmap-evidence/**/*.log
             build/tm-sysmap-evidence/**/*.txt
             build/tm-sysmap-runtime-smoke/*.log

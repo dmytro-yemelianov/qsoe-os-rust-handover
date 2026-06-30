@@ -24,6 +24,58 @@ Follow-up:
 - ...
 ```
 
+## 2026-06-30 08:15 CEST - tm_syscfg Rust-Default RC
+
+Scope:
+
+- Promoted the portable `tm_syscfg` provider to a Rust-default
+  release-candidate selector: `QSOE_RUST_TM_SYSCFG ?= 1` in the umbrella,
+  `libtaskman`, and applied NQ/LQ component Makefiles.
+- Added component override patches that flip ignored NQ/LQ checkouts to the
+  new default while preserving `QSOE_RUST_TM_SYSCFG=0` as C rollback.
+- Added `make tm-syscfg-rc-smoke` and
+  `make tm-syscfg-rc-rollback-smoke`; both verify NQ/LQ `libtaskman.a`
+  archive membership before booting the live LQ `/sys` and `sysinfo`
+  consumer probe.
+- Added CI wiring and `TASK_MANAGER_SYSCFG_RC.md` to record the RC window and
+  rollback drill. LQ's private FDT-backed runtime syscfg builder remains C.
+
+Commands:
+
+- `bash -n scripts/tm-syscfg-rc-smoke.sh scripts/tm-syscfg-runtime-smoke.sh scripts/tm-syscfg-evidence.sh scripts/apply-component-overrides.sh scripts/boot-smoke.sh`
+- `make -n tm-syscfg-rc-smoke tm-syscfg-rc-rollback-smoke container-tm-syscfg-rc-smoke container-tm-syscfg-rc-rollback-smoke`
+- `patch -d nq --dry-run --fuzz=0 -p1 < patches/components/nq-taskman-rust-tm-syscfg-rc-default.patch`
+- `patch -d lq --dry-run --fuzz=0 -p1 < patches/components/lq-makefile-rust-tm-syscfg-rc-default.patch`
+- `patch -d lq --dry-run --fuzz=0 -p1 < patches/components/lq-taskman-rust-tm-syscfg-rc-default.patch`
+- `./scripts/apply-component-overrides.sh`
+- `patch -d nq --reverse --dry-run --fuzz=0 -p1 < patches/components/nq-taskman-rust-tm-syscfg-rc-default.patch`
+- `patch -d lq --reverse --dry-run --fuzz=0 -p1 < patches/components/lq-makefile-rust-tm-syscfg-rc-default.patch`
+- `patch -d lq --reverse --dry-run --fuzz=0 -p1 < patches/components/lq-taskman-rust-tm-syscfg-rc-default.patch`
+- `make tm-syscfg-rc-smoke`
+- `make tm-syscfg-rc-rollback-smoke`
+- `make tm-syscfg-evidence`
+- `make tm-syscfg-runtime-smoke`
+- `git diff --check`
+- `make check-qrvfs-rust-writer-production-root`
+- `make -C libtaskman --no-print-directory`
+
+Result:
+
+- `make tm-syscfg-rc-smoke` passed with `nq-rust-default syscfg.o count: 0`
+  and `lq-rust-default syscfg.o count: 0`, then reached the live syscfg,
+  sysmap, `/sys/board`, `/sys/cmdline`, and `sysinfo` runtime markers.
+- `make tm-syscfg-rc-rollback-smoke` passed with
+  `nq-c-rollback syscfg.o count: 1` and
+  `lq-c-rollback syscfg.o count: 1`, then reached the same live runtime
+  markers under `QSOE_RUST_TM_SYSCFG=0`.
+- The existing `tm-syscfg-evidence` and `tm-syscfg-runtime-smoke` gates still
+  pass after the default flip.
+
+Follow-up:
+
+- Publish the PR, wait for trusted CI, merge, and update #145 to
+  `status:rc`.
+
 ## 2026-06-30 02:17 CEST - tm_sysfs Rust-Default RC
 
 Scope:
