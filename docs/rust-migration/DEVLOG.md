@@ -1,6 +1,6 @@
 # QSOE Rust Migration Development Log
 
-Last updated: 2026-06-30 CEST.
+Last updated: 2026-07-01 CEST.
 
 This log tracks the development process for the Rust migration and reproducible
 toolchain work. It records what changed, what was observed, what failed, and
@@ -23,6 +23,44 @@ Result:
 Follow-up:
 - ...
 ```
+
+## 2026-07-01 00:00 CEST - #202/#203 Warning-Mode Tooling Rollout
+
+Scope:
+
+- Added non-blocking CodeQL static security scanning for trusted pull-request
+  and main contexts.
+- Added non-blocking dependency review for dependency manifest and lockfile
+  pull requests.
+- Added warning-mode CI steps for `container-rust-deep` and
+  `container-rust-fuzz-smoke` so #203 can gather nextest/fuzz signal without
+  blocking unrelated migration work.
+- Pinned new GitHub Actions references by SHA to match the existing workflow
+  supply-chain style.
+- Updated #202 and #203 roadmap metadata from `status:future` to
+  `status:in-progress` and recorded the warning-mode baseline/promotion plan.
+- Updated handover, workflow, and top-level status text for the active tooling
+  milestone.
+
+Commands:
+
+- `gh issue edit 202 --repo dmytro-yemelianov/qsoe-os-rust-handover --body-file /tmp/issue202-body.md --add-label status:in-progress --remove-label status:future`
+- `gh issue edit 203 --repo dmytro-yemelianov/qsoe-os-rust-handover --body-file /tmp/issue203-body.md --add-label status:in-progress --remove-label status:future`
+- `git ls-remote https://github.com/github/codeql-action.git refs/tags/v3^{} refs/tags/v3`
+- `git ls-remote --tags https://github.com/actions/dependency-review-action.git`
+- `rg -n "uses: .*@(v[0-9]|main|master)" .github/workflows`
+- `make roadmap-validate`
+
+Result:
+
+- #202 and #203 now render as active tooling roadmap items and match the
+  checked-in warning-mode workflow shape. Roadmap metadata validates with 38
+  issue-backed items.
+
+Follow-up:
+
+- Record the first PR and main CI baseline runs in #202/#203 before marking
+  either item complete or promoting any check to required.
 
 ## 2026-06-30 23:40 CEST - tm_pathmgr, tm_pseudodev, and tm_rsrcdb C Provider Retirement
 

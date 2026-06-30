@@ -63,6 +63,14 @@ jobs:
       - name: Run host fixtures and Rust quality gate
         run: make container-check
 
+      - name: Run optional Rust deep gate (warning mode for #203)
+        continue-on-error: true
+        run: make container-rust-deep
+
+      - name: Run optional parser fuzz smoke (warning mode for #203)
+        continue-on-error: true
+        run: make container-rust-fuzz-smoke
+
       - name: Run Rust ABI/link gate
         run: make container-rust-abi
 

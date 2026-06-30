@@ -235,14 +235,18 @@ improvements from C-to-Rust component candidates.
 | --- | --- | --- |
 | #200 | Component gate harness and roadmap sync | Generate the per-component evidence/RC/rollback checklist from issue metadata and reject malformed roadmap state in CI and before dashboard publication. |
 | #201 | CI cache and sccache acceleration | Shorten repeated Rust/C taskman and smoke-test loops with Cargo registry/git cache, `sccache`, and explicit no-build-output cache boundaries. |
-| #202 | Static analysis and supply-chain gates | Add CodeQL plus dependency-review pressure around C/C++/Rust security and dependency changes. |
-| #203 | Rust host test and parser fuzz workflow | Promote `cargo-nextest`, parser fuzzing, and coverage from optional deep tools into explicit gates for parser-heavy PRs. |
+| #202 | Static analysis and supply-chain gates | Run CodeQL and dependency-review as non-blocking checks first, then promote after clean PR and main baselines. |
+| #203 | Rust host test and parser fuzz workflow | Run `container-rust-deep` and `container-rust-fuzz-smoke` as non-blocking CI checks first, then promote parser-heavy PR gates after baseline stability. |
 
 Tooling gates become required only after they have a clean baseline and a
 rollback plan for false positives or cache invalidation. Until then, they may
 land as documented, non-blocking, or scheduled checks. A component migration
 PR should not be blocked on a brand-new tool the same PR introduces unless that
 tool's issue explicitly says the gate has been promoted.
+
+As of the #202/#203 rollout, CodeQL, dependency review, Rust deep checks, and
+bounded parser fuzz smoke are warning-mode gates. Treat failures as evidence to
+tune configuration, permissions, corpus shape, or runtime cost before promotion.
 
 ## Per-Component Operating Loop
 
@@ -334,10 +338,13 @@ GitHub Checks for CodeRabbit review context:
 | Source build | `make container-source-build` | Runs `make prepare` when release components are missing, then builds NQ and LQ. |
 | Installed artifact audit | `make container-audit-artifacts` | Audits ELF files staged into the boot CPIO and qrvfs `/usr` roots. |
 | Fixtures and Rust quality | `make container-check` | Includes host tools, Rust quality, qrvfs Rust/C parity, and ELF relocation fixtures. |
+| Rust deep warning gate | `make container-rust-deep` | Non-blocking #203 baseline for nextest/test fallback, docs, deny, Miri, fuzz, and coverage tools when available. |
+| Parser fuzz smoke warning gate | `make container-rust-fuzz-smoke` | Non-blocking #203 bounded fuzz smoke baseline. |
 | Rust ABI | `make container-rust-abi` | Requires C source build artifacts. |
 | C analysis | `QSOE_INDEX_CLEAN=1 QSOE_INDEX_DB_FLAVOR=container make index-c-compile-db` and bounded `make tidy-c` | Rebuilds under Bear, then runs the curated clang-tidy pass against container paths. |
 | Boot | `scripts/container-toolchain.sh run scripts/boot-smoke.sh -k lq -t 120` | Required before enabling any Rust service in an image. |
-| Deep | `make rust-deep` | Scheduled or before risky parser/unsafe changes. |
+| CodeQL warning gate | `.github/workflows/codeql.yml` | Non-blocking #202 C/C++ static security scan for main and trusted pull-request contexts. |
+| Dependency review warning gate | `.github/workflows/dependency-review.yml` | Non-blocking #202 PR dependency review for manifest and lockfile changes. |
 
 The workflow intentionally uses `runs-on: [self-hosted, X64]` to match the
 hosted runner label used by the main Rapsody CI jobs.

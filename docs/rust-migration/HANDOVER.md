@@ -1,6 +1,6 @@
 # QSOE Migration Handover
 
-Last updated: 2026-06-30 CEST.
+Last updated: 2026-07-01 CEST.
 
 This handover captures the current QSOE Rust migration and workflow work so it
 can move from the macOS/container setup to a native Linux development machine.
@@ -404,7 +404,10 @@ The strict ELF audit showed:
 - Tooling/process improvements are now tracked as roadmap tooling gates:
   #200 for a component gate harness and roadmap sync, #201 for CI cache and
   `sccache`, #202 for CodeQL/dependency-review/static security gates, and #203
-  for `cargo-nextest` plus parser fuzz/coverage workflow. These use
+  for `cargo-nextest` plus parser fuzz/coverage workflow. #202 and #203 are in
+  warning-mode rollout: CodeQL and dependency review run as non-blocking checks,
+  while `container-rust-deep` and `container-rust-fuzz-smoke` run in CI with
+  `continue-on-error` until baseline results justify promotion. These use
   `kind: "tooling"` metadata and render in the Pages dashboard separately from
   component candidates.
 
@@ -420,10 +423,11 @@ The active decision log is `DECISIONS.md`. Most relevant recent decisions:
 
 ## Next Recommended Work
 
-1. Finish the #149/#151/#152 C provider retirement PR, then update those issues
-   to `status:retired`.
-2. Keep the hosted runner healthy for new PRs; CodeRabbit usage-credit failures
-   are non-blocking until the account is replenished.
-3. After #149, #151, and #152 are merged and closed, keep #146 `tm_fdt` under
-   RC observation until broader PCI/memory-topology confidence justifies a
-   separate retirement PR.
+1. Land the #202/#203 warning-mode tooling PR and record the first PR/main
+   CodeQL, dependency-review, deep-test, and fuzz-smoke outcomes in those issue
+   bodies before marking either item complete.
+2. Keep #146 `tm_fdt` under RC observation until broader PCI/memory-topology
+   confidence justifies a separate C provider retirement PR.
+3. After the #202/#203 baselines stabilize, decide whether to promote the new
+   checks to required parser/unsafe-boundary gates or move directly to the next
+   component milestone.

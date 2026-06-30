@@ -93,3 +93,19 @@ Use per-provider evidence targets for single-provider behavior and regression
 coverage. Use `make tm-providers-evidence` when changing the shared archive,
 provider selection plumbing, panic handler ownership, or component patches that
 affect taskman link composition.
+
+## Formal evidence run on 2026-06-30
+
+- `bash scripts/tm-providers-evidence.sh` completed successfully.
+- Shared archive membership and headers captured in `build/tm-providers-evidence/`:
+  - `shared-provider-summary.txt` (`413` members, `413` soft-float members)
+  - `shared-provider-symbols.txt`
+  - `shared-provider-readelf-header.txt`
+- Dual-provider and shared NQ/LQ link checks passed with empty portable-object leaks:
+  - `lq-dual-tm_procfs.o-membership.txt` (`count: 0`)
+  - `lq-shared-taskman-rust-panic-symbol-count.txt` (`0`)
+  - `nq-shared-taskman-rust-panic-symbol-count.txt` (`0`)
+- `/proc` smoke artifact captured at `build/tm-providers-evidence/procfs-smoke/boot-smoke-lq-procfs.log`
+  with milestone markers:
+  - `procfs-smoke: listed /proc ok`
+  - `procfs-smoke: read /proc/1/info ok`

@@ -98,6 +98,22 @@ make container-tm-fdt-evidence
 This evidence proves ABI compatibility, archive selection, rollback, and linked
 artifact shape.
 
+## Formal evidence run on 2026-06-30
+
+Local rerun:
+
+- `bash scripts/tm-fdt-evidence.sh` completed successfully.
+- C host fixture: `check-tm-fdt-model.sh: ok` (`tm_fdt_model_test` binary built).
+- Rust host tests: 3 passed.
+- Rust provider archive built for shared-link composition and RISC-V soft-float.
+- LQ Rust-default and C-rollback link plans both built and passed.
+- Evidence artifacts captured in `build/tm-fdt-evidence/`, including:
+  - `rust-provider-summary.txt`
+  - `lq-rust-default-taskman-dry-run.txt`
+  - `lq-rust-selected-taskman-dry-run.txt`
+  - `lq-c-default-taskman-readelf-*`
+  - `lq-c-rollback-taskman-readelf-*`
+
 `make tm-fdt-runtime-smoke` verified the Rust-default parser in a booted LQ
 image. The smoke:
 
