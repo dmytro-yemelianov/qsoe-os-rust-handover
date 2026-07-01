@@ -348,6 +348,48 @@ ensure_tm_reloc_env_continuations() {
     mv "$tmp" "$file"
 }
 
+ensure_tm_reloc_env_lines() {
+    local file=$1
+    local tmp
+
+    tmp=$(mktemp)
+    awk '
+        function reloc_line_for(nextline) {
+            if (nextline ~ /^[[:space:]]/) {
+                return "    QSOE_RUST_TM_RELOC=$(QSOE_RUST_TM_RELOC) \\"
+            }
+            return "    QSOE_RUST_TM_RELOC=$(QSOE_RUST_TM_RELOC)"
+        }
+
+        index($0, "QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)") {
+            line = $0
+            if (line !~ /\\[[:space:]]*$/) {
+                line = line " \\"
+            }
+            print line
+
+            if ((getline nextline) > 0) {
+                if (index(nextline, "QSOE_RUST_TM_RELOC=$(QSOE_RUST_TM_RELOC)")) {
+                    if ((getline following) > 0) {
+                        print reloc_line_for(following)
+                        print following
+                    } else {
+                        print "    QSOE_RUST_TM_RELOC=$(QSOE_RUST_TM_RELOC)"
+                    }
+                } else {
+                    print reloc_line_for(nextline)
+                    print nextline
+                }
+            } else {
+                print "    QSOE_RUST_TM_RELOC=$(QSOE_RUST_TM_RELOC)"
+            }
+            next
+        }
+        { print }
+    ' "$file" > "$tmp"
+    mv "$tmp" "$file"
+}
+
 # Older self-hosted workspaces may already have the selector patch but with
 # earlier link paths or timestamp-only Rust archive rules. Normalize those
 # first so required full patches can be recognized as already applied.
@@ -1060,16 +1102,14 @@ require_line "$ROOT/quser/test/suite/sync.c" 'rc_unlock == EOK || (rc_unlock == 
 ensure_line_after_first "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSFS ?= 0' 'QSOE_RUST_TM_RELOC ?= 0'
 ensure_line_after_first "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSFS ?= 1' 'QSOE_RUST_TM_RELOC ?= 0'
 ensure_provider_count_has_tm_reloc "$ROOT/lq/Makefile" '$(QSOE_RUST_TM_SYSFS)'
-ensure_tm_reloc_env_continuations "$ROOT/lq/Makefile"
-ensure_line_after_each "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)' '    QSOE_RUST_TM_RELOC=$(QSOE_RUST_TM_RELOC) \'
+ensure_tm_reloc_env_lines "$ROOT/lq/Makefile"
 require_line "$ROOT/lq/Makefile" 'QSOE_RUST_TM_RELOC ?= 0'
 require_line_contains "$ROOT/lq/Makefile" 'TM_RUST_PROVIDER_COUNT :=' '$(QSOE_RUST_TM_RELOC)'
 
 ensure_line_after_first "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SYSFS ?= 0' 'QSOE_RUST_TM_RELOC ?= 0'
 ensure_line_after_first "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SYSFS ?= 1' 'QSOE_RUST_TM_RELOC ?= 0'
 ensure_provider_count_has_tm_reloc "$ROOT/lq/taskman/Makefile" '$(QSOE_RUST_TM_SYSFS)'
-ensure_tm_reloc_env_continuations "$ROOT/lq/taskman/Makefile"
-ensure_line_after_each "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)' '    QSOE_RUST_TM_RELOC=$(QSOE_RUST_TM_RELOC) \'
+ensure_tm_reloc_env_lines "$ROOT/lq/taskman/Makefile"
 require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_RELOC ?= 0'
 require_line_contains "$ROOT/lq/taskman/Makefile" 'TM_RUST_PROVIDER_COUNT :=' '$(QSOE_RUST_TM_RELOC)'
 
