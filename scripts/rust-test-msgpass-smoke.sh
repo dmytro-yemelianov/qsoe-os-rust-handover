@@ -175,7 +175,7 @@ if [ "${#emu_args[@]}" -gt 0 ]; then
 fi
 
 expected_markers=(
-    "[test_msgpass-rs] alive" \
+    "PASS  msgpass: spawn /bin/test_msgpass" \
     "PASS  msgpass: resolve /dev/msgpass" \
     "PASS  msgpass: 4MB-2 round-trip" \
     "PASS  msgpass: payload halfword-swapped" \
