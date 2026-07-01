@@ -46,6 +46,7 @@ void tm_log_init(tm_log_sink_t sink);
 
 void tm_log_set_level(int level);
 int  tm_log_get_level(void);
+int  tm_log_enabled(int level);
 
 /* Scan a boot command line for the --debug[=N] token and set the
  * threshold accordingly (see the verbosity contract above).  Tokens
@@ -54,7 +55,19 @@ int  tm_log_get_level(void);
  * Returns the resulting threshold. */
 int  tm_log_apply_cmdline(const char *cmdline);
 
-/* The workhorse.  printf-subset format support:
+/* Non-variadic sink boundary for already formatted bytes.  This is the
+ * C-owned ABI a future Rust formatter can target without owning the
+ * exported C variadic tm_log() entry point.  `buf` must point to `len`
+ * bytes when `len` is non-zero; no NUL terminator is required. */
+void tm_log_emit(int level, const char *buf, unsigned len);
+
+/* C-owned va_list shim behind the public variadic wrapper.  Keep this
+ * boundary in C: stable no_std Rust should not consume a C va_list. */
+typedef __builtin_va_list tm_log_va_list;
+void tm_vlog(int level, const char *fmt, tm_log_va_list ap)
+    __attribute__((format(printf, 2, 0)));
+
+/* The exported workhorse.  printf-subset format support:
  *   %s %c %d %i %u %x %p %%   with  l / ll / z  length modifiers
  *   and  zero-pad + field width  (e.g. %08lx).
  * No floating point, no %n, no positional args.  Lines longer than

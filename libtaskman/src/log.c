@@ -39,6 +39,19 @@ int tm_log_get_level(void)
     return tm_level;
 }
 
+int tm_log_enabled(int level)
+{
+    return level <= tm_level && tm_sink != 0;
+}
+
+void tm_log_emit(int level, const char *buf, unsigned len)
+{
+    if (!tm_log_enabled(level) || len == 0)
+        return;
+
+    tm_sink(buf, len);
+}
+
 /* ---- --debug[=N] command-line scan ---------------------------------- */
 
 /* The option token.  Matched per-token (delimited by blanks), so a
@@ -151,7 +164,7 @@ static void out_num(struct tm_out *o, unsigned long long v, unsigned base,
 /* Length-modifier states for the %-spec parser below. */
 enum tm_len_mod { LEN_INT, LEN_LONG, LEN_LLONG, LEN_SIZE };
 
-static void tm_vfmt(struct tm_out *o, const char *fmt, va_list ap)
+static void tm_vfmt(struct tm_out *o, const char *fmt, tm_log_va_list ap)
 {
     while (*fmt != '\0') {
         char c = *fmt++;
@@ -245,20 +258,27 @@ static void tm_vfmt(struct tm_out *o, const char *fmt, va_list ap)
     }
 }
 
-void tm_log(int level, const char *fmt, ...)
+void tm_vlog(int level, const char *fmt, tm_log_va_list ap)
 {
-    if (level > tm_level || tm_sink == 0)
+    if (!tm_log_enabled(level))
         return;
 
     char line[TM_LOG_LINE_MAX];
     struct tm_out o = { line, sizeof line, 0 };
 
-    va_list ap;
-    va_start(ap, fmt);
     tm_vfmt(&o, fmt, ap);
-    va_end(ap);
 
     unsigned n = o.pos < o.cap ? o.pos : o.cap;
-    if (n > 0)
-        tm_sink(line, n);
+    tm_log_emit(level, line, n);
+}
+
+void tm_log(int level, const char *fmt, ...)
+{
+    if (!tm_log_enabled(level))
+        return;
+
+    tm_log_va_list ap;
+    va_start(ap, fmt);
+    tm_vlog(level, fmt, ap);
+    va_end(ap);
 }
