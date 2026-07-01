@@ -1,0 +1,109 @@
+name: LQ external ref evidence
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    inputs:
+      lq_repository:
+        description: GitHub owner/repo or clone URL for the LQ source.
+        required: true
+        default: dmytro-yemelianov/lq
+      lq_ref:
+        description: Branch, tag, or commit to fetch from the LQ source.
+        required: true
+        default: codex/msgpass-marker-stability
+
+concurrency:
+  group: qsoe-lq-ref-evidence-${{ github.ref }}-${{ inputs.lq_repository }}-${{ inputs.lq_ref }}
+  cancel-in-progress: true
+
+jobs:
+  spawn-loader:
+    name: Spawn/loader evidence against LQ ref
+    runs-on: [self-hosted, X64]
+    timeout-minutes: 180
+    env:
+      QSOE_CONTAINER_CACHE_ROOT: ${{ github.workspace }}/.qsoe-cache/container
+      QSOE_SCCACHE: "1"
+      QSOE_SCCACHE_C: "1"
+      QSOE_SCCACHE_STATS: "1"
+      SCCACHE_CACHE_SIZE: 2G
+      SCCACHE_IDLE_TIMEOUT: "0"
+
+    steps:
+      - name: Checkout handover repository
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+        with:
+          fetch-depth: 0
+
+      - name: Restore Cargo and compiler cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            .qsoe-cache/container/cargo-home/registry
+            .qsoe-cache/container/cargo-home/git
+            .qsoe-cache/container/sccache
+          key: qsoe-lq-ref-${{ runner.os }}-${{ runner.arch }}-cargo-sccache-${{ hashFiles('rust/Cargo.lock', 'rust/fuzz/Cargo.lock', 'rust/Cargo.toml', 'rust/**/Cargo.toml', 'rust/rust-toolchain.toml', 'toolchains/debian/Dockerfile', 'scripts/container-toolchain.sh', 'scripts/sccache-compiler-wrapper.sh', 'scripts/rust-env.sh', 'scripts/rust-workflow.sh', 'patches/components/*.patch') }}
+          restore-keys: |
+            qsoe-lq-ref-${{ runner.os }}-${{ runner.arch }}-cargo-sccache-
+            qsoe-ci-${{ runner.os }}-${{ runner.arch }}-cargo-sccache-
+
+      - name: Build Debian toolchain image
+        run: make container-toolchain-build
+
+      - name: Prepare release components
+        run: scripts/container-toolchain.sh run make prepare
+
+      - name: Overlay requested LQ source ref
+        env:
+          LQ_REPOSITORY: ${{ inputs.lq_repository }}
+          LQ_REF: ${{ inputs.lq_ref }}
+        run: |
+          set -eu
+
+          case "$LQ_REPOSITORY" in
+            http://*|https://*|git@*|ssh://*)
+              lq_url="$LQ_REPOSITORY"
+              ;;
+            *)
+              lq_url="https://github.com/${LQ_REPOSITORY}.git"
+              ;;
+          esac
+
+          rm -rf lq
+          git clone "$lq_url" lq
+          git -C lq fetch --depth 1 origin "$LQ_REF"
+          git -C lq checkout --detach FETCH_HEAD
+          scripts/apply-component-overrides.sh
+
+          mkdir -p build/lq-ref-evidence
+          {
+            printf 'lq_repository=%s\n' "$LQ_REPOSITORY"
+            printf 'lq_ref=%s\n' "$LQ_REF"
+            printf 'lq_commit=%s\n' "$(git -C lq rev-parse HEAD)"
+          } > build/lq-ref-evidence/summary.txt
+
+      - name: Run spawn/loader C boundary evidence
+        run: make container-spawn-loader-c-evidence
+
+      - name: Run spawn/loader C stress evidence
+        run: make container-spawn-loader-c-stress-evidence
+
+      - name: Show cache directory sizes
+        if: always()
+        run: du -sh .qsoe-cache/container/cargo-home .qsoe-cache/container/sccache || true
+
+      - name: Upload LQ ref evidence logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: lq-ref-spawn-loader-evidence
+          path: |
+            build/lq-ref-evidence/**/*.txt
+            build/spawn-loader-c-evidence/**/*.log
+            build/spawn-loader-c-evidence/**/*.txt
+            build/spawn-loader-c-stress-evidence/**/*.log
+            build/spawn-loader-c-stress-evidence/**/*.txt
+          if-no-files-found: ignore
