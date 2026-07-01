@@ -2,7 +2,9 @@
 
 Issue: #154
 
-Status: boundary-reviewed, still deferred for implementation.
+Status: boundary-reviewed; bounded `tm_reloc` provider retired/default Rust,
+broader spawn, capability, VSpace, loader, mmap, IRQ, and teardown ownership
+still deferred.
 
 ## Decision
 
@@ -24,7 +26,7 @@ The next safe milestone is evidence and seam extraction, not replacement.
 - `lq/taskman/proc/process.c`
 - `lq/taskman/mem/mmap.c`
 - `lq/taskman/sys/irq.c`
-- `libtaskman/src/reloc.c`
+- `rust/crates/qsoe-tm-reloc`
 - `libtaskman/include/tm_reloc.h`
 - `libtaskman/include/tm_seams.h`
 
@@ -63,17 +65,19 @@ split into smaller seams with independent evidence.
 
 ### Relocation
 
-`libtaskman/src/reloc.c` is already the cleanest seam in this area:
+The retired/default Rust `qsoe-tm-reloc` provider is the completed clean seam in
+this area:
 
 - it is pure byte-level logic over `tm_elf_view_t`
 - target-memory writes go through `tm_reloc_write_q_fn`
 - unresolved-symbol logging goes through `tm_reloc_skip_log_fn`
 - NQ and LQ can provide different write callbacks without changing the walker
 
-This makes relocation the only plausible first subcandidate, but only as a
-standalone `qsoe-tm-reloc`-style provider after the current C walker is covered
-by focused fixtures and LQ runtime evidence. It must not be bundled with spawn
-or VSpace work.
+This completed provider does not change the decision for the surrounding
+spawn/loader system. Spawn still owns child VSpace mappings, scratch writes,
+dynamic-loader ordering, RELRO tracking, process-table publication, and
+capability ownership. Further work must not bundle relocation with spawn or
+VSpace authority.
 
 ### Capability and process lifetime
 
@@ -162,12 +166,11 @@ Before moving any subcomponent from deferred to opt-in:
 1. Add formal C evidence for the current spawn/loader path.
 2. Split `tm_spawn(...)` internally into plan/build/commit phases while staying
    C-only.
-3. Promote `libtaskman/src/reloc.c` to an isolated relocation candidate only
-   after relocation fixtures and LQ runtime evidence exist.
+3. Keep the now-retired/default `qsoe-tm-reloc` provider isolated behind the
+   existing callback ABI.
 4. Reassess spawn planning after the C plan seams are stable.
 
 ## Roadmap posture
 
 #154 should remain open and `deferred` after this review. The completed
 milestone is the boundary review itself, not implementation readiness.
-

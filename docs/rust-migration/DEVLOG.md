@@ -1,3 +1,28 @@
+## 2026-07-01 CEST - tm_sysfs/qrvfs CI Posture and tm_reloc Metadata Cleanup
+
+Scope:
+
+- Renamed trusted CI qrvfs and `tm_sysfs` steps so they reflect the retired
+  Rust-only/default posture already enforced by Makefile selectors.
+- Added the qrvfs production-root Rust writer comparison to trusted CI via
+  `make container-check-qrvfs-rust-writer-production-root`.
+- Added `TASK_MANAGER_RELOC_RETIREMENT.md` and updated status, inventory,
+  README, retirement, task-manager, and boundary-review docs so `tm_reloc` is
+  recorded as a retired/default Rust provider while broader spawn/capability
+  and loader ownership stays deferred.
+
+Commands:
+
+- Not run locally; this is CI wiring and roadmap-facing documentation. The PR
+  CI is the formal evidence path for the added qrvfs production-root gate.
+
+Result:
+
+- `tm_sysfs`, host qrvfs tools, and `tm_reloc` now have consistent
+  roadmap-facing posture: retired/default Rust paths with stale C selectors
+  rejected, and no claim that authority-owning spawn/capability/loader code has
+  moved to Rust.
+
 ## 2026-07-01 CEST - Host qrvfs C Retirement
 
 Scope:

@@ -135,13 +135,17 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-rust-test-msgpass-smoke
 
-      - name: Run host qrvfs tree Rust-only smoke
+      - name: Run treeqrvfs retired RC smoke
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-treeqrvfs-rc-smoke
 
-      - name: Run mkfs-qrv Rust-only live smoke
+      - name: Run mkfs-qrv retired live smoke
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-mkfs-qrv-rc-live-smoke
+
+      - name: Run qrvfs production-root Rust writer evidence
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-check-qrvfs-rust-writer-production-root
 
       - name: Run Rust pipe data-path smoke
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -291,7 +295,7 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-pseudodev-rc-smoke
 
-      - name: Run tm_sysfs Rust opt-in evidence
+      - name: Run tm_sysfs Rust-only retirement evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-tm-sysfs-evidence
 

@@ -1,23 +1,24 @@
-# `tm_reloc` Rust-provider candidate plan
+# `tm_reloc` Rust-provider completion note
 
-Status: planned, C default retained.
+Status: retired/default Rust provider; broader spawn, capability, and loader
+ownership remains deferred.
 
-This plan defines the first eligible Rust-provider candidate inside the spawn,
-capability, relocation, and loader roadmap item. It is intentionally limited to
-the relocation walker ABI in `libtaskman`; it does not move spawn planning,
-capability publication, VSpace work, process-table state, IRQ state, mmap, or
-loader mapping logic.
+This note records the first completed Rust-provider subcandidate inside the
+spawn, capability, relocation, and loader roadmap item. It is intentionally
+limited to the relocation walker ABI in `libtaskman`; it does not move spawn
+planning, capability publication, VSpace work, process-table state, IRQ state,
+mmap, or loader mapping logic.
 
 ## Scope
 
-The candidate is the `tm_reloc` provider surface currently implemented by:
+The retired/default provider surface is now implemented by:
 
-- `libtaskman/src/reloc.c`
+- `rust/crates/qsoe-tm-reloc`
 - `libtaskman/include/tm_reloc.h`
 
-The Rust provider may implement the relocation resolver and relocation walker
-behind the existing C ABI. The C implementation remains the default until an
-explicit later default-switch milestone.
+The Rust provider implements the relocation resolver and relocation walker
+behind the existing C ABI. The C implementation `libtaskman/src/reloc.c` has
+been removed from tracked source.
 
 Out of scope for this candidate:
 
@@ -26,7 +27,7 @@ Out of scope for this candidate:
   construction.
 - seL4 capability ownership, cnode allocation, IRQ handling, process-table
   mutation, and VSpace authority.
-- Default provider switch, C implementation removal, or C evidence retirement.
+- Spawn, capability, VSpace, process-table, IRQ, mmap, or loader ownership.
 
 ## Required ABI surface
 
@@ -103,43 +104,41 @@ The Rust implementation must remain a leaf provider:
 - No logging except by calling `tm_reloc_skip_log_fn` for the existing skip-log
   case.
 
-## Opt-in wiring
+## Retired/default wiring
 
-The provider selector must be opt-in at first:
+The provider selector is now required:
 
 ```make
-QSOE_RUST_TM_RELOC=0
+QSOE_RUST_TM_RELOC=1
 ```
 
 Required wiring posture:
 
-- `QSOE_RUST_TM_RELOC=0` builds and runs the existing C implementation.
 - `QSOE_RUST_TM_RELOC=1` links the Rust provider through the same public C ABI.
-- CI must continue running the existing C relocation evidence.
-- Provider evidence must run the C and Rust paths against the same host fixture
-  expectations.
-- Default posture cannot change until the opt-in evidence is stable and recorded
-  in the roadmap issue.
+- `QSOE_RUST_TM_RELOC=0` is rejected after C `tm_reloc` retirement.
+- CI runs `make container-tm-reloc-provider-evidence`.
+- Provider evidence runs Rust host parity tests, audits the target archive,
+  rejects stale C selectors, verifies no C `reloc.o` remains in LQ
+  `libtaskman.a`, and boots LQ through libc.so, rtld, and main relocation logs.
 
-## Evidence requirements
+## Evidence captured
 
-The first implementation PR must add formal evidence before any runtime default
-switch.
+The implementation and retirement PRs added formal evidence before and after the
+runtime default switch.
 
 Required host evidence:
 
-- Reuse or extend `scripts/reloc-c-evidence.sh` so the C fixture expectations
-  remain the baseline.
-- Add a Rust-provider fixture path that exercises the same relocation cases and
-  expects the same counters, writes, skip logs, and resolver behavior.
-- Add an ABI/link check that confirms the Rust static object/archive exports
+- Historical C fixture expectations were captured before the switch.
+- Rust-provider host tests exercise the same relocation cases and expect the
+  same counters, writes, skip logs, and resolver behavior.
+- ABI/link evidence confirms the Rust static object/archive exports
   `tm_reloc_apply` and `tm_reloc_init_resolver`.
-- Reject provider artifacts that require TLS, constructors, destructors,
+- Provider archive audit rejects TLS, constructors, destructors,
   unwinding, or dynamic runtime initialization.
 
 Required runtime evidence:
 
-- Boot LQ with `QSOE_RUST_TM_RELOC=1`.
+- Boot LQ with default/required `QSOE_RUST_TM_RELOC=1`.
 - Preserve the existing dynamic ELF spawn evidence.
 - Require relocation log coverage for `libc.so`, `rtld`, and `main`.
 - Reject relocation failure logs and spawn/loader fatal diagnostics already
@@ -147,37 +146,30 @@ Required runtime evidence:
 - Run the existing spawn/loader C boundary and stress evidence with the Rust
   relocation provider selected.
 
-Required external-ref evidence:
-
-- Run GitHub Actions external LQ ref evidence against an LQ branch containing
-  only the opt-in provider wiring and provider candidate.
-- Record the external repository, ref, commit, and run ID in issue #154.
-- Keep C default in the handover repository until this evidence is complete.
-
 ## Acceptance gates
 
-The candidate advances only through these gates:
+The candidate advanced through these gates:
 
 1. Provider plan lands with normal CI, CodeQL, main CI, main CodeQL, and Pages.
 2. Opt-in Rust provider lands behind `QSOE_RUST_TM_RELOC=1` with host parity and
    ABI/link evidence.
-3. External LQ ref evidence passes with the opt-in provider and dynamic spawn
-   relocation logs.
-4. RC/default posture is proposed only after repeated evidence shows no
-   regression in C default, opt-in provider parity, spawn/loader stress, and
-   external LQ runtime behavior.
+3. Default/retirement PR rejects `QSOE_RUST_TM_RELOC=0`, removes C `reloc.o`
+   from normal links, and passes full PR/main CI with LQ runtime relocation
+   logs.
 
 ## Rollback posture
 
-Rollback remains simple until the explicit default-switch milestone:
+No C rollback selector remains after retirement:
 
-- Leave `QSOE_RUST_TM_RELOC=0` as the default.
-- Keep `libtaskman/src/reloc.c` buildable and covered by CI.
-- Do not remove C relocation evidence.
-- If provider evidence fails, disable only the opt-in selector and keep the C
-  roadmap state unchanged.
+- `QSOE_RUST_TM_RELOC=0` fails fast.
+- `libtaskman/src/reloc.c` is removed.
+- A rollback would be a normal source revert of the retirement PR.
+- Broader spawn, capability, VSpace, loader, and process-table ownership remains
+  C-owned and deferred.
 
 ## Next implementation step
 
-After this plan lands, the next PR should introduce the opt-in Rust provider
-candidate and the provider evidence target. That PR should not switch defaults.
+Do not treat `tm_reloc` retirement as approval to move `tm_spawn`, capability
+publication, VSpace construction, mmap, IRQ handling, or teardown ordering into
+Rust. The next issue #154 work should split and evidence another narrow seam
+before any authority-owning code changes language.

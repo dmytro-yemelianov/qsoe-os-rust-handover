@@ -24,7 +24,7 @@ excluded unless `QSOE_INDEX_SEL4=1` is set.
 | `common` | 2 | 359 | Shared CPIO helper code. Rust CPIO parsing exists, but C remains for existing callers. |
 | `host_tools` | 0 | 0 | C `treeqrvfs` and `mkfs-qrv` are retired; Rust `qrvfs-tree` and `mkfs-qrv-rs` are mandatory. Tracked by #136. |
 | `libc` | 447 | 43,080 | Broad runtime, syscall, stdio, allocator, string, rtld, and QSOE wrapper surface. Not a wholesale Rust target. |
-| `libtaskman` | 16 | 1,932 | Best source of host-testable task-manager modules. `tm_procfs`, `tm_cpio`, `tm_cred`, `tm_script`, `tm_elf`, `tm_syscfg`, `tm_sysfs`, and `tm_pathmgr` are retired to Rust through the shared provider archive; remaining candidates are tracked in #153. |
+| `libtaskman` | 16 | 1,932 | Best source of host-testable task-manager modules. `tm_procfs`, `tm_cpio`, `tm_cred`, `tm_script`, `tm_elf`, `tm_reloc`, `tm_syscfg`, `tm_sysfs`, and `tm_pathmgr` are retired to Rust through the shared provider archive; remaining candidates are tracked in #153 and #154. |
 | `lq` | 89 | 17,686 | seL4 task manager, LQ libc wrappers, process, capability, path, memory, syscall, and boot glue. Pure/diagnostic slices only are candidates; LQ FDT, sysmap, pseudo-devices, and resource DB accounting are retired to Rust. |
 | `nq` | 125 | 25,056 | Kernel, NQ libc, and NQ taskman surface. Near-term linked Rust is deferred by policy; fixture-only candidates are tracked in #155. |
 | `quser` | 125 | 40,818 | Userland services, drivers, resource-server support, shell, tests, and utilities. `test_msgpass` is the first retired C helper; `slogger`, `pipe`, and `devb-virtio` are retired C production paths; several services have Rust pilots; many remain C. |
@@ -70,10 +70,15 @@ Issue state, labels, and metadata are the source of truth for current progress.
 | `tm_pseudodev` | #152 | Retired C LQ pseudo-device provider; Rust `qsoe-tm-pseudodev` is mandatory in taskman and the focused `/dev/null` plus `/dev/zero` runtime smoke covers the Rust-only path. |
 | `tm_sysfs` | #148 | Retired C provider; Rust `qsoe-tm-sysfs` is mandatory in taskman and the `/sys` runtime smoke covers the Rust-only path. |
 
+The bounded `tm_reloc` provider is retired under #154 with Rust
+`qsoe-tm-reloc` mandatory through the shared taskman provider archive. Issue
+#154 remains deferred for broader spawn, capability, VSpace, loader, mmap, IRQ,
+and teardown ownership.
+
 Host qrvfs tools are retired after their RC windows and rollback drills. `test_msgpass` is the first tracked C implementation retired after an RC window and rollback drill. `slogger` is the first retired production service, followed
 by `pipe` and `devb-virtio`. `tm_procfs` is the first retired task-manager
 provider, followed by `tm_script`, `tm_cpio`, `tm_cred`, `tm_elf`,
-`tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`,
+`tm_reloc`, `tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`,
 `tm_rsrcdb`, and `tm_fdt`. Future retirements remain governed by #26 and must be separate removal PRs after their own RC evidence.
 
 ## Remaining Candidate Buckets
@@ -82,9 +87,9 @@ provider, followed by `tm_script`, `tm_cpio`, `tm_cred`, `tm_elf`,
 | --- | --- | --- |
 | Host qrvfs tools | #136 | Retired: Rust `qrvfs-tree` and `mkfs-qrv-rs` are mandatory; no C rollback target remains. |
 | Task-manager pure or diagnostic modules | #153 | Candidate backlog. Prefer host-tested modules that avoid direct seL4 invocations, spawn, capability ownership, relocation writes, and loader admission. |
-| Spawn, capability, relocation, and loader paths | #154 | Deferred. These paths are load-bearing for process creation and teardown. |
+| Spawn, capability, relocation, and loader paths | #154 | Deferred for broader authority-owning code. The bounded `tm_reloc` provider is retired/default Rust, but spawn, capability, VSpace, loader, mmap, IRQ, and teardown ownership remain C. |
 | Kernel Rust | #155 | Deferred. Current policy allows documentation and fixtures only. |
-| C retirement gate | #26 | Exercised by retiring the C `test_msgpass` helper, C `slogger`, `pipe`, and `devb-virtio` production paths, plus the `tm_procfs`, `tm_script`, `tm_cpio`, `tm_cred`, `tm_elf`, `tm_fdt`, `tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`, and `tm_rsrcdb` task-manager providers after their Rust-default RC evidence. Future removals must repeat the same checklist. |
+| C retirement gate | #26 | Exercised by retiring the C `test_msgpass` helper, C `slogger`, `pipe`, and `devb-virtio` production paths, plus the `tm_procfs`, `tm_script`, `tm_cpio`, `tm_cred`, `tm_elf`, `tm_reloc`, `tm_fdt`, `tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`, and `tm_rsrcdb` task-manager providers after their Rust-default RC evidence. Future removals must repeat the same checklist. |
 | OS-wide inventory | #156 | Satisfied by this document once merged. |
 | Shared task-manager Rust archive | #179 | Complete: selected taskman Rust providers link through one `qsoe-tm-providers` archive with one panic handler. |
 

@@ -9,7 +9,7 @@ PR removed the C helper. The next removals were production services
 `/sbin/slogger`, `/sbin/pipe`, and `/sbin/devb-virtio` after their own
 Rust-default RC evidence. Host qrvfs tools `treeqrvfs` and `mkfs-qrv` are also retired after their own inspector and writer RC windows. The current retired task-manager providers are
 `tm_procfs`, `tm_cpio`, `tm_cred`, `tm_script`, `tm_elf`, `tm_fdt`,
-`tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`, and `tm_rsrcdb` after their own
+`tm_reloc`, `tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`, and `tm_rsrcdb` after their own
 Rust-default RC evidence and rollback drills. All remaining Rust pilots stay
 either opt-in or Rust-default RC paths, and each non-retired C implementation
 remains the rollback path until the release-candidate evidence below exists.
@@ -53,12 +53,12 @@ it must include evidence for all of these items:
 The live status matrix is `STATUS.md`. It records C default, Rust opt-in, Rust
 default, and retired status for every tracked migration component. At this
 capture, host qrvfs tools, `test_msgpass`, `slogger`, `pipe`, `devb-virtio`, `tm_procfs`,
-`tm_cpio`, `tm_cred`, `tm_script`, `tm_elf`, `tm_syscfg`, `tm_sysmap`,
+`tm_cpio`, `tm_cred`, `tm_script`, `tm_elf`, `tm_reloc`, `tm_syscfg`, `tm_sysmap`,
 `tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`, `tm_rsrcdb`, and `tm_fdt` are the tracked components in `Retired` status.
 Host qrvfs tools are retired host paths. `test_msgpass` is the first retired helper; `slogger`, `pipe`, and
 `devb-virtio` are retired production paths. `tm_procfs` is the first retired
 task-manager provider, followed by `tm_cpio`, `tm_cred`, `tm_script`,
-`tm_elf`, `tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`,
+`tm_elf`, `tm_reloc`, `tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`,
 `tm_pseudodev`, and `tm_rsrcdb`. Remaining production services and
 task-manager providers still
 require their own separate removal PRs after RC evidence and rollback drills.
@@ -77,6 +77,7 @@ require their own separate removal PRs after RC evidence and rollback drills.
 | `tm_cred` | `TASK_MANAGER_CRED_RETIREMENT.md` | `TASK_MANAGER_CRED_RC.md`, `make tm-cred-rc-smoke`, previous `make tm-cred-rc-rollback-smoke` evidence | No C rollback target remains; Rust `qsoe-tm-cred` is mandatory in taskman through the shared provider archive. |
 | `tm_script` | `TASK_MANAGER_SCRIPT_RETIREMENT.md` | `TASK_MANAGER_SCRIPT_RC.md`, `make tm-script-rc-smoke`, previous `make tm-script-rc-rollback-smoke` evidence | No C rollback target remains; Rust `qsoe-tm-script` is mandatory in taskman through the shared provider archive. |
 | `tm_elf` | `TASK_MANAGER_ELF_RETIREMENT.md` | `TASK_MANAGER_ELF_RC.md`, `make tm-elf-rc-smoke`, previous `make tm-elf-rc-rollback-smoke` evidence | No C rollback target remains; Rust `qsoe-tm-elf` is mandatory in taskman through the shared provider archive. |
+| `tm_reloc` | `TASK_MANAGER_RELOC_RETIREMENT.md` | `TM_RELOC_RUST_PROVIDER_PLAN.md`, historical C relocation evidence, `make tm-reloc-provider-evidence` | No C rollback target remains for the RV64 relocation provider; Rust `qsoe-tm-reloc` is mandatory in taskman through the shared provider archive while broader spawn/loader ownership remains C. |
 | `tm_fdt` | `TASK_MANAGER_FDT_RETIREMENT.md` | `TASK_MANAGER_FDT_RC.md`, `make tm-fdt-rc-smoke`, previous `make tm-fdt-rc-rollback-smoke` evidence | No C rollback target remains for the LQ FDT parser provider; Rust `qsoe-tm-fdt` is mandatory in taskman through the shared provider archive. |
 | `tm_syscfg` | `TASK_MANAGER_SYSCFG_RETIREMENT.md` | `TASK_MANAGER_SYSCFG_RC.md`, `make tm-syscfg-rc-smoke`, previous `make tm-syscfg-rc-rollback-smoke` evidence | No C rollback target remains for the portable `libtaskman` provider; Rust `qsoe-tm-syscfg` is mandatory in taskman through the shared provider archive. |
 | `tm_sysmap` | `TASK_MANAGER_SYSMAP_RETIREMENT.md` | `TASK_MANAGER_SYSMAP_RC.md`, `make tm-sysmap-rc-smoke`, previous `make tm-sysmap-rc-rollback-smoke` evidence | No C rollback target remains for the LQ sysmap page builder; Rust `qsoe-tm-sysmap` is mandatory in taskman through the shared provider archive. |
