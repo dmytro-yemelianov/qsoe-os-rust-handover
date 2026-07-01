@@ -1040,3 +1040,11 @@ spawn-loader-c-evidence:
 
 container-spawn-loader-c-evidence:
 	@scripts/container-toolchain.sh run make spawn-loader-c-evidence
+
+.PHONY: spawn-loader-c-stress-evidence container-spawn-loader-c-stress-evidence
+
+spawn-loader-c-stress-evidence:
+	@scripts/spawn-loader-c-stress-evidence.sh
+
+container-spawn-loader-c-stress-evidence:
+	@scripts/container-toolchain.sh run make spawn-loader-c-stress-evidence
