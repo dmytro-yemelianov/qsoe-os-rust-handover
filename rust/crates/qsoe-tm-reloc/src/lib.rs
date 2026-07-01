@@ -330,7 +330,8 @@ unsafe fn external_lookup(ext: *const TmRelocResolver, name: *const c_char) -> u
         if sym.st_value != 0 {
             let sym_name = strtab.add(sym.st_name as usize);
             if c_streq(sym_name, name) {
-                return (ext.base as u64).wrapping_add(sym.st_value);
+                let base: u64 = ext.base;
+                return base.wrapping_add(sym.st_value);
             }
         }
         i += 1;
@@ -338,63 +339,62 @@ unsafe fn external_lookup(ext: *const TmRelocResolver, name: *const c_char) -> u
     0
 }
 
-unsafe fn walk_rela(
-    view: &TmElfView,
+struct RelaWalk<'a> {
+    view: &'a TmElfView,
     bias: u64,
-    blob_va: u64,
-    blob_sz: u64,
-    entsize: u64,
     symtab: *const Elf64Sym,
     strtab: *const c_char,
     ext: *const TmRelocResolver,
     write_cb: TmRelocWriteQFn,
     skip_log: TmRelocSkipLogFn,
     user: *mut c_void,
-    applied: &mut c_ulong,
-    total: &mut c_ulong,
-    skipped: &mut c_ulong,
-) -> c_int {
+    applied: &'a mut c_ulong,
+    total: &'a mut c_ulong,
+    skipped: &'a mut c_ulong,
+}
+
+unsafe fn walk_rela(ctx: &mut RelaWalk<'_>, blob_va: u64, blob_sz: u64, entsize: u64) -> c_int {
     if blob_va == 0 || blob_sz == 0 {
         return 0;
     }
     if entsize == 0 {
         return -1;
     }
-    let Some(rela_ptr) = va_to_blob(view, bias, blob_va.wrapping_add(bias)) else {
+    let Some(rela_ptr) = va_to_blob(ctx.view, ctx.bias, blob_va.wrapping_add(ctx.bias)) else {
         return -1;
     };
     let rela = rela_ptr.cast::<Elf64Rela>();
     let n = blob_sz / entsize;
-    *total = total.wrapping_add(n as c_ulong);
+    *ctx.total = ctx.total.wrapping_add(n as c_ulong);
 
     let mut i = 0u64;
     while i < n {
         let r = read_unaligned(rela.add(i as usize));
         let r_type = (r.r_info & 0xffff_ffff) as u32;
         let sidx = (r.r_info >> 32) as usize;
-        let loc_va = r.r_offset.wrapping_add(bias);
+        let loc_va = r.r_offset.wrapping_add(ctx.bias);
         let mut value = 0u64;
         let mut will_apply = true;
 
         match r_type {
             R_RISCV_RELATIVE => {
-                value = (bias as i64).wrapping_add(r.r_addend) as u64;
+                value = (ctx.bias as i64).wrapping_add(r.r_addend) as u64;
             }
             R_RISCV_64 | R_RISCV_JUMP_SLOT => {
-                if symtab.is_null() || strtab.is_null() {
+                if ctx.symtab.is_null() || ctx.strtab.is_null() {
                     will_apply = false;
                 } else {
-                    let sym = read_unaligned(symtab.add(sidx));
-                    let name = strtab.add(sym.st_name as usize);
+                    let sym = read_unaligned(ctx.symtab.add(sidx));
+                    let name = ctx.strtab.add(sym.st_name as usize);
                     let mut resolved = 0u64;
                     if sym.st_shndx != 0 && sym.st_value != 0 {
-                        resolved = sym.st_value.wrapping_add(bias);
-                    } else if !ext.is_null() {
-                        resolved = external_lookup(ext, name);
+                        resolved = sym.st_value.wrapping_add(ctx.bias);
+                    } else if !ctx.ext.is_null() {
+                        resolved = external_lookup(ctx.ext, name);
                     }
                     if resolved == 0 {
-                        if let Some(log) = skip_log {
-                            log(user, name);
+                        if let Some(log) = ctx.skip_log {
+                            log(ctx.user, name);
                         }
                     } else {
                         value = resolved.wrapping_add(r.r_addend as u64);
@@ -407,15 +407,15 @@ unsafe fn walk_rela(
         }
 
         if will_apply {
-            let Some(write) = write_cb else {
+            let Some(write) = ctx.write_cb else {
                 return -1;
             };
-            if write(user, loc_va, value) != 0 {
+            if write(ctx.user, loc_va, value) != 0 {
                 return -1;
             }
-            *applied = applied.wrapping_add(1);
+            *ctx.applied = ctx.applied.wrapping_add(1);
         } else {
-            *skipped = skipped.wrapping_add(1);
+            *ctx.skipped = ctx.skipped.wrapping_add(1);
         }
 
         i += 1;
@@ -424,6 +424,12 @@ unsafe fn walk_rela(
     0
 }
 
+/// Initializes a relocation resolver from a loaded ELF view.
+///
+/// # Safety
+/// `view` and `out` must be valid for reads/writes for the duration of the
+/// call, and `view` must describe an in-memory ELF image whose mapped bytes
+/// remain accessible while the resolver is used.
 #[no_mangle]
 pub unsafe extern "C" fn tm_reloc_init_resolver(
     view: *const TmElfView,
@@ -443,7 +449,7 @@ pub unsafe extern "C" fn tm_reloc_init_resolver(
         return -1;
     }
 
-    let bias_u64 = bias as u64;
+    let bias_u64: u64 = bias;
     let Some(symtab) = va_to_blob(view, bias_u64, symtab_va.wrapping_add(bias_u64)) else {
         return -1;
     };
@@ -463,6 +469,13 @@ pub unsafe extern "C" fn tm_reloc_init_resolver(
     0
 }
 
+/// Applies supported RISC-V RELA relocations to a loaded ELF view.
+///
+/// # Safety
+/// `view` must be valid for reads, `ext` must either be null or point to a
+/// resolver initialized from a compatible image, output counters must be null
+/// or valid for writes, and `write_cb`/`skip_log` must uphold their callback
+/// contracts for `user`.
 #[no_mangle]
 pub unsafe extern "C" fn tm_reloc_apply(
     view: *const TmElfView,
@@ -475,16 +488,16 @@ pub unsafe extern "C" fn tm_reloc_apply(
     out_total: *mut c_ulong,
     out_skipped: *mut c_ulong,
 ) -> c_int {
-    let mut applied = 0 as c_ulong;
-    let mut total = 0 as c_ulong;
-    let mut skipped = 0 as c_ulong;
+    let mut applied: c_ulong = 0;
+    let mut total: c_ulong = 0;
+    let mut skipped: c_ulong = 0;
     let mut rc = 0;
 
     if view.is_null() {
         rc = -1;
     } else {
         let view = &*view;
-        let bias_u64 = bias as u64;
+        let bias_u64: u64 = bias;
         if let Some(dynp) = find_dynamic_in_blob(view) {
             let (rela_va, rela_sz, rela_ent, jmprel_va, jmprel_sz, symtab_va, strtab_va) =
                 find_dyn_values(dynp);
@@ -501,38 +514,27 @@ pub unsafe extern "C" fn tm_reloc_apply(
                 core::ptr::null()
             };
 
-            rc = walk_rela(
+            let mut ctx = RelaWalk {
                 view,
-                bias_u64,
-                rela_va,
-                rela_sz,
-                rela_ent,
+                bias: bias_u64,
                 symtab,
                 strtab,
                 ext,
                 write_cb,
                 skip_log,
                 user,
-                &mut applied,
-                &mut total,
-                &mut skipped,
-            );
+                applied: &mut applied,
+                total: &mut total,
+                skipped: &mut skipped,
+            };
+
+            rc = walk_rela(&mut ctx, rela_va, rela_sz, rela_ent);
             if rc == 0 {
                 rc = walk_rela(
-                    view,
-                    bias_u64,
+                    &mut ctx,
                     jmprel_va,
                     jmprel_sz,
                     size_of::<Elf64Rela>() as u64,
-                    symtab,
-                    strtab,
-                    ext,
-                    write_cb,
-                    skip_log,
-                    user,
-                    &mut applied,
-                    &mut total,
-                    &mut skipped,
                 );
             }
         }
