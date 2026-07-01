@@ -1,0 +1,14 @@
+[package]
+name = "qsoe-tm-reloc"
+version = "0.0.0"
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[lib]
+name = "qsoe_tm_reloc"
+path = "src/lib.rs"
+crate-type = ["rlib"]
+
+[features]
+host-tests = []

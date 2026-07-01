@@ -32,10 +32,11 @@ QSOE_RUST_TM_SYSCFG ?= 1
 QSOE_RUST_TM_SYSMAP ?= 1
 QSOE_RUST_TM_SYSFS ?= 1
 QSOE_RUST_TM_LOG ?= 1
+QSOE_RUST_TM_RELOC ?= 0
 QSOE_RUST_TREEQRVFS ?= 1
 QSOE_RUST_MKFS_QRV ?= 1
 
-TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_ELF) $(QSOE_RUST_TM_FDT) $(QSOE_RUST_TM_LOG) $(QSOE_RUST_TM_PATHMGR) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_RSRCDB) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSMAP) $(QSOE_RUST_TM_SYSFS)))
+TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_ELF) $(QSOE_RUST_TM_FDT) $(QSOE_RUST_TM_LOG) $(QSOE_RUST_TM_PATHMGR) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_RELOC) $(QSOE_RUST_TM_RSRCDB) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSMAP) $(QSOE_RUST_TM_SYSFS)))
 ifneq ($(QSOE_RUST_TM_CPIO),1)
 $(error QSOE_RUST_TM_CPIO must be 1 after C tm_cpio retirement)
 endif
@@ -109,8 +110,8 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         slogger-artifact virtio-artifact test-msgpass-artifact pipe-artifact \
         rust-tm-cpio-provider rust-tm-cred-provider rust-tm-elf-provider rust-tm-fdt-provider rust-tm-log-provider rust-tm-pathmgr-provider rust-tm-procfs-provider \
         rust-tm-rsrcdb-provider rust-tm-script-provider rust-tm-syscfg-provider rust-tm-sysmap-provider rust-tm-sysfs-provider \
-        rust-tm-pseudodev-provider rust-tm-providers \
-        tm-cpio-evidence tm-cpio-runtime-smoke tm-cpio-rc-smoke tm-cred-evidence tm-cred-runtime-smoke tm-cred-rc-smoke tm-elf-evidence tm-elf-runtime-smoke tm-elf-rc-smoke tm-fdt-evidence tm-fdt-runtime-smoke tm-fdt-rc-smoke tm-pathmgr-evidence tm-pathmgr-runtime-smoke tm-pathmgr-rc-smoke tm-procfs-evidence tm-providers-evidence tm-rsrcdb-evidence tm-rsrcdb-runtime-smoke tm-rsrcdb-rc-smoke tm-script-evidence tm-script-runtime-smoke tm-script-rc-smoke \
+        rust-tm-pseudodev-provider rust-tm-reloc-provider rust-tm-providers \
+        tm-cpio-evidence tm-cpio-runtime-smoke tm-cpio-rc-smoke tm-cred-evidence tm-cred-runtime-smoke tm-cred-rc-smoke tm-elf-evidence tm-elf-runtime-smoke tm-elf-rc-smoke tm-fdt-evidence tm-fdt-runtime-smoke tm-fdt-rc-smoke tm-pathmgr-evidence tm-pathmgr-runtime-smoke tm-pathmgr-rc-smoke tm-procfs-evidence tm-providers-evidence tm-reloc-provider-evidence tm-rsrcdb-evidence tm-rsrcdb-runtime-smoke tm-rsrcdb-rc-smoke tm-script-evidence tm-script-runtime-smoke tm-script-rc-smoke \
         tm-syscfg-evidence tm-syscfg-runtime-smoke tm-syscfg-rc-smoke tm-sysmap-evidence tm-sysmap-runtime-smoke tm-sysmap-rc-smoke tm-log-evidence tm-sysfs-evidence tm-sysfs-runtime-smoke tm-sysfs-rc-smoke tm-pseudodev-evidence tm-pseudodev-runtime-smoke tm-pseudodev-rc-smoke \
         rust-slogger-boot-smoke \
         rust-virtio-boot-smoke rust-virtio-file-smoke \
@@ -135,8 +136,8 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-tm-cpio-provider container-rust-tm-cred-provider \
         container-rust-tm-elf-provider container-rust-tm-fdt-provider container-rust-tm-log-provider container-rust-tm-pathmgr-provider container-rust-tm-procfs-provider container-rust-tm-rsrcdb-provider container-rust-tm-script-provider \
         container-rust-tm-syscfg-provider container-rust-tm-sysmap-provider container-rust-tm-sysfs-provider \
-        container-rust-tm-pseudodev-provider container-rust-tm-providers \
-        container-tm-cpio-evidence container-tm-cpio-runtime-smoke container-tm-cpio-rc-smoke container-tm-cred-evidence container-tm-cred-runtime-smoke container-tm-cred-rc-smoke container-tm-elf-evidence container-tm-elf-runtime-smoke container-tm-elf-rc-smoke container-tm-fdt-evidence container-tm-fdt-runtime-smoke container-tm-fdt-rc-smoke container-tm-pathmgr-evidence container-tm-pathmgr-runtime-smoke container-tm-pathmgr-rc-smoke container-tm-procfs-evidence container-tm-providers-evidence \
+        container-rust-tm-pseudodev-provider container-rust-tm-reloc-provider container-rust-tm-providers \
+        container-tm-cpio-evidence container-tm-cpio-runtime-smoke container-tm-cpio-rc-smoke container-tm-cred-evidence container-tm-cred-runtime-smoke container-tm-cred-rc-smoke container-tm-elf-evidence container-tm-elf-runtime-smoke container-tm-elf-rc-smoke container-tm-fdt-evidence container-tm-fdt-runtime-smoke container-tm-fdt-rc-smoke container-tm-pathmgr-evidence container-tm-pathmgr-runtime-smoke container-tm-pathmgr-rc-smoke container-tm-procfs-evidence container-tm-providers-evidence container-tm-reloc-provider-evidence \
         container-tm-rsrcdb-evidence container-tm-rsrcdb-runtime-smoke container-tm-rsrcdb-rc-smoke container-tm-script-evidence container-tm-script-runtime-smoke container-tm-script-rc-smoke container-tm-syscfg-evidence container-tm-syscfg-runtime-smoke container-tm-syscfg-rc-smoke \
         container-tm-sysmap-evidence container-tm-sysmap-runtime-smoke container-tm-sysmap-rc-smoke container-tm-log-evidence container-tm-sysfs-evidence container-tm-sysfs-runtime-smoke container-tm-sysfs-rc-smoke container-tm-pseudodev-evidence container-tm-pseudodev-runtime-smoke container-tm-pseudodev-rc-smoke \
         container-rust-virtio-boot-smoke \
@@ -173,7 +174,9 @@ all: component-overrides
 	    QSOE_RUST_TM_PATHMGR=$(QSOE_RUST_TM_PATHMGR) \
 	    QSOE_RUST_TM_PROCFS=$(QSOE_RUST_TM_PROCFS) \
 	    QSOE_RUST_TM_PSEUDODEV=$(QSOE_RUST_TM_PSEUDODEV) \
+	    QSOE_RUST_TM_RELOC=$(QSOE_RUST_TM_RELOC) \
 	    QSOE_RUST_TM_RSRCDB=$(QSOE_RUST_TM_RSRCDB) \
+    QSOE_RUST_TM_RELOC=$(QSOE_RUST_TM_RELOC) \
 	    QSOE_RUST_TM_SCRIPT=$(QSOE_RUST_TM_SCRIPT) \
 	    QSOE_RUST_TM_SYSCFG=$(QSOE_RUST_TM_SYSCFG) \
 	    QSOE_RUST_TM_SYSMAP=$(QSOE_RUST_TM_SYSMAP) \
@@ -503,6 +506,10 @@ rust-tm-pseudodev-provider:
 	@QSOE_RUST_TM_PSEUDODEV=1 \
 	    scripts/build-rust-tm-providers.sh build/rust/tm-pseudodev/libqsoe_tm_pseudodev.a
 
+rust-tm-reloc-provider:
+	@QSOE_RUST_TM_RELOC=1 \
+	    scripts/build-rust-tm-providers.sh build/rust/tm-reloc/libqsoe_tm_reloc.a
+
 rust-tm-providers:
 	@QSOE_RUST_TM_CPIO=$(QSOE_RUST_TM_CPIO) \
 	    QSOE_RUST_TM_CRED=$(QSOE_RUST_TM_CRED) \
@@ -569,6 +576,9 @@ tm-procfs-evidence:
 
 tm-providers-evidence:
 	@scripts/tm-providers-evidence.sh
+
+tm-reloc-provider-evidence:
+	@scripts/tm-reloc-provider-evidence.sh
 
 tm-rsrcdb-evidence:
 	@scripts/tm-rsrcdb-evidence.sh
@@ -776,6 +786,9 @@ container-rust-tm-pathmgr-provider:
 container-rust-tm-procfs-provider:
 	@scripts/container-toolchain.sh run make rust-tm-procfs-provider
 
+container-rust-tm-reloc-provider:
+	@scripts/container-toolchain.sh run make rust-tm-reloc-provider
+
 container-rust-tm-rsrcdb-provider:
 	@scripts/container-toolchain.sh run make rust-tm-rsrcdb-provider
 
@@ -847,6 +860,9 @@ container-tm-procfs-evidence:
 
 container-tm-providers-evidence:
 	@scripts/container-toolchain.sh run make tm-providers-evidence
+
+container-tm-reloc-provider-evidence:
+	@scripts/container-toolchain.sh run make tm-reloc-provider-evidence
 
 container-tm-rsrcdb-evidence:
 	@scripts/container-toolchain.sh run make tm-rsrcdb-evidence

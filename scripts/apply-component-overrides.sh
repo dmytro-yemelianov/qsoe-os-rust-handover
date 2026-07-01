@@ -246,7 +246,7 @@ ensure_tm_log_env_continuations() {
     awk '
         index($0, "QSOE_RUST_TM_LOG=$(QSOE_RUST_TM_LOG)") &&
             $0 !~ /\\[[:space:]]*$/ {
-            $0 = $0 " \\"
+            $0 = $0 " \"
         }
         { print }
     ' "$file" > "$tmp"
@@ -272,6 +272,46 @@ ensure_provider_count_has_tm_log() {
                      " $(QSOE_RUST_TM_LOG)" \
                      substr($0, pos + length(after))
             }
+        }
+        { print }
+    ' "$file" > "$tmp"
+    mv "$tmp" "$file"
+}
+
+ensure_provider_count_has_tm_reloc() {
+    local file=$1
+    local after=$2
+    local tmp
+
+    if grep -F 'TM_RUST_PROVIDER_COUNT :=' "$file" |
+        grep -Fq '$(QSOE_RUST_TM_RELOC)'; then
+        return 0
+    fi
+
+    tmp=$(mktemp)
+    awk -v after="$after" '
+        /^TM_RUST_PROVIDER_COUNT :=/ {
+            pos = index($0, after)
+            if (pos) {
+                $0 = substr($0, 1, pos + length(after) - 1) \
+                     " $(QSOE_RUST_TM_RELOC)" \
+                     substr($0, pos + length(after))
+            }
+        }
+        { print }
+    ' "$file" > "$tmp"
+    mv "$tmp" "$file"
+}
+
+ensure_tm_reloc_env_continuations() {
+    local file=$1
+    local tmp
+
+    tmp=$(mktemp)
+    awk '
+        index($0, "QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)") &&
+            $0 !~ /\\[[:space:]]*$/ {
+            $0 = $0 " \"
         }
         { print }
     ' "$file" > "$tmp"
@@ -983,3 +1023,19 @@ require_line "$ROOT/quser/test/suite/msgpass_test.c" '(void) ProcessTerminate(nr
 require_line "$ROOT/quser/test/suite/sync.c" 'rc_unlock == EOK || (rc_unlock == -1 && errno == EPERM)'
 
 echo "apply-component-overrides.sh: component overrides ready"
+
+
+# Keep tm_reloc as an explicit opt-in provider candidate.  This is normalized
+# after the historical component patches so both fresh release checkouts and
+# already-patched self-hosted workspaces get the same selector surface.
+ensure_line_after_first "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSFS ?= 0' 'QSOE_RUST_TM_RELOC ?= 0'
+ensure_provider_count_has_tm_reloc "$ROOT/lq/Makefile" '$(QSOE_RUST_TM_SYSFS)'
+ensure_tm_reloc_env_continuations "$ROOT/lq/Makefile"
+ensure_line_after_each "$ROOT/lq/Makefile" 'QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)' '    QSOE_RUST_TM_RELOC=$(QSOE_RUST_TM_RELOC) \'
+
+ensure_line_after_first "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SYSFS ?= 0' 'QSOE_RUST_TM_RELOC ?= 0'
+ensure_provider_count_has_tm_reloc "$ROOT/lq/taskman/Makefile" '$(QSOE_RUST_TM_SYSFS)'
+ensure_tm_reloc_env_continuations "$ROOT/lq/taskman/Makefile"
+ensure_line_after_each "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)' '    QSOE_RUST_TM_RELOC=$(QSOE_RUST_TM_RELOC) \'
+require_line "$ROOT/lq/taskman/Makefile" 'QSOE_RUST_TM_RELOC ?= 0'
+require_line_contains "$ROOT/lq/taskman/Makefile" 'TM_RUST_PROVIDER_COUNT :=' '$(QSOE_RUST_TM_RELOC)'

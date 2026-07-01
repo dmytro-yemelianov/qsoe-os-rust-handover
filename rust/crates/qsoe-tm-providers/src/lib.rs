@@ -20,6 +20,7 @@ pub extern "C" fn qsoe_tm_providers_archive_anchor() -> usize {
         feature = "tm-pathmgr",
         feature = "tm-procfs",
         feature = "tm-pseudodev",
+        feature = "tm-reloc",
         feature = "tm-rsrcdb",
         feature = "tm-script",
         feature = "tm-syscfg",
@@ -39,6 +40,7 @@ pub extern "C" fn qsoe_tm_providers_archive_anchor() -> usize {
         feature = "tm-pathmgr",
         feature = "tm-procfs",
         feature = "tm-pseudodev",
+        feature = "tm-reloc",
         feature = "tm-rsrcdb",
         feature = "tm-script",
         feature = "tm-syscfg",
@@ -79,6 +81,11 @@ pub extern "C" fn qsoe_tm_providers_archive_anchor() -> usize {
         #[cfg(feature = "tm-pseudodev")]
         {
             acc ^= qsoe_tm_pseudodev::tm_devnull_write as *const () as usize;
+        }
+        #[cfg(feature = "tm-reloc")]
+        {
+            acc ^= qsoe_tm_reloc::tm_reloc_apply as *const () as usize;
+            acc ^= qsoe_tm_reloc::tm_reloc_init_resolver as *const () as usize;
         }
         #[cfg(feature = "tm-rsrcdb")]
         {

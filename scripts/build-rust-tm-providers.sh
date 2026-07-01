@@ -222,6 +222,8 @@ add_feature QSOE_RUST_TM_LOG tm-log
 add_feature QSOE_RUST_TM_PATHMGR tm-pathmgr
 add_feature QSOE_RUST_TM_PROCFS tm-procfs
 add_feature QSOE_RUST_TM_PSEUDODEV tm-pseudodev
+QSOE_RUST_TM_RELOC=${QSOE_RUST_TM_RELOC:-0}
+add_feature QSOE_RUST_TM_RELOC tm-reloc
 add_feature QSOE_RUST_TM_RSRCDB tm-rsrcdb
 add_feature QSOE_RUST_TM_SCRIPT tm-script
 add_feature QSOE_RUST_TM_SYSCFG tm-syscfg
