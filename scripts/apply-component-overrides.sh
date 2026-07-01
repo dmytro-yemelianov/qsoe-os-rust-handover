@@ -311,7 +311,7 @@ ensure_tm_reloc_env_continuations() {
     awk '
         index($0, "QSOE_RUST_TM_SYSFS=$(QSOE_RUST_TM_SYSFS)") &&
             $0 !~ /\\[[:space:]]*$/ {
-            $0 = $0 " \"
+            $0 = $0 " \\"
         }
         { print }
     ' "$file" > "$tmp"
