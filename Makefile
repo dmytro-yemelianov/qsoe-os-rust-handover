@@ -1048,3 +1048,11 @@ spawn-loader-c-stress-evidence:
 
 container-spawn-loader-c-stress-evidence:
 	@scripts/container-toolchain.sh run make spawn-loader-c-stress-evidence
+
+.PHONY: reloc-c-evidence container-reloc-c-evidence
+
+reloc-c-evidence:
+	@scripts/reloc-c-evidence.sh
+
+container-reloc-c-evidence:
+	@scripts/container-toolchain.sh run make reloc-c-evidence
