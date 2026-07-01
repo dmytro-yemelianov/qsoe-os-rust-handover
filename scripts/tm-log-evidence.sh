@@ -166,11 +166,13 @@ audit_provider_archive() {
 
 audit_fallback_build() {
     local log_obj="$ROOT/nq/build/libtaskman/log.o"
+    local log_lib="$ROOT/nq/build/libtaskman/libtaskman.a"
     local elf="$ROOT/nq/build/taskman/taskman.elf"
     local log_symbols="$WORKDIR/nq-c-fallback-log-symbols.txt"
     local elf_symbols="$WORKDIR/nq-c-fallback-taskman-symbols.txt"
 
     echo "tm-log-evidence.sh: building explicit C fallback selector"
+    rm -f "$log_obj" "$log_lib" "$elf"
     "$MAKE" -C "$ROOT/nq/taskman" --no-print-directory QSOE_RUST_TM_LOG=0
 
     capture_symbols "$log_obj" "$log_symbols"
@@ -183,6 +185,7 @@ audit_fallback_build() {
 
 audit_rust_selected_build() {
     local log_obj="$ROOT/lq/build/libtaskman/log.o"
+    local log_lib="$ROOT/lq/build/libtaskman/libtaskman.a"
     local elf="$ROOT/lq/build/taskman.elf"
     local log_symbols="$WORKDIR/lq-rust-selected-log-symbols.txt"
     local elf_symbols="$WORKDIR/lq-rust-selected-taskman-symbols.txt"
@@ -192,6 +195,7 @@ audit_rust_selected_build() {
     audit_provider_archive
 
     echo "tm-log-evidence.sh: building LQ image with Rust tm_log formatter selected"
+    rm -f "$log_obj" "$log_lib" "$elf"
     "$MAKE" -C "$ROOT/lq" --no-print-directory QSOE_RUST_TM_LOG=1
 
     capture_symbols "$log_obj" "$log_symbols"
