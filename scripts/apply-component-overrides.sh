@@ -238,6 +238,21 @@ ensure_line_between() {
     mv "$tmp" "$file"
 }
 
+ensure_tm_log_env_continuations() {
+    local file=$1
+    local tmp
+
+    tmp=$(mktemp)
+    awk '
+        index($0, "QSOE_RUST_TM_LOG=$(QSOE_RUST_TM_LOG)") &&
+            $0 !~ /\\[[:space:]]*$/ {
+            $0 = $0 " \\"
+        }
+        { print }
+    ' "$file" > "$tmp"
+    mv "$tmp" "$file"
+}
+
 ensure_provider_count_has_tm_log() {
     local file=$1
     local after=$2
@@ -666,6 +681,10 @@ ensure_provider_count_has_tm_log "$ROOT/lq/taskman/Makefile" \
 ensure_line_after_each "$ROOT/lq/taskman/Makefile" \
     'QSOE_RUST_TM_FDT=$(QSOE_RUST_TM_FDT)' \
     "$TM_LOG_ENV_LINE"
+
+ensure_tm_log_env_continuations "$ROOT/nq/taskman/Makefile"
+ensure_tm_log_env_continuations "$ROOT/lq/Makefile"
+ensure_tm_log_env_continuations "$ROOT/lq/taskman/Makefile"
 
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO ?= 1'
 require_line "$ROOT/nq/taskman/Makefile" 'QSOE_RUST_TM_CPIO must be 1 after C tm_cpio retirement'
