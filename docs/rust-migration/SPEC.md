@@ -137,12 +137,12 @@ Each Rust migration must follow this sequence:
 ### Host Tools
 
 Host tools are the lowest-risk starting point because they do not run inside
-QSOE and can be validated against generated images:
+QSOE and can be validated against generated images. The qrvfs inspector and
+writer have completed this path and are now retired-C Rust host tools:
 
-- `host_tools/mkgpt.py`.
-- `host_tools/mkfs-qrv.c`.
-- `host_tools/treeqrvfs.c`.
-- `boot/gptextract.py`.
+- Rust `mkfs-qrv-rs` and `qrvfs-tree` for qrvfs images.
+- Remaining C/Python host tools such as `host_tools/mkgpt.py` and
+  `boot/gptextract.py`.
 
 Host-tool Rust ports should share parser and serializer crates that can later be
 adapted to `no_std` where practical.

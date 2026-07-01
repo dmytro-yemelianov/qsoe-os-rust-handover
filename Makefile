@@ -32,7 +32,7 @@ QSOE_RUST_TM_SYSCFG ?= 1
 QSOE_RUST_TM_SYSMAP ?= 1
 QSOE_RUST_TM_SYSFS ?= 1
 QSOE_RUST_TREEQRVFS ?= 1
-QSOE_RUST_MKFS_QRV ?= 0
+QSOE_RUST_MKFS_QRV ?= 1
 
 TM_RUST_PROVIDER_COUNT := $(words $(filter 1,$(QSOE_RUST_TM_CPIO) $(QSOE_RUST_TM_CRED) $(QSOE_RUST_TM_ELF) $(QSOE_RUST_TM_FDT) $(QSOE_RUST_TM_PATHMGR) $(QSOE_RUST_TM_PROCFS) $(QSOE_RUST_TM_PSEUDODEV) $(QSOE_RUST_TM_RSRCDB) $(QSOE_RUST_TM_SCRIPT) $(QSOE_RUST_TM_SYSCFG) $(QSOE_RUST_TM_SYSMAP) $(QSOE_RUST_TM_SYSFS)))
 ifneq ($(QSOE_RUST_TM_CPIO),1)
@@ -71,6 +71,12 @@ endif
 ifneq ($(QSOE_RUST_TM_SYSFS),1)
 $(error QSOE_RUST_TM_SYSFS must be 1 after C tm_sysfs retirement)
 endif
+ifneq ($(QSOE_RUST_TREEQRVFS),1)
+$(error QSOE_RUST_TREEQRVFS must be 1 after C treeqrvfs retirement)
+endif
+ifneq ($(QSOE_RUST_MKFS_QRV),1)
+$(error QSOE_RUST_MKFS_QRV must be 1 after C mkfs-qrv retirement)
+endif
 
 SELECTED_SLOGGER_ELF ?= build/rust/selected/sbin/slogger.elf
 SELECTED_VIRTIO_ELF ?= build/rust/selected/sbin/devb-virtio.elf
@@ -78,9 +84,9 @@ SELECTED_TEST_MSGPASS_ELF ?= build/rust/selected/usr/bin/test_msgpass.elf
 SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
 
 .PHONY: all prepare component-overrides clean nvme nvme-populate virtio fsqrv-image tree \
-        treeqrvfs-artifact treeqrvfs-rc-smoke treeqrvfs-rc-rollback-smoke \
+        treeqrvfs-artifact treeqrvfs-rc-smoke \
         rust-mkfs-qrv-artifact rust-mkfs-qrv-live-smoke \
-        mkfs-qrv-rc-live-smoke mkfs-qrv-rc-rollback-smoke \
+        mkfs-qrv-rc-live-smoke \
         check-host-tools check-qrvfs-fixture check-qrvfs-rust-fixture \
         check-qrvfs-rust-writer-fixture \
         check-qrvfs-rust-writer-production-root \
@@ -135,7 +141,7 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-rust-virtio-boot-smoke \
         container-virtio-rc-file-smoke \
         container-rust-mkfs-qrv-live-smoke \
-        container-mkfs-qrv-rc-live-smoke container-mkfs-qrv-rc-rollback-smoke \
+        container-mkfs-qrv-rc-live-smoke \
         container-rust-slog-readback-smoke container-slogger-rc-boot-smoke \
         container-slogger-rc-readback-smoke \
         container-rust-test-msgpass-smoke container-test-msgpass-rc-smoke \
@@ -146,7 +152,6 @@ SELECTED_PIPE_ELF ?= build/rust/selected/sbin/pipe.elf
         container-check-qrvfs-rust-writer-production-root \
         container-procfs-smoke container-tm-procfs-rc-smoke \
         container-treeqrvfs-rc-smoke \
-        container-treeqrvfs-rc-rollback-smoke \
         container-source-build
 
 all: component-overrides
@@ -213,13 +218,8 @@ VIRTIO_IMG     := build/virtio.img
 
 FSQRV_PART     := 8
 FSQRV_SIZE_MB  := 16
-MKFS_QRV_C     := build/mkfs-qrv
 MKFS_QRV_RS    := build/mkfs-qrv-rs
-ifeq ($(QSOE_RUST_MKFS_QRV),1)
 MKFS_QRV       := $(MKFS_QRV_RS)
-else
-MKFS_QRV       := $(MKFS_QRV_C)
-endif
 TREEQRVFS      := build/treeqrvfs
 FSQRV_ROOT     := build/fsqrv-root
 FSQRV_IMG      := build/fsqrv.img
@@ -263,10 +263,6 @@ $(NVME_IMG): host_tools/mkgpt.py
 		host_tools/mkgpt.py --fsqrv $(NVME_NPARTS) $@ $(NVME_PARTS); \
 	fi
 
-$(MKFS_QRV_C): host_tools/mkfs-qrv.c quser/fs/qrv/fs.h
-	@mkdir -p $(dir $@)
-	@cc -O2 -Wall -I quser/fs/qrv -o $@ $<
-
 rust-mkfs-qrv-artifact:
 	@scripts/mkfs-qrv-rs-artifact.sh "$(MKFS_QRV_RS)"
 
@@ -280,15 +276,12 @@ $(TREEQRVFS): treeqrvfs-artifact
 treeqrvfs-rc-smoke:
 	@scripts/treeqrvfs-rc-smoke.sh
 
-treeqrvfs-rc-rollback-smoke:
-	@TREEQRVFS_RC_ROLLBACK=1 scripts/treeqrvfs-rc-smoke.sh
-
 # Dump the staged qrvfs image's directory tree (build it first if needed).
 tree: $(TREEQRVFS) fsqrv-image
 	@if [ -f $(FSQRV_IMG) ]; then "$(TREEQRVFS)" $(FSQRV_IMG); \
 	else echo "make tree: $(FSQRV_IMG) not built (build quser first)"; fi
 
-check-host-tools: check-qrvfs-fixture check-gpt-fixture \
+check-host-tools: check-qrvfs-fixture check-qrvfs-rust-fixture check-gpt-fixture \
     check-tm-cpio-model check-tm-cred-model check-tm-elf-model check-tm-pathmgr-model check-tm-procfs-model \
     check-tm-rsrcdb-model check-tm-script-model check-tm-syscfg-model \
     check-tm-sysmap-model check-tm-sysfs-model
@@ -638,9 +631,6 @@ rust-mkfs-qrv-live-smoke:
 mkfs-qrv-rc-live-smoke:
 	@scripts/mkfs-qrv-rc-live-smoke.sh
 
-mkfs-qrv-rc-rollback-smoke:
-	@MKFS_QRV_RC_ROLLBACK=1 scripts/mkfs-qrv-rc-live-smoke.sh
-
 virtio-rc-file-smoke:
 	@scripts/virtio-rc-file-smoke.sh
 
@@ -916,9 +906,6 @@ container-rust-mkfs-qrv-live-smoke:
 container-mkfs-qrv-rc-live-smoke:
 	@scripts/container-toolchain.sh run make mkfs-qrv-rc-live-smoke
 
-container-mkfs-qrv-rc-rollback-smoke:
-	@scripts/container-toolchain.sh run make mkfs-qrv-rc-rollback-smoke
-
 container-rust-slog-readback-smoke:
 	@scripts/container-toolchain.sh run make rust-slog-readback-smoke
 
@@ -957,9 +944,6 @@ container-tm-procfs-rc-smoke:
 
 container-treeqrvfs-rc-smoke:
 	@scripts/container-toolchain.sh run make treeqrvfs-rc-smoke
-
-container-treeqrvfs-rc-rollback-smoke:
-	@scripts/container-toolchain.sh run make treeqrvfs-rc-rollback-smoke
 
 container-source-build:
 	@scripts/container-toolchain.sh source-build

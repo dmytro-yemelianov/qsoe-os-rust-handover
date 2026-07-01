@@ -2,6 +2,9 @@
 
 Captured: 2026-06-28 21:17 CEST.
 
+Historical note: C `treeqrvfs` was later retired. The current Rust-only host
+qrvfs tool path is documented in `HOST_QRVFS_RETIREMENT.md`.
+
 This note records the host `treeqrvfs` inspector Rust-default
 release-candidate path. It does not replace the C `mkfs-qrv` image writer, and
 the existing C inspector remains available as the rollback implementation and

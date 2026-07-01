@@ -1,3 +1,42 @@
+## 2026-07-01 CEST - Host qrvfs C Retirement
+
+Scope:
+
+- Retired C `host_tools/treeqrvfs.c` and `host_tools/mkfs-qrv.c`.
+- Made Rust `qrvfs-tree` and `mkfs-qrv-rs` mandatory in Makefile selectors.
+- Converted qrvfs fixture and production-root checks to Rust-only oracles.
+- Removed qrvfs rollback make and container targets.
+- Updated CI to run Rust-only tree and mkfs-qrv live smokes.
+- Added `HOST_QRVFS_RETIREMENT.md` and updated roadmap-facing docs.
+
+Commands:
+
+- `bash -n scripts/treeqrvfs-artifact.sh scripts/treeqrvfs-rc-smoke.sh scripts/check-qrvfs-fixture.sh scripts/check-qrvfs-rust-fixture.sh scripts/check-qrvfs-rust-writer-fixture.sh scripts/check-qrvfs-rust-writer-production-root.sh scripts/mkfs-qrv-rs-artifact.sh scripts/rust-mkfs-qrv-live-smoke.sh scripts/mkfs-qrv-rc-live-smoke.sh`
+- `make check-qrvfs-fixture`
+- `make check-qrvfs-rust-fixture`
+- `make treeqrvfs-rc-smoke`
+- `make check-qrvfs-rust-writer-fixture`
+- `make check-qrvfs-rust-writer-production-root`
+- `make rust-mkfs-qrv-live-smoke`
+- `make mkfs-qrv-rc-live-smoke`
+- `QSOE_RUST_TREEQRVFS=0 make tree`
+- `QSOE_RUST_MKFS_QRV=0 make fsqrv-image`
+- `TREEQRVFS_RC_ROLLBACK=1 scripts/treeqrvfs-rc-smoke.sh`
+- `MKFS_QRV_RC_ROLLBACK=1 scripts/mkfs-qrv-rc-live-smoke.sh`
+
+Result:
+
+- Shell syntax passed for all qrvfs retirement scripts.
+- Rust-only qrvfs fixture, selected tree artifact, and `treeqrvfs-rc-smoke` passed.
+- Rust writer fixture and production-root comparison passed using Rust `qrvfs-tree` as the oracle.
+- Retired selectors `QSOE_RUST_TREEQRVFS=0`, `QSOE_RUST_MKFS_QRV=0`, `TREEQRVFS_RC_ROLLBACK=1`, and `MKFS_QRV_RC_ROLLBACK=1` fail fast.
+- `make rust-mkfs-qrv-live-smoke` and `make mkfs-qrv-rc-live-smoke` passed with the `rust-virtio-file-smoke: read /usr/conf/passwd ok` marker.
+- `make rust-quality` passed, including 7 `qsoe-qrvfs` parser/writer tests.
+
+Follow-up:
+
+- Update #136 metadata after PR and main CI complete.
+
 # QSOE Rust Migration Development Log
 
 Last updated: 2026-07-01 CEST.

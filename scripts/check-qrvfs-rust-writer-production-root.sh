@@ -1,21 +1,19 @@
 #!/usr/bin/env bash
 #
-# Build the normal staged qrvfs root, then write and inspect a Rust image from it.
+# Build the normal staged qrvfs root, then write and inspect Rust images from it.
 
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-TOOLS="$ROOT/build/host-tools"
 FIXTURE="$ROOT/build/fixtures/qrvfs-rust-production-root"
 ROOTDIR="$ROOT/build/fsqrv-root"
-C_IMG="$ROOT/build/fsqrv.img"
+PROD_IMG="$ROOT/build/fsqrv.img"
 RUST_IMG="$FIXTURE/fsqrv-rust.img"
-C_TREE="$FIXTURE/tree-c-writer.log"
+PROD_TREE="$FIXTURE/tree-production.log"
 RUST_TREE="$FIXTURE/tree-rust-writer.log"
-C_BUILD_LOG="$FIXTURE/mkfs-c.log"
+PROD_BUILD_LOG="$FIXTURE/mkfs-production.log"
 RUST_BUILD_LOG="$FIXTURE/mkfs-rust.log"
 MANIFEST="$ROOT/rust/Cargo.toml"
-CC=${CC:-cc}
 
 . "$ROOT/scripts/rust-env.sh"
 qsoe_cargo_set_target_dir "$ROOT" host
@@ -25,28 +23,26 @@ if ! command -v cargo >/dev/null 2>&1; then
     exit 127
 fi
 
-mkdir -p "$TOOLS" "$FIXTURE"
+mkdir -p "$FIXTURE"
 
-make -C "$ROOT" --no-print-directory fsqrv-image > "$C_BUILD_LOG"
-if [ ! -f "$C_IMG" ] || [ ! -d "$ROOTDIR" ]; then
+make -C "$ROOT" --no-print-directory fsqrv-image > "$PROD_BUILD_LOG"
+if [ ! -f "$PROD_IMG" ] || [ ! -d "$ROOTDIR" ]; then
     echo "check-qrvfs-rust-writer-production-root.sh: fsqrv-image was not built" >&2
-    echo "--- $C_BUILD_LOG ---" >&2
-    cat "$C_BUILD_LOG" >&2
+    echo "--- $PROD_BUILD_LOG ---" >&2
+    cat "$PROD_BUILD_LOG" >&2
     exit 1
 fi
 
-"$CC" -O2 -Wall -Wno-unused-variable -I "$ROOT/quser/fs/qrv" \
-    -o "$TOOLS/treeqrvfs" "$ROOT/host_tools/treeqrvfs.c"
-
-cargo run \
+cargo build \
     --quiet \
     --manifest-path "$MANIFEST" \
     -p qsoe-qrvfs \
     --bin mkfs-qrv-rs \
-    -- -s 16 "$RUST_IMG" "$ROOTDIR" > "$RUST_BUILD_LOG"
+    --bin qrvfs-tree
 
-"$TOOLS/treeqrvfs" "$C_IMG" > "$C_TREE"
-"$TOOLS/treeqrvfs" "$RUST_IMG" > "$RUST_TREE"
+"$CARGO_TARGET_DIR/debug/mkfs-qrv-rs" -s 16 "$RUST_IMG" "$ROOTDIR" > "$RUST_BUILD_LOG"
+"$CARGO_TARGET_DIR/debug/qrvfs-tree" "$PROD_IMG" > "$PROD_TREE"
+"$CARGO_TARGET_DIR/debug/qrvfs-tree" "$RUST_IMG" > "$RUST_TREE"
 
 require() {
     pattern=$1
@@ -59,7 +55,7 @@ require() {
     fi
 }
 
-for tree in "$C_TREE" "$RUST_TREE"; do
+for tree in "$PROD_TREE" "$RUST_TREE"; do
     require "qrvfs v2, 4096 blocks, 128 inodes" "$tree"
     require "home" "$tree"
     require "user" "$tree"
@@ -82,16 +78,16 @@ for tree in "$C_TREE" "$RUST_TREE"; do
     require "6 directories, 12 files" "$tree"
 done
 
-c_count=$(tail -n 1 "$C_TREE")
+prod_count=$(tail -n 1 "$PROD_TREE")
 rust_count=$(tail -n 1 "$RUST_TREE")
-if [ "$c_count" != "$rust_count" ]; then
-    echo "check-qrvfs-rust-writer-production-root.sh: C/Rust tree counts diverge" >&2
-    echo "C:    $c_count" >&2
-    echo "Rust: $rust_count" >&2
+if [ "$prod_count" != "$rust_count" ]; then
+    echo "check-qrvfs-rust-writer-production-root.sh: production/Rust tree counts diverge" >&2
+    echo "Production: $prod_count" >&2
+    echo "Rust:       $rust_count" >&2
     exit 1
 fi
 
 echo "check-qrvfs-rust-writer-production-root.sh: ok"
-echo "  root:      $ROOTDIR"
-echo "  c image:   $C_IMG"
-echo "  rust image: $RUST_IMG"
+echo "  root:             $ROOTDIR"
+echo "  production image: $PROD_IMG"
+echo "  rebuilt image:    $RUST_IMG"

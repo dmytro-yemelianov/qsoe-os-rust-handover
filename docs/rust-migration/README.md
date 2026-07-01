@@ -18,6 +18,7 @@ Read in this order:
    release-candidate note and C rollback drill.
 7. `MKFS_QRV_RC.md`: Rust-default host `mkfs-qrv-rs` writer
    release-candidate note and C rollback drill.
+   `HOST_QRVFS_RETIREMENT.md` records the subsequent C host-tool retirement.
 8. `TOOLCHAIN.md`: Debian container toolchain for source builds and Rust link
    smokes.
 9. `INDEXING.md`: C source indexing, compile database, and clangd workflow.

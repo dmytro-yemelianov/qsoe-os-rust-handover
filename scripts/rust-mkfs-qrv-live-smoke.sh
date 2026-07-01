@@ -8,7 +8,7 @@ usage() {
     cat <<'EOF'
 usage: scripts/rust-mkfs-qrv-live-smoke.sh [-t seconds] [-o log] [--keep-running] [-- <emu args>]
 
-Builds the normal virtio qrvfs image with Rust mkfs-qrv-rs selected, then
+Builds the normal virtio qrvfs image with retired-C Rust mkfs-qrv-rs selected, then
 reuses the virtio file-read smoke to prove the guest can mount /usr and read
 /usr/conf/passwd from the Rust-written image.
 

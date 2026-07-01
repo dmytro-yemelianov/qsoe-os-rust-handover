@@ -1,13 +1,13 @@
 # C Implementation Retirement Gate
 
-Captured: 2026-06-29 CEST.
+Captured: 2026-07-01 CEST.
 
 This document turns the Phase 8 retirement rule into an explicit gate. The
 first removal was the in-guest test helper `test_msgpass`, which had a
 Rust-default release-candidate path and C rollback drill before its retirement
 PR removed the C helper. The next removals were production services
 `/sbin/slogger`, `/sbin/pipe`, and `/sbin/devb-virtio` after their own
-Rust-default RC evidence. The current retired task-manager providers are
+Rust-default RC evidence. Host qrvfs tools `treeqrvfs` and `mkfs-qrv` are also retired after their own inspector and writer RC windows. The current retired task-manager providers are
 `tm_procfs`, `tm_cpio`, `tm_cred`, `tm_script`, `tm_elf`, `tm_fdt`,
 `tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`, and `tm_rsrcdb` after their own
 Rust-default RC evidence and rollback drills. All remaining Rust pilots stay
@@ -52,12 +52,10 @@ it must include evidence for all of these items:
 
 The live status matrix is `STATUS.md`. It records C default, Rust opt-in, Rust
 default, and retired status for every tracked migration component. At this
-capture, `test_msgpass`, `slogger`, `pipe`, `devb-virtio`, `tm_procfs`,
+capture, host qrvfs tools, `test_msgpass`, `slogger`, `pipe`, `devb-virtio`, `tm_procfs`,
 `tm_cpio`, `tm_cred`, `tm_script`, `tm_elf`, `tm_syscfg`, `tm_sysmap`,
-`tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`, and `tm_rsrcdb` are
-the tracked components
-in `Retired` status.
-`test_msgpass` is the first retired helper; `slogger`, `pipe`, and
+`tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`, `tm_rsrcdb`, and `tm_fdt` are the tracked components in `Retired` status.
+Host qrvfs tools are retired host paths. `test_msgpass` is the first retired helper; `slogger`, `pipe`, and
 `devb-virtio` are retired production paths. `tm_procfs` is the first retired
 task-manager provider, followed by `tm_cpio`, `tm_cred`, `tm_script`,
 `tm_elf`, `tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`,
@@ -69,6 +67,7 @@ require their own separate removal PRs after RC evidence and rollback drills.
 
 | Component | Retirement note | Prior RC evidence | Current rollback |
 | --- | --- | --- | --- |
+| Host qrvfs tools | `HOST_QRVFS_RETIREMENT.md` | `TREEQRVFS_RC.md`, `MKFS_QRV_RC.md`, `make treeqrvfs-rc-smoke`, `make mkfs-qrv-rc-live-smoke`, previous `make treeqrvfs-rc-rollback-smoke` and `make mkfs-qrv-rc-rollback-smoke` evidence | No C rollback target remains; Rust `qrvfs-tree` and `mkfs-qrv-rs` are mandatory for host qrvfs inspection and image creation. |
 | `test_msgpass` | `TEST_MSGPASS_RETIREMENT.md` | `TEST_MSGPASS_RC.md`, `make test-msgpass-rc-smoke`, previous `make test-msgpass-rc-rollback-smoke` evidence | No C rollback target remains; the retired helper is Rust-only in test images. |
 | `slogger` | `SLOGGER_RETIREMENT.md` | `SLOGGER_RC.md`, `make slogger-rc-readback-smoke`, previous `make slogger-rc-rollback-smoke` evidence | No C rollback target remains; Rust `slogger-rs` is staged as `/sbin/slogger` in NQ/LQ images. |
 | `pipe` | `PIPE_RETIREMENT.md` | `PIPE_RC.md`, `make pipe-rc-data-smoke`, previous `make pipe-rc-rollback-smoke` evidence | No C rollback target remains; Rust `pipe-rs` is staged as `/sbin/pipe` in NQ/LQ images. |

@@ -1,24 +1,33 @@
 #!/usr/bin/env bash
 #
-# Generate and inspect a small qrvfs fixture using the current C host tools.
+# Generate and inspect a small qrvfs fixture using the retired-C Rust host tools.
 
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-TOOLS="$ROOT/build/host-tools"
 FIXTURE="$ROOT/build/fixtures/qrvfs"
 ROOTDIR="$FIXTURE/root"
 IMG="$FIXTURE/qrvfs-fixture.img"
 MKFS_LOG="$FIXTURE/mkfs.log"
 TREE_LOG="$FIXTURE/tree.log"
-CC=${CC:-cc}
+MANIFEST="$ROOT/rust/Cargo.toml"
 
-mkdir -p "$TOOLS" "$FIXTURE"
+. "$ROOT/scripts/rust-env.sh"
+qsoe_cargo_set_target_dir "$ROOT" host
 
-"$CC" -O2 -Wall -Wno-unused-variable -I "$ROOT/quser/fs/qrv" \
-    -o "$TOOLS/mkfs-qrv" "$ROOT/host_tools/mkfs-qrv.c"
-"$CC" -O2 -Wall -Wno-unused-variable -I "$ROOT/quser/fs/qrv" \
-    -o "$TOOLS/treeqrvfs" "$ROOT/host_tools/treeqrvfs.c"
+if ! command -v cargo >/dev/null 2>&1; then
+    echo "check-qrvfs-fixture.sh: cargo not found" >&2
+    exit 127
+fi
+
+mkdir -p "$FIXTURE"
+
+cargo build \
+    --quiet \
+    --manifest-path "$MANIFEST" \
+    -p qsoe-qrvfs \
+    --bin mkfs-qrv-rs \
+    --bin qrvfs-tree
 
 rm -rf "$ROOTDIR"
 mkdir -p "$ROOTDIR/bin" "$ROOTDIR/conf" "$ROOTDIR/home/user"
@@ -33,8 +42,8 @@ chmod 644 "$ROOTDIR/conf/passwd"
 printf 'PATH=/bin:/sbin\nexport PATH\n' > "$ROOTDIR/home/user/profile"
 chmod 644 "$ROOTDIR/home/user/profile"
 
-"$TOOLS/mkfs-qrv" -s 2 -n 64 "$IMG" "$ROOTDIR" > "$MKFS_LOG"
-"$TOOLS/treeqrvfs" "$IMG" > "$TREE_LOG"
+"$CARGO_TARGET_DIR/debug/mkfs-qrv-rs" -s 2 -n 64 "$IMG" "$ROOTDIR" > "$MKFS_LOG"
+"$CARGO_TARGET_DIR/debug/qrvfs-tree" "$IMG" > "$TREE_LOG"
 
 require() {
     pattern=$1
@@ -47,7 +56,7 @@ require() {
     fi
 }
 
-require "mkfs-qrvfs: done. Root inode=1" "$MKFS_LOG"
+require "mkfs-qrvfs-rs: done. Root inode=1" "$MKFS_LOG"
 require "qrvfs v2, 512 blocks, 64 inodes" "$TREE_LOG"
 require "bin" "$TREE_LOG"
 require "hello" "$TREE_LOG"

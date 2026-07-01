@@ -2,6 +2,9 @@
 
 Captured: 2026-06-29 09:26 CEST.
 
+Historical note: C `mkfs-qrv` was later retired. The current Rust-only host
+qrvfs tool path is documented in `HOST_QRVFS_RETIREMENT.md`.
+
 This note records the host qrvfs image writer Rust-default release-candidate
 path. It does not retire the C `mkfs-qrv` writer. The C writer remains present
 and is the explicit rollback implementation.

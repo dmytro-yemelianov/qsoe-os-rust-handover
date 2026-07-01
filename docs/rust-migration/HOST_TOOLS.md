@@ -5,13 +5,18 @@ preserve or intentionally change with a separate design note.
 
 ## Scope
 
-The first host-tool baseline covers:
+The host-tool baseline covers:
 
-- `host_tools/mkfs-qrv.c`: qrvfs image construction.
-- `host_tools/treeqrvfs.c`: qrvfs read-only tree inspection.
+- Rust `mkfs-qrv-rs`: qrvfs image construction.
+- Rust `qrvfs-tree`: qrvfs read-only tree inspection.
 - `host_tools/mkgpt.py`: primary GPT skeleton creation and partition payload
   writes.
 - `boot/gptextract.py`: primary GPT partition extraction.
+
+Historical C baselines for `host_tools/mkfs-qrv.c` and
+`host_tools/treeqrvfs.c` are recorded in `MKFS_QRV_RC.md` and
+`TREEQRVFS_RC.md`; the current retired-C state is recorded in
+`HOST_QRVFS_RETIREMENT.md`.
 
 The fixture scripts generate temporary artifacts under `build/fixtures/`.
 Generated images are not committed.
@@ -122,7 +127,7 @@ scripts/check-qrvfs-fixture.sh
 
 ## Rust qrvfs Writer Fixture
 
-The initial Rust writer is opt-in and fixture-scoped:
+The Rust writer is the retired-C production qrvfs image writer:
 
 ```text
 rust/crates/qsoe-qrvfs
@@ -132,23 +137,21 @@ It provides:
 
 - A `mkfs-qrv-rs` host binary.
 - A target writer that uses sparse regular-file initialization and block-device
-  metadata initialization matching the C writer's `BLKZEROOUT`/manual-zero
+  metadata initialization matching the retired C writer.s `BLKZEROOUT`/manual-zero
   fallback.
 - Directory and regular-file population from a host root.
 - Direct, single-indirect, double-indirect, and bounded triple-indirect file
   block allocation coverage.
 - Parser-backed Rust unit tests, including stale regular-file target
   replacement.
-- A fixture gate that inspects the Rust-written image with the C `treeqrvfs`
-  oracle.
+- A fixture gate that inspects the Rust-written image with Rust `qrvfs-tree`.
 - A production-root comparison that rebuilds the normal staged qrvfs root,
-  writes a Rust image from that root, and inspects both images with the C
-  `treeqrvfs` oracle.
-- An opt-in live-image smoke that selects Rust `mkfs-qrv-rs` for the qrvfs
+  writes a second Rust image from that root, and inspects both images with Rust
+  `qrvfs-tree`.
+- A live-image smoke that uses Rust `mkfs-qrv-rs` for the qrvfs
   image, boots QSOE/L from the resulting virtio disk, mounts `/usr`, and reads
   `/usr/conf/passwd`.
-- A Rust-default writer RC smoke and C writer rollback smoke for the same
-  mounted `/usr` file-read path.
+- A Rust-only writer compatibility smoke for the same mounted `/usr` file-read path.
 
 Run:
 
@@ -157,20 +160,17 @@ make check-qrvfs-rust-writer-fixture
 make check-qrvfs-rust-writer-production-root
 make rust-mkfs-qrv-live-smoke
 make mkfs-qrv-rc-live-smoke
-make mkfs-qrv-rc-rollback-smoke
 ```
 
 The live smoke succeeds when the boot log contains the guest marker
 `rust-virtio-file-smoke: read /usr/conf/passwd ok` and the wrapper prints
 `rust-virtio-file-smoke.sh: /usr file read smoke passed`.
 
-This is not a production writer replacement. The C `mkfs-qrv` remains the
-default image writer for `fsqrv-image`, NVMe population, virtio image
-generation, and rollback. Set `QSOE_RUST_MKFS_QRV=1` to select Rust
-`mkfs-qrv-rs` for qrvfs image construction. The Rust-default RC path is
-`make mkfs-qrv-rc-live-smoke`; the rollback drill is
-`make mkfs-qrv-rc-rollback-smoke`. C removal still requires the retirement
-checklist and a separate removal PR.
+Rust `mkfs-qrv-rs` is now the production writer for `fsqrv-image`, NVMe
+population, virtio image generation, and qrvfs writer fixtures. The current
+Rust-only live smoke is `make mkfs-qrv-rc-live-smoke`; stale C selectors such
+as `QSOE_RUST_MKFS_QRV=0` and `MKFS_QRV_RC_ROLLBACK=1` fail fast after
+retirement.
 
 ## Rust qrvfs Inspection Baseline
 
@@ -185,9 +185,8 @@ It provides:
 - A bounds-checked qrvfs superblock, inode, and directory parser.
 - A `qrvfs-tree` binary that emits the same tree format as `treeqrvfs`.
 - Unit tests for a minimal in-memory qrvfs image.
-- A fixture comparison against the current C inspector.
-- A selected `make tree` artifact that uses Rust by default while preserving a
-  C rollback selector.
+- A fixture comparison against the selected Rust inspector artifact.
+- A selected `make tree` artifact that uses Rust only after C retirement.
 
 Run the Rust/C comparison:
 
@@ -195,19 +194,18 @@ Run the Rust/C comparison:
 make check-qrvfs-rust-fixture
 ```
 
-The comparison regenerates the qrvfs fixture with the current C tools, runs the
-Rust inspector, and fails if the output diverges from `treeqrvfs`.
+The comparison regenerates the qrvfs fixture with Rust `mkfs-qrv-rs`, runs the
+selected Rust inspector artifact, and fails if the output diverges from the
+canonical Rust tree log.
 
-The host inspector release-candidate selector is:
+The host inspector compatibility selector is:
 
 ```sh
 make treeqrvfs-rc-smoke
-make treeqrvfs-rc-rollback-smoke
 ```
 
-`make tree` now selects Rust `qrvfs-tree` by default. Set
-`QSOE_RUST_TREEQRVFS=0` to build the C `treeqrvfs` rollback artifact instead.
-The C `mkfs-qrv` image writer remains unchanged.
+`make tree` now selects Rust `qrvfs-tree` only. `QSOE_RUST_TREEQRVFS=0` and
+`TREEQRVFS_RC_ROLLBACK=1` fail fast after C retirement.
 
 ## Rust ELF Inspection Baseline
 

@@ -24,8 +24,9 @@ gate in `docs/rust-migration/RETIREMENT.md`.
 
 ## Current Status
 
-- Rust-default release-candidate paths exist for `qrvfs-tree` and
-  `mkfs-qrv-rs`.
+- Retired C host qrvfs tools: Rust `qrvfs-tree` and `mkfs-qrv-rs` are now
+  mandatory for host inspection, `fsqrv-image`, NVMe population, virtio image
+  generation, and qrvfs fixtures.
 - Retired C implementations: the C `test_msgpass` helper is removed from
   tracked `quser` test-image paths, and the C `/sbin/slogger` and `/sbin/pipe`
   services and C `/sbin/devb-virtio` block driver are removed from tracked
@@ -42,10 +43,10 @@ gate in `docs/rust-migration/RETIREMENT.md`.
   `qsoe-tm-providers` archive so multiple providers can link behind one panic
   handler.
 - Rust `mkfs-qrv-rs` has fixture, production-root, target-initialization,
-  bounded triple-indirect allocator, live virtio `/usr`, and C rollback smoke
-  evidence.
+  bounded triple-indirect allocator, live virtio `/usr`, historical C rollback
+  smoke evidence, and current retired-selector rejection.
 - Future C retirements still require #26's checklist and a separate removal PR.
-  C remains the rollback path for all non-retired migration candidates.
+  C remains the rollback path only for non-retired migration candidates.
 
 Detailed planning lives under `docs/rust-migration/`. Start with:
 
@@ -71,7 +72,7 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | --- | --- | --- |
 | Baseline and tooling | Active warning-mode gates | Linux/container workflows, boot smokes, artifact audit, C indexing, clangd, clang-tidy wrapper, pinned Rust toolchain, cargo-deny, fuzz smoke, coverage targets, issue-backed roadmap gates, scoped CI Cargo/`sccache` cache wiring, and non-blocking #202/#203 CodeQL, dependency-review, Rust deep, and parser fuzz-smoke checks are in place. |
 | Rust ABI/FFI foundation | Complete | `qsoe-abi`, `qsoe-ffi`, and `qsoe-ressrv` compile for the QSOE target with layout tests and reviewed unsafe boundaries. |
-| Host qrvfs tools | Rust default RC for inspector and writer | Rust fixture checks compare against the existing C host tool; `make tree` selects Rust `qrvfs-tree` by default, and `make treeqrvfs-rc-rollback-smoke` preserves C rollback. `make mkfs-qrv-rc-live-smoke` selects Rust `mkfs-qrv-rs` by default for the writer RC, and `make mkfs-qrv-rc-rollback-smoke` restores C. Fixture, production-root, stale-target, bounded triple-indirect allocator, and live `/usr` smokes cover the writer path. Production C remains rollback. |
+| Host qrvfs tools | Retired C host tools | Rust `qrvfs-tree` and `mkfs-qrv-rs` are mandatory. `make tree`, `make treeqrvfs-rc-smoke`, `make fsqrv-image`, `make rust-mkfs-qrv-live-smoke`, and `make mkfs-qrv-rc-live-smoke` use Rust only; stale C selectors fail fast. Fixture, production-root, stale-target, bounded triple-indirect allocator, and live `/usr` smokes cover the writer path. |
 | `slogger` service | Retired C service | `slogger-rs` links, boots, registers `/dev/slog`, is staged as `/sbin/slogger` in normal NQ/LQ images, and passes the `/dev/slog` readback smoke through `make slogger-rc-readback-smoke`. The C service source and rollback targets are removed by the retirement PR. |
 | `devb-virtio` block driver | Retired C driver | Rust MMIO/virtqueue model, host queue tests, link/boot/file-read smokes, and `make virtio-rc-file-smoke` cover the Rust-only file-read path. Normal NQ/LQ images stage Rust `devb-virtio-rs` as `/sbin/devb-virtio`; the C driver source and rollback target are removed by the retirement PR. |
 | Shared parsers | Complete for current scope | CPIO, syscfg/sysmap, and ELF inspection crates exist with host tests and host/guest reuse coverage. |
@@ -91,19 +92,16 @@ Detailed planning lives under `docs/rust-migration/`. Start with:
 | `tm_sysmap` task-manager provider | Retired C provider | `qsoe-tm-sysmap` exports the existing LQ `tm_sysmap_*` ABI and is mandatory in normal LQ taskman builds. `QSOE_RUST_TM_SYSMAP=0` fails fast, `lq/taskman/sys/sysmap.c` is removed by the component override, and `make tm-sysmap-evidence` verifies Rust host tests, soft-float archive audit, no C `sys/sysmap.o` in LQ taskman links, retired selector rejection, and exported symbols. `make tm-sysmap-rc-smoke` boots LQ through spawned-child `sysinfo` consumers of the mapped `PSYS` page on the Rust-only path. |
 | `tm_sysfs` task-manager provider | Retired C provider | `qsoe-tm-sysfs` exports the existing `tm_sysfs.h` ABI and is mandatory in normal NQ/LQ taskman builds. `QSOE_RUST_TM_SYSFS=0` fails fast, `libtaskman/src/tm_sysfs.c` is removed, and `make tm-sysfs-evidence` verifies Rust host tests, soft-float archive audit, no C `tm_sysfs.o` in NQ/LQ taskman links, retired selector rejection, and exported symbols. `make tm-sysfs-rc-smoke` boots LQ through `/sys` readdir plus all five portable `/sys` file reads on the Rust-only path. |
 | Kernel Rust | Deferred | Current decision rejects near-term Rust in `nq` kernel code; only fixture/audit candidates are documented. |
-| C retirement | Sixteen removals complete | `test_msgpass` is the first retired C helper; `slogger`, `pipe`, and `devb-virtio` are retired C production paths after their Rust-default RC evidence; `tm_procfs` is the first retired task-manager provider, followed by `tm_cpio`, `tm_cred`, `tm_script`, `tm_elf`, `tm_fdt`, `tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`, and `tm_rsrcdb`. Future removals still require #26's checklist and a separate removal PR. |
+| C retirement | Seventeen removals complete | Host qrvfs tools are retired C host paths; `test_msgpass` is the first retired C helper; `slogger`, `pipe`, and `devb-virtio` are retired C production paths after their Rust-default RC evidence; `tm_procfs` is the first retired task-manager provider, followed by `tm_cpio`, `tm_cred`, `tm_script`, `tm_elf`, `tm_fdt`, `tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`, and `tm_rsrcdb`. Future removals still require #26's checklist and a separate removal PR. |
 
 ## Current Follow-ups
 
 - The draft PR stack through #89 was merged into `main` on 2026-06-24. The
   former #42 runner blocker, #60 CodeRabbit blocker, and bottom-up merge tracker
   are closed as #82, #83, and #84.
-- Host `qrvfs-tree` now has a Rust-default release-candidate path for the
-  read-only `make tree` inspector with explicit C rollback. `mkfs-qrv` remains
-  C, and C retirement stays blocked until #26's checklist and a separate
-  removal PR.
-- `mkfs-qrv-rs` now has Rust-default writer RC and C rollback smokes. Keep
-  `host_tools/mkfs-qrv.c` until #26's checklist and a separate removal PR.
+- Host qrvfs tools have moved past their Rust-default release-candidate paths
+  into C retirement. `QSOE_RUST_TREEQRVFS=0`, `QSOE_RUST_MKFS_QRV=0`,
+  `TREEQRVFS_RC_ROLLBACK=1`, and `MKFS_QRV_RC_ROLLBACK=1` now fail fast.
 - `slogger-rs` has moved past its Rust-default release-candidate path into C
   service retirement. The old C rollback flags now fail fast; normal NQ/LQ
   images stage Rust `slogger-rs` as `/sbin/slogger`.
@@ -137,12 +135,10 @@ make rust-fast
 make rust-quality
 make rust-abi
 make treeqrvfs-rc-smoke
-make treeqrvfs-rc-rollback-smoke
 make check-qrvfs-rust-writer-fixture
 make check-qrvfs-rust-writer-production-root
 make rust-mkfs-qrv-live-smoke
 make mkfs-qrv-rc-live-smoke
-make mkfs-qrv-rc-rollback-smoke
 make slog-readback-smoke
 make rust-slog-readback-smoke
 make slogger-rc-readback-smoke

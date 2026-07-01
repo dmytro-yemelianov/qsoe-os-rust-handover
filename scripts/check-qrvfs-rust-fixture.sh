@@ -1,38 +1,27 @@
 #!/usr/bin/env bash
 #
-# Compare the Rust qrvfs inspector against the current C treeqrvfs output.
+# Compare the selected qrvfs-tree artifact against the Rust canonical fixture.
 
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-IMG="$ROOT/build/fixtures/qrvfs/qrvfs-fixture.img"
-C_TREE="$ROOT/build/fixtures/qrvfs/tree.log"
-RUST_TREE="$ROOT/build/fixtures/qrvfs/rust-tree.log"
-MANIFEST="$ROOT/rust/Cargo.toml"
-
-. "$ROOT/scripts/rust-env.sh"
-qsoe_cargo_set_target_dir "$ROOT" host
-
-if ! command -v cargo >/dev/null 2>&1; then
-    echo "check-qrvfs-rust-fixture.sh: cargo not found" >&2
-    exit 127
-fi
+FIXTURE="$ROOT/build/fixtures/qrvfs"
+IMG="$FIXTURE/qrvfs-fixture.img"
+CANONICAL_TREE="$FIXTURE/tree.log"
+SELECTED_TREE="$FIXTURE/rust-tree.log"
+TREEQRVFS="$FIXTURE/qrvfs-tree-selected"
 
 "$ROOT/scripts/check-qrvfs-fixture.sh" >/dev/null
+"$ROOT/scripts/treeqrvfs-artifact.sh" "$TREEQRVFS" >/dev/null
 
-cargo run \
-    --quiet \
-    --manifest-path "$MANIFEST" \
-    -p qsoe-qrvfs \
-    --bin qrvfs-tree \
-    -- "$IMG" > "$RUST_TREE"
+"$TREEQRVFS" "$IMG" > "$SELECTED_TREE"
 
-if ! diff -u "$C_TREE" "$RUST_TREE"; then
-    echo "check-qrvfs-rust-fixture.sh: Rust qrvfs output diverges from treeqrvfs" >&2
+if ! diff -u "$CANONICAL_TREE" "$SELECTED_TREE"; then
+    echo "check-qrvfs-rust-fixture.sh: selected qrvfs-tree output diverges" >&2
     exit 1
 fi
 
 echo "check-qrvfs-rust-fixture.sh: ok"
-echo "  image: $IMG"
-echo "  c:     $C_TREE"
-echo "  rust:  $RUST_TREE"
+echo "  image:     $IMG"
+echo "  canonical: $CANONICAL_TREE"
+echo "  selected:  $SELECTED_TREE"

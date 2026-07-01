@@ -1,18 +1,16 @@
 #!/usr/bin/env bash
 #
-# Generate a qrvfs fixture with the Rust writer and inspect it with the C tree.
+# Generate a qrvfs fixture with the retired-C Rust writer and inspect it with Rust.
 
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
-TOOLS="$ROOT/build/host-tools"
 FIXTURE="$ROOT/build/fixtures/qrvfs-rust-writer"
 ROOTDIR="$FIXTURE/root"
 IMG="$FIXTURE/qrvfs-rust-writer.img"
 MKFS_LOG="$FIXTURE/mkfs-rust.log"
-TREE_LOG="$FIXTURE/tree-c.log"
+TREE_LOG="$FIXTURE/tree-rust.log"
 MANIFEST="$ROOT/rust/Cargo.toml"
-CC=${CC:-cc}
 
 . "$ROOT/scripts/rust-env.sh"
 qsoe_cargo_set_target_dir "$ROOT" host
@@ -22,10 +20,14 @@ if ! command -v cargo >/dev/null 2>&1; then
     exit 127
 fi
 
-mkdir -p "$TOOLS" "$FIXTURE"
+mkdir -p "$FIXTURE"
 
-"$CC" -O2 -Wall -Wno-unused-variable -I "$ROOT/quser/fs/qrv" \
-    -o "$TOOLS/treeqrvfs" "$ROOT/host_tools/treeqrvfs.c"
+cargo build \
+    --quiet \
+    --manifest-path "$MANIFEST" \
+    -p qsoe-qrvfs \
+    --bin mkfs-qrv-rs \
+    --bin qrvfs-tree
 
 rm -rf "$ROOTDIR"
 mkdir -p "$ROOTDIR/bin" "$ROOTDIR/conf" "$ROOTDIR/home/user"
@@ -53,14 +55,8 @@ chmod 644 "$ROOTDIR/conf/passwd"
 printf 'PATH=/bin:/sbin\nexport PATH\n' > "$ROOTDIR/home/user/profile"
 chmod 644 "$ROOTDIR/home/user/profile"
 
-cargo run \
-    --quiet \
-    --manifest-path "$MANIFEST" \
-    -p qsoe-qrvfs \
-    --bin mkfs-qrv-rs \
-    -- -s 8 -n 64 "$IMG" "$ROOTDIR" > "$MKFS_LOG"
-
-"$TOOLS/treeqrvfs" "$IMG" > "$TREE_LOG"
+"$CARGO_TARGET_DIR/debug/mkfs-qrv-rs" -s 8 -n 64 "$IMG" "$ROOTDIR" > "$MKFS_LOG"
+"$CARGO_TARGET_DIR/debug/qrvfs-tree" "$IMG" > "$TREE_LOG"
 
 require() {
     pattern=$1

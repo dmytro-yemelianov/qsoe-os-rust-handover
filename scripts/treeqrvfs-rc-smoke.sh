@@ -1,33 +1,43 @@
 #!/usr/bin/env bash
 #
-# Validate the Rust-default host qrvfs inspector and the C rollback selector.
+# Validate the retired-C Rust-only host qrvfs inspector selector.
 
 set -eu
 
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 FIXTURE="$ROOT/build/fixtures/qrvfs"
 IMG="$FIXTURE/qrvfs-fixture.img"
-C_TREE="$FIXTURE/tree.log"
+CANONICAL_TREE="$FIXTURE/tree.log"
 SELECTED_TREE="$FIXTURE/treeqrvfs-selected.log"
 TREEQRVFS="$ROOT/build/treeqrvfs"
 
-if [ "${TREEQRVFS_RC_ROLLBACK:-0}" = 1 ]; then
-    QSOE_RUST_TREEQRVFS=0
-    mode=c-rollback
-else
-    QSOE_RUST_TREEQRVFS=${QSOE_RUST_TREEQRVFS:-1}
-    case "$QSOE_RUST_TREEQRVFS" in
-        1|true|yes)
-            mode=rust-default
-            ;;
-        0|false|no)
-            mode=c-selected
-            ;;
-        *)
-            mode=selected
-            ;;
-    esac
-fi
+case "${TREEQRVFS_RC_ROLLBACK:-0}" in
+    0)
+        ;;
+    1)
+        echo "treeqrvfs-rc-smoke.sh: C treeqrvfs rollback is retired" >&2
+        exit 2
+        ;;
+    *)
+        echo "treeqrvfs-rc-smoke.sh: TREEQRVFS_RC_ROLLBACK must be 0 after C retirement" >&2
+        exit 2
+        ;;
+esac
+
+QSOE_RUST_TREEQRVFS=${QSOE_RUST_TREEQRVFS:-1}
+case "$QSOE_RUST_TREEQRVFS" in
+    1|true|TRUE|yes|YES)
+        mode=rust-only
+        ;;
+    0|false|FALSE|no|NO)
+        echo "treeqrvfs-rc-smoke.sh: C treeqrvfs is retired; use Rust qrvfs-tree" >&2
+        exit 2
+        ;;
+    *)
+        echo "treeqrvfs-rc-smoke.sh: QSOE_RUST_TREEQRVFS must be 1 after C retirement" >&2
+        exit 2
+        ;;
+esac
 export QSOE_RUST_TREEQRVFS
 
 "$ROOT/scripts/check-qrvfs-fixture.sh" >/dev/null
@@ -35,12 +45,12 @@ export QSOE_RUST_TREEQRVFS
 
 "$TREEQRVFS" "$IMG" > "$SELECTED_TREE"
 
-if ! diff -u "$C_TREE" "$SELECTED_TREE"; then
-    echo "treeqrvfs-rc-smoke.sh: selected treeqrvfs output diverges" >&2
+if ! diff -u "$CANONICAL_TREE" "$SELECTED_TREE"; then
+    echo "treeqrvfs-rc-smoke.sh: selected qrvfs-tree output diverges" >&2
     exit 1
 fi
 
 echo "treeqrvfs-rc-smoke.sh: $mode passed"
 echo "  image:    $IMG"
-echo "  c oracle: $C_TREE"
+echo "  canonical: $CANONICAL_TREE"
 echo "  selected: $SELECTED_TREE"

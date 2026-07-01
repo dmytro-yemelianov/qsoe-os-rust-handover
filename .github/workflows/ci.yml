@@ -92,13 +92,13 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-rust-test-msgpass-smoke
 
-      - name: Run mkfs-qrv Rust-default RC live smoke
+      - name: Run host qrvfs tree Rust-only smoke
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-treeqrvfs-rc-smoke
+
+      - name: Run mkfs-qrv Rust-only live smoke
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-mkfs-qrv-rc-live-smoke
-
-      - name: Run mkfs-qrv C rollback live smoke
-        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-        run: make container-mkfs-qrv-rc-rollback-smoke
 
       - name: Run Rust pipe data-path smoke
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
@@ -255,6 +255,9 @@ jobs:
           name: qsoe-boot-smoke-logs
           path: |
             build/boot-smoke-*.log
+            build/fixtures/qrvfs/**/*.log
+            build/fixtures/qrvfs-rust-writer/**/*.log
+            build/fixtures/qrvfs-rust-production-root/**/*.log
             build/slog-readback-smoke-lq-slogger-rc-*.log
             build/slogger-rc/*.log
             build/rust-test-msgpass/*.log

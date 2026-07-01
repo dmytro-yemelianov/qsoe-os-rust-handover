@@ -1,6 +1,6 @@
 # OS-wide C Inventory
 
-Captured: 2026-06-30 CEST.
+Captured: 2026-07-01 CEST.
 
 This inventory gives the migration tracker an OS-wide baseline. It is not a
 claim that every C file is an independently translatable component. It separates
@@ -22,15 +22,15 @@ excluded unless `QSOE_INDEX_SEL4=1` is set.
 | Root | Indexed files | Approx LOC | Current migration posture |
 | --- | ---: | ---: | --- |
 | `common` | 2 | 359 | Shared CPIO helper code. Rust CPIO parsing exists, but C remains for existing callers. |
-| `host_tools` | 2 | 781 | `qrvfs-tree` and `mkfs-qrv-rs` have Rust-default RC paths with C rollback. Tracked by #136. |
+| `host_tools` | 0 | 0 | C `treeqrvfs` and `mkfs-qrv` are retired; Rust `qrvfs-tree` and `mkfs-qrv-rs` are mandatory. Tracked by #136. |
 | `libc` | 447 | 43,080 | Broad runtime, syscall, stdio, allocator, string, rtld, and QSOE wrapper surface. Not a wholesale Rust target. |
 | `libtaskman` | 16 | 1,932 | Best source of host-testable task-manager modules. `tm_procfs`, `tm_cpio`, `tm_cred`, `tm_script`, `tm_elf`, `tm_syscfg`, `tm_sysfs`, and `tm_pathmgr` are retired to Rust through the shared provider archive; remaining candidates are tracked in #153. |
 | `lq` | 89 | 17,686 | seL4 task manager, LQ libc wrappers, process, capability, path, memory, syscall, and boot glue. Pure/diagnostic slices only are candidates; LQ FDT, sysmap, pseudo-devices, and resource DB accounting are retired to Rust. |
 | `nq` | 125 | 25,056 | Kernel, NQ libc, and NQ taskman surface. Near-term linked Rust is deferred by policy; fixture-only candidates are tracked in #155. |
 | `quser` | 125 | 40,818 | Userland services, drivers, resource-server support, shell, tests, and utilities. `test_msgpass` is the first retired C helper; `slogger`, `pipe`, and `devb-virtio` are retired C production paths; several services have Rust pilots; many remain C. |
-| **Total** | **806** | **129,712** | QSOE-owned C/asm/linker surface in this checkout, excluding generated build outputs and vendor seL4. |
+| **Total** | **804** | **128,931** | QSOE-owned C/asm/linker surface in this checkout, excluding generated build outputs and vendor seL4. |
 
-By file type: `514` C files, `280` headers, `10` assembly files, and `2` linker
+By file type: `512` C files, `280` headers, `10` assembly files, and `2` linker
 scripts.
 
 ## Issue-backed Migration Ledger
@@ -52,7 +52,7 @@ Issue state, labels, and metadata are the source of truth for current progress.
 
 | Component | Issue | Current state |
 | --- | --- | --- |
-| Host qrvfs tools | #136 | Rust-default RC for `qrvfs-tree` and `mkfs-qrv-rs`; C remains rollback and no C implementation is retired. |
+| Host qrvfs tools | #136 | Retired C host tools; Rust `qrvfs-tree` and `mkfs-qrv-rs` are mandatory. |
 | `slogger` | #137 | Retired C service; Rust `slogger-rs` is always staged as `/sbin/slogger` in NQ/LQ images. |
 | `devb-virtio` | #138 | Retired C block driver; Rust `devb-virtio-rs` is always staged as `/sbin/devb-virtio` in NQ/LQ images. |
 | `pipe` | #139 | Retired C service; Rust `pipe-rs` is always staged as `/sbin/pipe` in NQ/LQ images. |
@@ -70,19 +70,17 @@ Issue state, labels, and metadata are the source of truth for current progress.
 | `tm_pseudodev` | #152 | Retired C LQ pseudo-device provider; Rust `qsoe-tm-pseudodev` is mandatory in taskman and the focused `/dev/null` plus `/dev/zero` runtime smoke covers the Rust-only path. |
 | `tm_sysfs` | #148 | Retired C provider; Rust `qsoe-tm-sysfs` is mandatory in taskman and the `/sys` runtime smoke covers the Rust-only path. |
 
-`test_msgpass` is the first tracked C implementation retired after an RC window
-and rollback drill. `slogger` is the first retired production service, followed
+Host qrvfs tools are retired after their RC windows and rollback drills. `test_msgpass` is the first tracked C implementation retired after an RC window and rollback drill. `slogger` is the first retired production service, followed
 by `pipe` and `devb-virtio`. `tm_procfs` is the first retired task-manager
 provider, followed by `tm_script`, `tm_cpio`, `tm_cred`, `tm_elf`,
 `tm_syscfg`, `tm_sysmap`, `tm_sysfs`, `tm_pathmgr`, `tm_pseudodev`,
-`tm_rsrcdb`, and `tm_fdt`. Future retirements remain governed by #26 and must
-be separate removal PRs after their own RC evidence.
+`tm_rsrcdb`, and `tm_fdt`. Future retirements remain governed by #26 and must be separate removal PRs after their own RC evidence.
 
 ## Remaining Candidate Buckets
 
 | Bucket | Issues | Posture |
 | --- | --- | --- |
-| Host qrvfs tools | #136 | Complete for current scope: `qrvfs-tree` and `mkfs-qrv-rs` have Rust-default RC paths. Keep C rollback until #26. |
+| Host qrvfs tools | #136 | Retired: Rust `qrvfs-tree` and `mkfs-qrv-rs` are mandatory; no C rollback target remains. |
 | Task-manager pure or diagnostic modules | #153 | Candidate backlog. Prefer host-tested modules that avoid direct seL4 invocations, spawn, capability ownership, relocation writes, and loader admission. |
 | Spawn, capability, relocation, and loader paths | #154 | Deferred. These paths are load-bearing for process creation and teardown. |
 | Kernel Rust | #155 | Deferred. Current policy allows documentation and fixtures only. |

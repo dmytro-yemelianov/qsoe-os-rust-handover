@@ -629,24 +629,21 @@ crates/qsoe-qrvfs
 ```
 
 It reads qrvfs images and includes `qrvfs-tree`, a tree-format inspector that is
-diffed against the current C `treeqrvfs` output:
+validated against generated qrvfs fixtures:
 
 ```sh
 make check-qrvfs-rust-fixture
 ```
 
-The read-only inspector has a Rust-default release-candidate selector:
+The read-only inspector has a Rust-only compatibility selector:
 
 ```sh
 make treeqrvfs-rc-smoke
-make treeqrvfs-rc-rollback-smoke
 ```
 
-`make tree` builds `build/treeqrvfs` from Rust `qrvfs-tree` by default. Set
-`QSOE_RUST_TREEQRVFS=0` to select the C `host_tools/treeqrvfs.c` rollback
-artifact instead. The inspector path is read-only; the C `mkfs-qrv` tool
-remains the default writer and source of truth for production image
-construction.
+`make tree` builds `build/treeqrvfs` from Rust `qrvfs-tree`. The C rollback
+selector is retired; `QSOE_RUST_TREEQRVFS=0` and `TREEQRVFS_RC_ROLLBACK=1`
+fail fast.
 
 The first opt-in Rust writer fixture is:
 
@@ -657,14 +654,15 @@ make rust-mkfs-qrv-live-smoke
 ```
 
 The fixture smoke builds a small image with `mkfs-qrv-rs`, then inspects that
-image with the C `treeqrvfs` oracle. The fixture includes a large file that
-crosses into the double-indirect allocation path. The production-root smoke
-rebuilds the normal staged qrvfs root, writes a Rust image from that root, and
-checks the C and Rust-written images with the C oracle. `mkfs-qrv-rs` also uses
-sparse regular-file target initialization and the C writer's block-device
+image with Rust `qrvfs-tree`. The fixture includes a large file that crosses
+into the double-indirect allocation path. The production-root smoke rebuilds
+the normal staged qrvfs root, writes a second Rust image from that root, and
+checks both images with Rust `qrvfs-tree`. `mkfs-qrv-rs` also uses sparse
+regular-file target initialization and the retired C writer's block-device
 metadata zeroing strategy. The live smoke selects Rust `mkfs-qrv-rs`, boots
 QSOE/L from the resulting virtio disk, and reads `/usr/conf/passwd`.
-Production image generation still uses C `mkfs-qrv`.
+Production image generation now uses Rust `mkfs-qrv-rs`; `QSOE_RUST_MKFS_QRV=0`
+and `MKFS_QRV_RC_ROLLBACK=1` fail fast after C retirement.
 
 ## Host CPIO Parser
 
