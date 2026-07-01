@@ -498,7 +498,9 @@ apply_patch_if_possible_or_present lq lq-taskman-rust-tm-sysfs-retired.patch \
 apply_patch_if_possible_or_present lq lq-taskman-stack-32k.patch \
     "$ROOT/lq/taskman/start.S" \
     '    .skip 32768'
-apply_patch_if_possible lq lq-msgpass-mcs-teardown-and-bulk-copy.patch
+apply_patch_if_possible_or_present lq lq-msgpass-mcs-teardown-and-bulk-copy.patch \
+    "$ROOT/lq/taskman/proc/proc.h" \
+    'int           tm_process_resolve_frame'
 apply_patch_if_possible_or_present quser quser-retire-test-msgpass-c.patch \
     "$ROOT/quser/Makefile" \
     'test_msgpass-rs'
