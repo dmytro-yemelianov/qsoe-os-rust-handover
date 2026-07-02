@@ -50,3 +50,5 @@ Selected taskman Rust providers now link through one shared
 `qsoe-tm-providers` archive when any `QSOE_RUST_TM_*` selector is enabled, so
 multi-provider evidence can be gathered without duplicate panic-handler
 symbols. C remains the rollback path only for non-retired current migration candidates.
+
+2026-07-02: Added `tm_vspace_plan` and `tm_teardown_plan` C seam evidence. The spawn page-table/page mapping authority and process revoke/delete/free teardown authority are now tracked as bounded C-owned plans with dedicated component patches and CI evidence targets.

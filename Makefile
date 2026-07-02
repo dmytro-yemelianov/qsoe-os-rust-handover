@@ -1087,3 +1087,15 @@ reloc-c-evidence:
 
 container-reloc-c-evidence:
 	@$(MAKE) --no-print-directory container-tm-reloc-provider-evidence
+
+.PHONY: spawn-vspace-plan-c-evidence container-spawn-vspace-plan-c-evidence
+spawn-vspace-plan-c-evidence:
+	@scripts/spawn-vspace-plan-c-evidence.sh
+container-spawn-vspace-plan-c-evidence:
+	@scripts/container-toolchain.sh run make spawn-vspace-plan-c-evidence
+
+.PHONY: teardown-plan-c-evidence container-teardown-plan-c-evidence
+teardown-plan-c-evidence:
+	@scripts/teardown-plan-c-evidence.sh
+container-teardown-plan-c-evidence:
+	@scripts/container-toolchain.sh run make teardown-plan-c-evidence

@@ -654,6 +654,13 @@ apply_patch_if_possible_or_present lq lq-taskman-spawn-argpack-seam.patch \
 apply_patch_if_possible_or_present lq lq-taskman-spawn-cap-plan-seam.patch \
     "$ROOT/lq/taskman/proc/spawn.c" \
     'tm_cap_plan_prepare'
+
+apply_patch_if_possible_or_present lq lq-taskman-spawn-vspace-plan-seam.patch \
+    "$ROOT/lq/taskman/proc/spawn.c" \
+    'tm_vspace_plan_commit'
+apply_patch_if_possible_or_present lq lq-taskman-teardown-plan-seam.patch \
+    "$ROOT/lq/taskman/proc/process.c" \
+    'tm_teardown_plan_commit'
 apply_patch_if_possible_or_present quser quser-retire-test-msgpass-c.patch \
     "$ROOT/quser/Makefile" \
     'test_msgpass-rs'

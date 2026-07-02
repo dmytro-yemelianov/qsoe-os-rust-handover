@@ -275,6 +275,14 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-spawn-cap-plan-c-evidence
 
+      - name: Run spawn vspace plan C seam evidence
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-spawn-vspace-plan-c-evidence
+
+      - name: Run teardown plan C seam evidence
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-teardown-plan-c-evidence
+
       - name: Run spawn/loader C boundary evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-spawn-loader-c-evidence
@@ -389,6 +397,8 @@ jobs:
             build/tm-sysmap-rc/*.txt
             build/spawn-argpack-c-evidence/**/*.txt
             build/spawn-cap-plan-c-evidence/**/*.txt
+            build/spawn-vspace-plan-c-evidence/**/*.txt
+            build/teardown-plan-c-evidence/**/*.txt
             build/spawn-loader-c-evidence/**/*.log
             build/spawn-loader-c-evidence/**/*.txt
             build/spawn-loader-c-stress-evidence/**/*.log

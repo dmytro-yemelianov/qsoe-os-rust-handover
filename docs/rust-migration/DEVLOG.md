@@ -4875,3 +4875,9 @@ Result:
 Follow-up:
 
 - Keep release tags stable while planning Rust migration.
+
+## 2026-07-02 - tm_vspace_plan and tm_teardown_plan C Seam Evidence
+
+- Added component patches for the `lq` taskman spawn vspace plan and process teardown plan seams.
+- Added CI evidence scripts for bounded vspace mapping and teardown cleanup plans.
+- Updated the spawn/cap-loader boundary review to move these two seams from roadmap candidates to evidenced C-owned boundaries.

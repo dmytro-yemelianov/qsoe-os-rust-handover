@@ -180,3 +180,12 @@ Before moving any subcomponent from deferred to opt-in:
 
 #154 should remain open and `deferred` after this review. The completed
 milestone is the boundary review itself, not implementation readiness.
+
+### tm_vspace_plan and tm_teardown_plan C seams
+
+The 2026-07-02 follow-up splits two more authority boundaries out of ad-hoc spawn and teardown control flow:
+
+- `tm_vspace_plan` is a bounded C-owned plan for page-table and page mappings. Preparation records the intended operation kind, cap, virtual address, rights, attributes, and cap-recording policy; commit still performs `qsoe_riscv_pagetable_map`, `qsoe_riscv_page_map`, `spawn_record_pt`, and `spawn_record_frame` in C.
+- `tm_teardown_plan` is a bounded C-owned plan for revoke/delete/free cleanup. Preparation records the cleanup kind and slot pointer; commit still performs `qsoe_cnode_revoke`, `qsoe_cnode_delete`, and `taskman_free_slot` in C while preserving the process teardown order.
+
+Formal evidence targets now cover both seams with `make spawn-vspace-plan-c-evidence` and `make teardown-plan-c-evidence`. The next useful split is loader relocation and protocol-shape state, because the current page-table, cap-publication, argpack, and teardown authority boundaries are now separately replayable through component patches.
