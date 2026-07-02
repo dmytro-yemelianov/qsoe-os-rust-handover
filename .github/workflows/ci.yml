@@ -283,6 +283,10 @@ jobs:
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-teardown-plan-c-evidence
 
+      - name: Run spawn loader protocol C seam evidence
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        run: make container-spawn-loader-proto-c-evidence
+
       - name: Run spawn/loader C boundary evidence
         if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
         run: make container-spawn-loader-c-evidence

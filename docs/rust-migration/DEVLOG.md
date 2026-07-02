@@ -4881,3 +4881,11 @@ Follow-up:
 - Added component patches for the `lq` taskman spawn vspace plan and process teardown plan seams.
 - Added CI evidence scripts for bounded vspace mapping and teardown cleanup plans.
 - Updated the spawn/cap-loader boundary review to move these two seams from roadmap candidates to evidenced C-owned boundaries.
+
+## 2026-07-02 - tm_loader_proto C Seam Evidence
+
+- Added a component patch for the `lq` taskman loader protocol state seam.
+- Added CI evidence for bounded dynamic-loader protocol admission state.
+- Kept load, relocation, auxv, TCB, VSpace, and capability authority in C while
+  routing `AT_PHDR`, `AT_BASE`, `AT_ENTRY`, entry PC, and dyn-link state through
+  `tm_loader_proto`.

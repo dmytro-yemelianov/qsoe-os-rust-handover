@@ -149,6 +149,9 @@ inputs and explicit rollback/evidence:
 - `tm_vspace_plan`: declarative list of page-table and frame mappings with
   rights/attributes.
 - `tm_teardown_plan`: explicit reverse-order resource graph for process exit.
+- `tm_loader_proto`: explicit dynamic-loader protocol state for `AT_PHDR`,
+  `AT_BASE`, `AT_ENTRY`, entry PC, and dyn-link admission after the existing
+  C-owned load/reloc sequence.
 
 These seams must keep C as the seL4 authority owner until the relevant plan is
 validated and committed.
@@ -172,9 +175,11 @@ Before moving any subcomponent from deferred to opt-in:
    spawn/loader runtime evidence.
 2. Keep `tm_cap_plan` source evidence running next to argpack and spawn/loader
    runtime evidence while follow-on cap/object relocation seams stay C-only.
-3. Keep the now-retired/default `qsoe-tm-reloc` provider isolated behind the
+3. Keep `tm_loader_proto` source evidence running next to the vspace and
+   teardown plan evidence while broader spawn/loader authority stays C-only.
+4. Keep the now-retired/default `qsoe-tm-reloc` provider isolated behind the
    existing callback ABI.
-4. Reassess spawn planning after the C plan seams are stable.
+5. Reassess spawn planning after the C plan seams are stable.
 
 ## Roadmap posture
 
@@ -189,3 +194,22 @@ The 2026-07-02 follow-up splits two more authority boundaries out of ad-hoc spaw
 - `tm_teardown_plan` is a bounded C-owned plan for revoke/delete/free cleanup. Preparation records the cleanup kind and slot pointer; commit still performs `qsoe_cnode_revoke`, `qsoe_cnode_delete`, and `taskman_free_slot` in C while preserving the process teardown order.
 
 Formal evidence targets now cover both seams with `make spawn-vspace-plan-c-evidence` and `make teardown-plan-c-evidence`. The next useful split is loader relocation and protocol-shape state, because the current page-table, cap-publication, argpack, and teardown authority boundaries are now separately replayable through component patches.
+
+### tm_loader_proto C seam
+
+The 2026-07-02 loader follow-up splits dynamic-loader protocol state out of
+the spawn body without moving authority:
+
+- `tm_loader_proto` records whether the spawn is dynamically linked, the entry
+  PC, the main image `AT_PHDR` address, and the runtime-linker `AT_BASE`.
+- `tm_loader_proto_admit_dynamic` runs only after the existing C-owned
+  `load_elf_segments` and `tm_reloc_apply` sequence has loaded and relocated
+  libc.so, rtld, and the main image.
+- Auxv emission and `TCB_WriteRegisters` consume `tm_loader_proto`, while
+  VSpace maps, relocation writes, capability publication, and TCB authority
+  remain in C.
+
+Formal source evidence now covers this seam with
+`make spawn-loader-proto-c-evidence`. The next useful split remains a narrow
+C-owned spawn-loader admission sub-seam or failure-path plan; it is not Rust
+ownership of spawn/capability/loader authority.
